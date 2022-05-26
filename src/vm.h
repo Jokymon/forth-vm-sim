@@ -1,0 +1,27 @@
+#ifndef VM_H
+#define VM_H
+
+#include <array>
+
+class Vm {
+public:
+    enum Result {
+        Finished, Error, IllegalInstruction
+    };
+
+    Vm();
+
+    Result interpret();
+
+private:
+    uint8_t fetch_op();
+
+    uint32_t reg_ip = 0;
+    uint32_t reg_wp = 0;
+    uint32_t reg_rp = 0;
+    uint32_t reg_sp = 0;
+
+    std::array<uint8_t, 32768> memory;
+};
+
+#endif
