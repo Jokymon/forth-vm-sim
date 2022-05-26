@@ -8,6 +8,15 @@ enum class Opcode {
 
 Vm::Vm() {
     memory.fill(static_cast<uint8_t>(Opcode::OP_ILLEGAL));
+
+    // Setup the memory layout
+    // +------------+------------+--------------+----------------+-------------+
+    // | Dictionary | Data Stack | Return Stack | User Variables | I/O Buffers |
+    // +------------+------------+--------------+----------------+-------------+
+    //  16k           4k           4k             4k               4k
+    //   -->                  <--           <--
+    reg_rsp = (16+4+4) * 1024;
+    reg_dsp = (16+4) * 1024;
 }
 
 Vm::Result Vm::interpret() {
