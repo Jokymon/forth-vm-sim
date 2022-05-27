@@ -5,6 +5,7 @@
 enum class Opcode {
     OP_NOP = 0x0,
     OP_INPUT = 0x1,
+    OP_OUTPUT = 0x2,
     OP_TERMINATE = 0xFE,
     OP_ILLEGAL = 0xFF
 };
@@ -32,6 +33,10 @@ Vm::Result Vm::interpret() {
             case Opcode::OP_INPUT:
                 ch = getch();
                 memory[reg_dsp--] = ch;
+                std::cout << ch;
+                break;
+            case Opcode::OP_OUTPUT:
+                ch = memory[reg_dsp--];
                 std::cout << ch;
                 break;
             case Opcode::OP_ILLEGAL:
