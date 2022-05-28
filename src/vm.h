@@ -11,6 +11,7 @@ public:
 
     Vm();
 
+    void loadImage(const std::string &image_path);
     Result interpret();
 
 private:

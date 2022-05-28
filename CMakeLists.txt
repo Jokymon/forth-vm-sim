@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.23.1)
 include(cmake/CPM.cmake)
 CPMAddPackage("gh:catchorg/Catch2@3.0.1")
-
+CPMAddPackage("gh:Taywee/args#6.4.1")
 
 project(forth-vm-sim)
 
@@ -23,7 +23,7 @@ target_sources(${PROJECT_NAME}
         src/main.cpp
 )
 
-target_link_libraries(forth-vm-sim vm -static-libgcc -static-libstdc++)
+target_link_libraries(${PROJECT_NAME} vm args -static-libgcc -static-libstdc++)
 
 add_executable(test)
 target_sources(test

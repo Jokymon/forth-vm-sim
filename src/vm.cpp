@@ -1,6 +1,7 @@
 #include "vm.h"
 #include <conio.h>
 #include <iostream>
+#include <fstream>
 
 enum class Opcode {
     OP_NOP = 0x0,
@@ -12,7 +13,6 @@ enum class Opcode {
 
 Vm::Vm() {
     memory.fill(static_cast<uint8_t>(Opcode::OP_ILLEGAL));
-    memory[0] = static_cast<uint8_t>(Opcode::OP_INPUT);
 
     // Setup the memory layout
     // +------------+------------+--------------+----------------+-------------+
@@ -22,6 +22,20 @@ Vm::Vm() {
     //   -->                  <--           <--
     reg_rsp = (16+4+4) * 1024;
     reg_dsp = (16+4) * 1024;
+}
+
+void Vm::loadImage(const std::string &image_path) {
+    std::fstream image_file;
+    image_file.open(image_path, std::ios::in | std::ios::binary | std::ios::ate);
+    auto filesize = image_file.tellg();
+    if (filesize <= sizeof(memory)) {
+        image_file.seekg(0);
+        image_file.read(reinterpret_cast<char*>(memory.data()), filesize);
+    }
+    else {
+        std::cout << "ERROR!! Couldn't loading binary with a size bigger than available memory size\n";
+    }
+    image_file.close();
 }
 
 Vm::Result Vm::interpret() {
