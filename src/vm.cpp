@@ -7,6 +7,10 @@ enum class Opcode {
     OP_NOP = 0x0,
     OP_INPUT = 0x1,
     OP_OUTPUT = 0x2,
+
+    OP_ADD = 0x20,
+
+    OP_DUMP = 0xFD,
     OP_TERMINATE = 0xFE,
     OP_ILLEGAL = 0xFF
 };
@@ -44,14 +48,24 @@ Vm::Result Vm::interpret() {
     while (true) {
         Opcode op = static_cast<Opcode>(fetch_op());
         switch (static_cast<Opcode>(op)) {
+            case Opcode::OP_NOP:
+                break;
             case Opcode::OP_INPUT:
                 ch = getch();
-                memory[reg_dsp--] = ch;
+                push_ds(ch);
                 std::cout << ch;
                 break;
             case Opcode::OP_OUTPUT:
-                ch = memory[reg_dsp--];
+                ch = pop_ds() & 0xff;
                 std::cout << ch;
+                break;
+            case Opcode::OP_ADD:
+                reg_acc1 = pop_ds();
+                reg_acc2 = pop_ds();
+                push_ds(reg_acc1 + reg_acc2);
+                break;
+            case Opcode::OP_DUMP:
+                std::cout << "\nDump: " << get32(reg_dsp) << "\n";
                 break;
             case Opcode::OP_ILLEGAL:
                 return IllegalInstruction;
@@ -64,4 +78,26 @@ Vm::Result Vm::interpret() {
 
 uint8_t Vm::fetch_op() {
     return memory[reg_ip++];
+}
+
+void Vm::push_ds(uint32_t data) {
+    reg_dsp -= 4;
+    put32(reg_dsp, data);
+}
+
+uint32_t Vm::pop_ds() {
+    uint32_t value = get32(reg_dsp);
+    reg_dsp += 4;
+    return value;
+}
+
+uint32_t Vm::get32(uint32_t address) {
+    return (memory[address] | (memory[address+1] << 8) | (memory[address+2] << 16) | (memory[address+3] << 24));
+}
+
+void Vm::put32(uint32_t address, uint32_t value) {
+    memory[address] = value & 0xff;
+    memory[address+1] = (value >> 8) & 0xff;
+    memory[address+2] = (value >> 16) & 0xff;
+    memory[address+3] = (value >> 24) & 0xff;
 }

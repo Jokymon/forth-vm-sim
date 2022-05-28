@@ -4,16 +4,16 @@ from lark import Transformer
 
 instructions = {
     "nop": 0x00,
+    "dump": 0xfd,
     "terminate": 0xfe,
     "illegal": 0xff,
 
     "input": 0x01,
     "output": 0x02,
 
-    "push_ds": 0x03,
-    "pop_ds": 0x04,
-    "push_rs": 0x05,
-    "pop_rs": 0x06
+    "inc_wp": 0x10,
+
+    "add": 0x20,
 }
 
 
@@ -26,23 +26,43 @@ class VmForthAssembler(Transformer):
         self.previous_word_start = load_address
         self.binary_code = b""
 
+    def _append_uint32(self, number):
+        self.binary_code += struct.pack("<I", number)
+
+    def _macro_next(self):
+        result = b""
+        # TODO: get cfa from current wp
+        result += struct.pack("B", instructions["inc_wp"])
+        # TODO: jump to address given in cfa determined from previous wp
+        return result
+
     def start(self, arg):
         return self.binary_code
 
     def code_block(self, args):
         self.binary_code += b"".join(args)
 
-    def code_definition(self, arg):
+    def code_definition(self, args):
         current_position = len(self.binary_code)
-        self.binary_code += struct.pack("<I", self.previous_word_start)
+        # Append back-link
+        self._append_uint32(self.previous_word_start)
         self.previous_word_start = current_position
 
-        word_name = str(arg[0])
+        word_name = str(args[0])
 
+        # Append length and word text
         self.binary_code += struct.pack("B", len(word_name))
         self.binary_code += bytes(word_name, encoding="utf-8")
 
-        self.binary_code += arg[1]
+        # Append CFA field which is just the current address +4 for code words
+        current_position = len(self.binary_code)
+        self._append_uint32(current_position+4)
+
+        # Append the byte code of the code word definition
+        self.binary_code += b"".join(args[1:])
+
+        # Append NEXT instructions
+        self.binary_code += self._macro_next()
 
     def instruction(self, arg):
         mnemonic = str(arg[0])
