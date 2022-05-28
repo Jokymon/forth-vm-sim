@@ -1,0 +1,24 @@
+start: definition*
+
+definition: code_block
+    | code_definition
+    | word_definition
+
+code_block: "codeblock" instruction* "end"
+
+code_definition: "defcode" IDENTIFIER instruction* "end"
+
+word_definition: "defword" IDENTIFIER word* "end"
+
+instruction: OPCODE ( "." SIZESUFFIX )?
+
+word: IDENTIFIER
+
+IDENTIFIER: /[\x21-\x7E]+/i
+OPCODE: /[a-z_]+/i
+SIZESUFFIX: /[bw]/i
+
+%import common.LETTER
+%import common.INT -> NUMBER
+%import common.WS
+%ignore WS
