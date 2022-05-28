@@ -29,6 +29,9 @@ class VmForthAssembler(Transformer):
     def start(self, arg):
         return self.binary_code
 
+    def code_block(self, args):
+        self.binary_code += b"".join(args)
+
     def code_definition(self, arg):
         current_position = len(self.binary_code)
         self.binary_code += struct.pack("<I", self.previous_word_start)
