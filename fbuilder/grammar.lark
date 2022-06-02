@@ -18,6 +18,10 @@ IDENTIFIER: /[\x21-\x7E]+/i
 OPCODE: /[a-z_]+/i
 SIZESUFFIX: /[bw]/i
 
+%import common.NEWLINE
+COMMENT: "//" /(.)+/ NEWLINE
+%ignore COMMENT
+
 %import common.LETTER
 %import common.INT -> NUMBER
 %import common.WS
