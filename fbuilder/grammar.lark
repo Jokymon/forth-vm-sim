@@ -22,9 +22,17 @@ macro_call: "$" IDENTIFIER "(" ")"
 
 word: WORD_NAME
 
+OPCODE: "nop"
+    | "dump"
+    | "terminate"
+    | "illegal"
+    | "input"
+    | "output"
+    | "inc_wp"
+    | "add"
+
 WORD_NAME: /[\x21-\x7E]+/i
 IDENTIFIER: /[a-zA-Z0-9_]+/
-OPCODE: /[a-z_]+/i
 SIZESUFFIX: /[bw]/i
 
 %import common.NEWLINE

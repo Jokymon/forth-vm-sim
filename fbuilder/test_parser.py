@@ -47,8 +47,8 @@ def test_empty_macro(parser):
 def test_macro_with_instructions(parser):
     source = """
     macro TEST_MACRO
-        opcode
-        opcode
+        nop
+        nop
     end
     """
     parser.parse(source)
@@ -57,8 +57,8 @@ def test_macro_with_instructions(parser):
 def test_calling_a_macro(parser):
     source = """
     macro TEST_MACRO
-        opcode
-        opcode
+        nop
+        nop
     end
 
     codeblock
@@ -72,6 +72,6 @@ def test_comments(parser):
     source = """
     // comments on lines by themselves
     codeblock // comment on block start
-        some_op_code // comment on opcode line
+        nop // comment on opcode line
     end // comment on block end
     """
