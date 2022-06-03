@@ -44,6 +44,27 @@ def test_empty_macro(parser):
     parser.parse(source)
 
 
+def test_opcodes_with_single_parameter(parser):
+    source = """
+    codeblock
+        add %wp     // register
+        add #234    // value - this is only syntax, semantics might be wrong
+        add [%wp]   // register immediate - again with wrong semantics  
+    end
+    """
+    parser.parse(source)
+
+
+def test_opcodes_with_two_parameter(parser):
+    source = """
+    codeblock
+        add %wp, [%wp]
+        add %ip, #4
+    end
+    """
+    parser.parse(source)
+
+
 def test_macro_with_instructions(parser):
     source = """
     macro TEST_MACRO
