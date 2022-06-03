@@ -31,13 +31,6 @@ class VmForthAssembler(Transformer):
     def _append_uint32(self, number):
         self.binary_code += struct.pack("<I", number)
 
-    def _macro_next(self):
-        result = b""
-        # TODO: get cfa from current wp
-        result += struct.pack("B", instructions["inc_wp"])
-        # TODO: jump to address given in cfa determined from previous wp
-        return result
-
     def start(self, arg):
         return self.binary_code
 
@@ -62,9 +55,6 @@ class VmForthAssembler(Transformer):
 
         # Append the byte code of the code word definition
         self.binary_code += b"".join(args[1:])
-
-        # Append NEXT instructions
-        self.binary_code += self._macro_next()
 
     def macro_definition(self, args):
         macro_name = str(args[0])
