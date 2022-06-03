@@ -77,7 +77,7 @@ class VmForthAssembler(Transformer):
     def instruction(self, arg):
         mnemonic = str(arg[0])
         if not mnemonic in instructions:
-            raise ValueError(f"Unknown instruction: '{mnemonic}'")
+            raise ValueError(f"Unknown instruction '{mnemonic}' on line {arg[0].line}")
         return struct.pack("B", instructions[mnemonic])
 
     def macro_call(self, args):

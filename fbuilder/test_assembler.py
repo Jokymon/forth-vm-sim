@@ -20,6 +20,18 @@ def assembler():
     return Lark(grammar, parser='lalr', transformer=VmForthAssembler())
 
 
+def test_using_undefined_instruction_gives_line_number(assembler):
+    source = """
+    codeblock
+        unknown_op
+    end
+    """
+
+    with pytest.raises(ValueError) as parsing_error:
+        assembler.parse(source)
+    assert "Unknown instruction 'unknown_op' on line 3" in str(parsing_error)
+
+
 def test_calling_macros_inserts_the_code(assembler):
     source = """
     macro TEST
