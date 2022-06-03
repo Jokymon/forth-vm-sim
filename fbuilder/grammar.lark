@@ -2,19 +2,28 @@ start: definition*
 
 definition: code_block
     | code_definition
+    | macro_definition
     | word_definition
 
-code_block: "codeblock" instruction* "end"
+code_block: "codeblock" code_line* "end"
 
-code_definition: "defcode" IDENTIFIER instruction* "end"
+code_definition: "defcode" IDENTIFIER code_line* "end"
+
+macro_definition: "macro" IDENTIFIER code_line* "end"
 
 word_definition: "defword" IDENTIFIER word* "end"
 
+code_line: instruction
+    | macro_call
+
 instruction: OPCODE ( "." SIZESUFFIX )?
 
-word: IDENTIFIER
+macro_call: "$" IDENTIFIER "(" ")"
 
-IDENTIFIER: /[\x21-\x7E]+/i
+word: WORD_NAME
+
+WORD_NAME: /[\x21-\x7E]+/i
+IDENTIFIER: /[a-zA-Z0-9_]+/
 OPCODE: /[a-z_]+/i
 SIZESUFFIX: /[bw]/i
 

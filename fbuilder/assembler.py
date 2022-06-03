@@ -23,6 +23,8 @@ def aligned(address, alignment):
 
 class VmForthAssembler(Transformer):
     def __init__(self, load_address=0):
+        self.macros = {}
+
         self.previous_word_start = load_address
         self.binary_code = b""
 
@@ -64,11 +66,25 @@ class VmForthAssembler(Transformer):
         # Append NEXT instructions
         self.binary_code += self._macro_next()
 
+    def macro_definition(self, args):
+        macro_name = str(args[0])
+        macro_code = b"".join(args[1:])
+        self.macros[macro_name] = macro_code
+
+    def code_line(self, args):
+        return args[0]
+
     def instruction(self, arg):
         mnemonic = str(arg[0])
         if not mnemonic in instructions:
             raise ValueError(f"Unknown instruction: '{mnemonic}'")
         return struct.pack("B", instructions[mnemonic])
 
-    def word(self, arg):
-        return f"Got {arg}"
+    def macro_call(self, args):
+        macro_name = str(args[0])
+        if not macro_name in self.macros:
+            raise ValueError(f"Undefined Macro: '{macro_name}' on line {args[0].line}")
+        return self.macros[macro_name]
+
+    def word(self, args):
+        return str(args[0])

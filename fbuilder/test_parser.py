@@ -36,6 +36,38 @@ def test_defword(parser):
     parser.parse(source)
 
 
+def test_empty_macro(parser):
+    source = """
+    macro TEST_MACRO
+    end
+    """
+    parser.parse(source)
+
+
+def test_macro_with_instructions(parser):
+    source = """
+    macro TEST_MACRO
+        opcode
+        opcode
+    end
+    """
+    parser.parse(source)
+
+
+def test_calling_a_macro(parser):
+    source = """
+    macro TEST_MACRO
+        opcode
+        opcode
+    end
+
+    codeblock
+        $TEST_MACRO()
+    end
+    """
+    parser.parse(source)
+
+
 def test_comments(parser):
     source = """
     // comments on lines by themselves
