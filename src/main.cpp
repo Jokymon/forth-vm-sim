@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
     Vm vm;
 
-    vm.loadImage(args::get(binaryInput));
+    vm.loadImageFromFile(args::get(binaryInput));
 
     auto res = vm.interpret();
 
