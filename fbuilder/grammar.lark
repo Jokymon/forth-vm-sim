@@ -4,6 +4,7 @@ definition: code_block
     | code_definition
     | macro_definition
     | word_definition
+    | constant_definition
 
 code_block: "codeblock" code_line* "end"
 
@@ -12,6 +13,8 @@ code_definition: "defcode" IDENTIFIER code_line* "end"
 macro_definition: "macro" IDENTIFIER code_line* "end"
 
 word_definition: "defword" IDENTIFIER word* "end"
+
+constant_definition: "const" IDENTIFIER "=" number
 
 code_line: instruction
     | macro_call
@@ -30,7 +33,9 @@ word: WORD_NAME
 
 register: REGISTER
 
-immediate_number: "#" ( DEC_NUMBER | HEX_NUMBER )
+immediate_number: "#" number | IDENTIFIER
+
+number: ( DEC_NUMBER | HEX_NUMBER )
 
 register_immediate: "[" REGISTER "]"
 

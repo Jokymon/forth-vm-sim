@@ -32,6 +32,19 @@ def test_hexadecimal_number_is_correctly_parsed(assembler):
     assert binary == assembler.parse(source)
 
 
+def test_constant_is_replaced_in_parameters(assembler):
+    source = """
+    const IFKT_VALUE = 0x1234
+    codeblock
+        ifkt IFKT_VALUE
+    end
+    """
+
+    binary = b"\xfe\x34\x12"
+
+    assert binary == assembler.parse(source)
+
+
 def test_ifkt_is_translated_with_16bit_argument(assembler):
     source = """
     codeblock

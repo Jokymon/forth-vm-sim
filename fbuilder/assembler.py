@@ -21,6 +21,7 @@ def aligned(address, alignment):
 class VmForthAssembler(Transformer):
     def __init__(self, load_address=0):
         self.macros = {}
+        self.constants = {}
 
         self.previous_word_start = load_address
         self.binary_code = b""
@@ -58,6 +59,11 @@ class VmForthAssembler(Transformer):
         macro_code = b"".join(args[1:])
         self.macros[macro_name] = macro_code
 
+    def constant_definition(self, args):
+        constant_name = str(args[0])
+        constant_value = args[1]
+        self.constants[constant_name] = constant_value
+
     def code_line(self, args):
         return args[0]
 
@@ -87,7 +93,14 @@ class VmForthAssembler(Transformer):
     def word(self, args):
         return str(args[0])
 
-    def immediate_number(self, arg):
+    def immediate_number(self, args):
+        number = args[0]
+        if number.__class__.__name__=="Token":
+            return self.constants[str(number)]
+        else:
+            return number
+
+    def number(self, arg):
         number_text = arg[0]
         if number_text.startswith("0x"):
             return int(number_text[2:], 16)

@@ -44,6 +44,13 @@ def test_empty_macro(parser):
     parser.parse(source)
 
 
+def test_constant_definition(parser):
+    source = """
+    const MY_VALUE = 23
+    """
+    parser.parse(source)
+
+
 def test_opcodes_with_single_parameter(parser):
     source = """
     codeblock
