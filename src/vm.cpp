@@ -4,12 +4,13 @@
 #include <fstream>
 
 enum class Opcode {
-    OP_NOP = 0x0,
+    NOP = 0x0,
 
-    OP_ADD = 0x20,
+    ADD = 0x20,
+    MOVR = 0x21,
 
-    OP_IFKT = 0xFE,
-    OP_ILLEGAL = 0xFF
+    IFKT = 0xFE,
+    ILLEGAL = 0xFF
 };
 
 enum class IfktCodes {
@@ -21,7 +22,7 @@ enum class IfktCodes {
 };
 
 Vm::Vm() {
-    memory.fill(static_cast<uint8_t>(Opcode::OP_ILLEGAL));
+    memory.fill(static_cast<uint8_t>(Opcode::ILLEGAL));
 
     // Setup the memory layout
     // +------------+------------+--------------+----------------+-------------+
@@ -53,14 +54,14 @@ Vm::Result Vm::singleStep() {
 
     Opcode op = static_cast<Opcode>(fetch_op());
     switch (op) {
-        case Opcode::OP_NOP:
+        case Opcode::NOP:
             break;
-        case Opcode::OP_ADD:
+        case Opcode::ADD:
             state.reg_acc1 = pop_ds();
             state.reg_acc2 = pop_ds();
             push_ds(state.reg_acc1 + state.reg_acc2);
             break;
-        case Opcode::OP_IFKT:
+        case Opcode::IFKT:
             param16 = fetch_op();
             param16 |= (fetch_op() << 8);
             switch (static_cast<IfktCodes>(param16)) {
@@ -82,7 +83,7 @@ Vm::Result Vm::singleStep() {
                     return IllegalInstruction;
             }
             break;
-        case Opcode::OP_ILLEGAL:
+        case Opcode::ILLEGAL:
             return IllegalInstruction;
     }
     return Success;
