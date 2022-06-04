@@ -20,6 +20,19 @@ def assembler():
     return Lark(grammar, parser='lalr', transformer=VmForthAssembler())
 
 
+def test_ifkt_is_translated_with_16bit_argument(assembler):
+    source = """
+    codeblock
+        ifkt #1234
+        ifkt #32152
+    end
+    """
+
+    binary = b"\xfe\xd2\x04\xfe\x98\x7d"
+
+    assert binary == assembler.parse(source)
+
+
 def test_calling_macros_inserts_the_code(assembler):
     source = """
     macro TEST

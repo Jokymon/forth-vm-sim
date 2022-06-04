@@ -4,16 +4,13 @@ from lark import Transformer
 
 instructions = {
     "nop": 0x00,
-    "dump": 0xfd,
-    "terminate": 0xfe,
-    "illegal": 0xff,
-
-    "input": 0x01,
-    "output": 0x02,
 
     "inc_wp": 0x10,
 
     "add": 0x20,
+
+    "ifkt": 0xfe,
+    "illegal": 0xff,
 }
 
 
@@ -64,11 +61,16 @@ class VmForthAssembler(Transformer):
     def code_line(self, args):
         return args[0]
 
-    def instruction(self, arg):
-        mnemonic = str(arg[0])
-        if not mnemonic in instructions:
-            raise ValueError(f"Unknown instruction '{mnemonic}' on line {arg[0].line}")
-        return struct.pack("B", instructions[mnemonic])
+    def instruction(self, args):
+        mnemonic = str(args[0])
+        if mnemonic == "ifkt":
+            code = struct.pack("B", instructions[mnemonic])
+            code += struct.pack("<H", args[1][0])
+        else:
+            if not mnemonic in instructions:
+                raise ValueError(f"Unknown instruction '{mnemonic}' on line {args[0].line}")
+            code = struct.pack("B", instructions[mnemonic])
+        return code
 
     def macro_call(self, args):
         macro_name = str(args[0])
@@ -76,5 +78,15 @@ class VmForthAssembler(Transformer):
             raise ValueError(f"Undefined Macro: '{macro_name}' on line {args[0].line}")
         return self.macros[macro_name]
 
+    def paramlist(self, args):
+        return args
+
+    def param(self, args):
+        return args[0]
+
     def word(self, args):
         return str(args[0])
+
+    def number(self, arg):
+        (arg, ) = arg
+        return int(arg[1:])

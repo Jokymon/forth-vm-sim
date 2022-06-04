@@ -5,14 +5,19 @@
 
 enum class Opcode {
     OP_NOP = 0x0,
-    OP_INPUT = 0x1,
-    OP_OUTPUT = 0x2,
 
     OP_ADD = 0x20,
 
-    OP_DUMP = 0xFD,
-    OP_TERMINATE = 0xFE,
+    OP_IFKT = 0xFE,
     OP_ILLEGAL = 0xFF
+};
+
+enum class IfktCodes {
+    INPUT = 0x1,
+    OUTPUT = 0x2,
+
+    TERMINATE = 0xf0,
+    DUMP = 0xf1,
 };
 
 Vm::Vm() {
@@ -44,33 +49,42 @@ void Vm::loadImage(const std::string &image_path) {
 
 Vm::Result Vm::interpret() {
     char ch;
+    uint16_t param16;
 
     while (true) {
         Opcode op = static_cast<Opcode>(fetch_op());
-        switch (static_cast<Opcode>(op)) {
+        switch (op) {
             case Opcode::OP_NOP:
-                break;
-            case Opcode::OP_INPUT:
-                ch = getch();
-                push_ds(ch);
-                std::cout << ch;
-                break;
-            case Opcode::OP_OUTPUT:
-                ch = pop_ds() & 0xff;
-                std::cout << ch;
                 break;
             case Opcode::OP_ADD:
                 reg_acc1 = pop_ds();
                 reg_acc2 = pop_ds();
                 push_ds(reg_acc1 + reg_acc2);
                 break;
-            case Opcode::OP_DUMP:
-                std::cout << "\nDump: " << get32(reg_dsp) << "\n";
+            case Opcode::OP_IFKT:
+                param16 = fetch_op();
+                param16 |= (fetch_op() << 8);
+                switch (static_cast<IfktCodes>(param16)) {
+                    case IfktCodes::INPUT:
+                        ch = getch();
+                        push_ds(ch);
+                        std::cout << ch;
+                        break;
+                    case IfktCodes::OUTPUT:
+                        ch = pop_ds() & 0xff;
+                        std::cout << ch;
+                        break;
+                    case IfktCodes::TERMINATE:
+                        return Finished;
+                    case IfktCodes::DUMP:
+                        std::cout << "\nDump: " << get32(reg_dsp) << "\n";
+                        break;
+                    default:
+                        return IllegalInstruction;
+                }
                 break;
             case Opcode::OP_ILLEGAL:
                 return IllegalInstruction;
-            case Opcode::OP_TERMINATE:
-                return Finished;
         }
     }
     return Finished;

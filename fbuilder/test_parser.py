@@ -55,6 +55,15 @@ def test_opcodes_with_single_parameter(parser):
     parser.parse(source)
 
 
+def test_interpreter_interface_instruction(parser):
+    source = """
+    codeblock
+        ifkt #34
+    end
+    """
+    parser.parse(source)
+
+
 def test_opcodes_with_two_parameter(parser):
     source = """
     codeblock

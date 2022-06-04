@@ -23,7 +23,7 @@ private:
     uint32_t get32(uint32_t address);
     void put32(uint32_t address, uint32_t value);
 
-    uint32_t reg_ip = 0x20;
+    uint32_t reg_ip = 0;
     uint32_t reg_wp = 0;
     uint32_t reg_rsp = 0;
     uint32_t reg_dsp = 0;

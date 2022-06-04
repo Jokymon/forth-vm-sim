@@ -20,28 +20,31 @@ instruction: OPCODE ( "." SIZESUFFIX )? [ paramlist ]
 
 paramlist: param ( "," param )*
 
-param: REGISTER
-    | IMMEDIATE_NUMBER
-    | "[" REGISTER "]"
+param: register
+    | number
+    | register_immediate
 
 macro_call: "$" IDENTIFIER "(" ")"
 
 word: WORD_NAME
 
+register: REGISTER
+
+number: IMMEDIATE_NUMBER
+
+register_immediate: "[" REGISTER "]"
+
 OPCODE: "add"
-    | "dump"
+    | "ifkt"
     | "illegal"
-    | "input"
     | "inc_wp"
     | "jmp"
     | "mov"
     | "nop"
-    | "output"
     | "popd"
     | "popr"
     | "pushd"
     | "pushr"
-    | "terminate"
 
 REGISTER: "%ip"
     | "%wp"
