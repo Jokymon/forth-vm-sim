@@ -87,6 +87,9 @@ class VmForthAssembler(Transformer):
     def word(self, args):
         return str(args[0])
 
-    def number(self, arg):
-        (arg, ) = arg
-        return int(arg[1:])
+    def immediate_number(self, arg):
+        number_text = arg[0]
+        if number_text.startswith("0x"):
+            return int(number_text[2:], 16)
+        else:
+            return int(number_text)

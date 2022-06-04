@@ -21,7 +21,7 @@ instruction: OPCODE ( "." SIZESUFFIX )? [ paramlist ]
 paramlist: param ( "," param )*
 
 param: register
-    | number
+    | immediate_number
     | register_immediate
 
 macro_call: "$" IDENTIFIER "(" ")"
@@ -30,7 +30,7 @@ word: WORD_NAME
 
 register: REGISTER
 
-number: IMMEDIATE_NUMBER
+immediate_number: "#" ( DEC_NUMBER | HEX_NUMBER )
 
 register_immediate: "[" REGISTER "]"
 
@@ -53,17 +53,16 @@ REGISTER: "%ip"
     | "%acc1"
     | "%acc2"
 
-IMMEDIATE_NUMBER: "#" NUMBER
-
 WORD_NAME: /[\x21-\x7E]+/i
 IDENTIFIER: /[a-zA-Z0-9_]+/
 SIZESUFFIX: /[bw]/i
+DEC_NUMBER: /\d+/
+HEX_NUMBER: /0x[\da-f]*/i
 
 %import common.NEWLINE
 COMMENT: "//" /(.)+/ NEWLINE
 %ignore COMMENT
 
 %import common.LETTER
-%import common.INT -> NUMBER
 %import common.WS
 %ignore WS

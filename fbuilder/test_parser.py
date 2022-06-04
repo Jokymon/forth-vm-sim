@@ -55,6 +55,15 @@ def test_opcodes_with_single_parameter(parser):
     parser.parse(source)
 
 
+def test_hexadecimal_notation_for_numbers_supported(parser):
+    source = """
+    codeblock
+        add #0x234
+    end
+    """
+    parser.parse(source)
+
+
 def test_interpreter_interface_instruction(parser):
     source = """
     codeblock

@@ -20,6 +20,18 @@ def assembler():
     return Lark(grammar, parser='lalr', transformer=VmForthAssembler())
 
 
+def test_hexadecimal_number_is_correctly_parsed(assembler):
+    source = """
+    codeblock
+        ifkt #0x1234
+    end
+    """
+
+    binary = b"\xfe\x34\x12"
+
+    assert binary == assembler.parse(source)
+
+
 def test_ifkt_is_translated_with_16bit_argument(assembler):
     source = """
     codeblock
