@@ -12,13 +12,16 @@ reg_encoding = {
 }
 
 
+MOVR_W = 0x20
+MOVR_B = 0x21
+
+
 instructions = {
     "nop": 0x00,
 
     "inc_wp": 0x10,
 
-    "add": 0x20,
-    "movr": 0x21,
+    "add": 0x30,
 
     "ifkt": 0xfe,
     "illegal": 0xff,
@@ -84,10 +87,13 @@ class VmForthAssembler(Transformer):
             code = struct.pack("B", instructions[mnemonic])
             code += struct.pack("<H", args[1][0])
         elif mnemonic == "movr":
+            opcode = MOVR_W
+            if len(args)==3 and str(args[1])=="b":
+                opcode = MOVR_B
             indirect_target = 0x0
             indirect_source = 0x0
-            reg_target = args[1][0]
-            reg_source = args[1][1]
+            reg_target = args[-1][0]
+            reg_source = args[-1][1]
             if reg_target[0] == "%":
                 reg_target = reg_target[1:]
             else:
@@ -100,7 +106,7 @@ class VmForthAssembler(Transformer):
                 indirect_source = 0x8
             reg_target = reg_encoding[reg_target]
             reg_source = reg_encoding[reg_source]
-            code = struct.pack("BB", 0x21,
+            code = struct.pack("BB", opcode,
                 (reg_source | indirect_source) | (reg_target | indirect_target) << 4)
         else:
             if not mnemonic in instructions:

@@ -90,11 +90,11 @@ class TestAssemblingMovrInstructions:
     def test_moving_between_instructions(self, assembler):
         source = """
         codeblock
-            movr %wp, %acc1
-            movr %rsp, %acc2
-            movr [%dsp], %ip
-            movr %wp, [%acc1]
-            movr [%acc1], [%acc2]
+            movr.b %wp, %acc1
+            movr.b %rsp, %acc2
+            movr.b [%dsp], %ip
+            movr.b %wp, [%acc1]
+            movr.b [%acc1], [%acc2]
         end
         """
 
@@ -104,4 +104,15 @@ class TestAssemblingMovrInstructions:
         binary += b"\x21\x1c"
         binary += b"\x21\xcd"
 
+        assert binary == assembler.parse(source)
+
+    def test_word_based_moving(self, assembler):
+        source = """
+        codeblock
+            movr.w %wp, %acc1
+            movr %wp, %acc1     // without suffix, 'word' is assumed
+        end
+        """
+
+        binary = b"\x20\x14\x20\x14"
         assert binary == assembler.parse(source)

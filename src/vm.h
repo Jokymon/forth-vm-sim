@@ -38,17 +38,19 @@ public:
 
     State getState() const;
     void setState(const State &new_state);
-    uint8_t memoryAt(uint32_t address) const;
+    uint8_t byteAt(uint32_t address) const;
+    uint32_t wordAt(uint32_t address) const;
 
 private:
     uint8_t fetch_op();
 
-    void movr(uint8_t param);
+    void movr_b(uint8_t param);
+    void movr_w(uint8_t param);
 
     void push_ds(uint32_t data);
     uint32_t pop_ds();
 
-    uint32_t get32(uint32_t address);
+    uint32_t get32(uint32_t address) const;
     void put32(uint32_t address, uint32_t value);
 
     State state = {
