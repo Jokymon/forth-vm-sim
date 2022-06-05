@@ -9,13 +9,17 @@ public:
         Success, Finished, Error, IllegalInstruction
     };
 
+    enum Register {
+        Ip = 0x0,
+        Wp = 0x1,
+        Rsp = 0x2,
+        Dsp = 0x3,
+        Acc1 = 0x4,
+        Acc2 = 0x5,
+    };
+
     struct State {
-        uint32_t reg_ip = 0;
-        uint32_t reg_wp = 0;
-        uint32_t reg_rsp = 0;
-        uint32_t reg_dsp = 0;
-        uint32_t reg_acc1 = 0;
-        uint32_t reg_acc2 = 0;
+        std::array<uint32_t, 6> registers;
     };
 
     Vm();
@@ -33,10 +37,13 @@ public:
     Result interpret();
 
     State getState() const;
+    void setState(const State &new_state);
     uint8_t memoryAt(uint32_t address) const;
 
 private:
     uint8_t fetch_op();
+
+    void movr(uint8_t param);
 
     void push_ds(uint32_t data);
     uint32_t pop_ds();

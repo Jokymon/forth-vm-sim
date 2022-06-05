@@ -2,12 +2,23 @@ import struct
 from lark import Transformer
 
 
+reg_encoding = {
+    "ip": 0x0,
+    "wp": 0x1,
+    "rsp": 0x2,
+    "dsp": 0x3,
+    "acc1": 0x4,
+    "acc2": 0x5,
+}
+
+
 instructions = {
     "nop": 0x00,
 
     "inc_wp": 0x10,
 
     "add": 0x20,
+    "movr": 0x21,
 
     "ifkt": 0xfe,
     "illegal": 0xff,
@@ -72,6 +83,25 @@ class VmForthAssembler(Transformer):
         if mnemonic == "ifkt":
             code = struct.pack("B", instructions[mnemonic])
             code += struct.pack("<H", args[1][0])
+        elif mnemonic == "movr":
+            indirect_target = 0x0
+            indirect_source = 0x0
+            reg_target = args[1][0]
+            reg_source = args[1][1]
+            if reg_target[0] == "%":
+                reg_target = reg_target[1:]
+            else:
+                reg_target = reg_target[2:-1]
+                indirect_target = 0x8
+            if reg_source[0] == "%":
+                reg_source = reg_source[1:]
+            else:
+                reg_source = reg_source[2:-1]
+                indirect_source = 0x8
+            reg_target = reg_encoding[reg_target]
+            reg_source = reg_encoding[reg_source]
+            code = struct.pack("BB", 0x21,
+                (reg_source | indirect_source) | (reg_target | indirect_target) << 4)
         else:
             if not mnemonic in instructions:
                 raise ValueError(f"Unknown instruction '{mnemonic}' on line {args[0].line}")
@@ -92,6 +122,12 @@ class VmForthAssembler(Transformer):
 
     def word(self, args):
         return str(args[0])
+
+    def register(self, args):
+        return str(args[0])
+
+    def register_indirect(self, args):
+        return "["+str(args[0])+"]"
 
     def immediate_number(self, args):
         number = args[0]

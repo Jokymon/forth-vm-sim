@@ -25,7 +25,7 @@ paramlist: param ( "," param )*
 
 param: register
     | immediate_number
-    | register_immediate
+    | register_indirect
 
 macro_call: "$" IDENTIFIER "(" ")"
 
@@ -37,7 +37,7 @@ immediate_number: "#" number | IDENTIFIER
 
 number: ( DEC_NUMBER | HEX_NUMBER )
 
-register_immediate: "[" REGISTER "]"
+register_indirect: "[" REGISTER "]"
 
 OPCODE: "add"
     | "ifkt"
@@ -45,6 +45,7 @@ OPCODE: "add"
     | "inc_wp"
     | "jmp"
     | "mov"
+    | "movr"
     | "nop"
     | "popd"
     | "popr"

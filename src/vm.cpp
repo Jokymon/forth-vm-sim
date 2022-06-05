@@ -30,8 +30,8 @@ Vm::Vm() {
     // +------------+------------+--------------+----------------+-------------+
     //  16k           4k           4k             4k               4k
     //   -->                  <--           <--
-    state.reg_rsp = (16+4+4) * 1024;
-    state.reg_dsp = (16+4) * 1024;
+    state.registers[Rsp] = (16+4+4) * 1024;
+    state.registers[Dsp] = (16+4) * 1024;
 }
 
 void Vm::loadImageFromFile(const std::string &image_path) {
@@ -50,6 +50,7 @@ void Vm::loadImageFromFile(const std::string &image_path) {
 
 Vm::Result Vm::singleStep() {
     char ch;
+    uint8_t param8;
     uint16_t param16;
 
     Opcode op = static_cast<Opcode>(fetch_op());
@@ -57,9 +58,13 @@ Vm::Result Vm::singleStep() {
         case Opcode::NOP:
             break;
         case Opcode::ADD:
-            state.reg_acc1 = pop_ds();
-            state.reg_acc2 = pop_ds();
-            push_ds(state.reg_acc1 + state.reg_acc2);
+            state.registers[Acc1] = pop_ds();
+            state.registers[Acc2] = pop_ds();
+            push_ds(state.registers[Acc1] + state.registers[Acc2]);
+            break;
+        case Opcode::MOVR:
+            param8 = fetch_op();
+            movr(param8);
             break;
         case Opcode::IFKT:
             param16 = fetch_op();
@@ -77,7 +82,7 @@ Vm::Result Vm::singleStep() {
                 case IfktCodes::TERMINATE:
                     return Finished;
                 case IfktCodes::DUMP:
-                    std::cout << "\nDump: " << get32(state.reg_dsp) << "\n";
+                    std::cout << "\nDump: " << get32(state.registers[Dsp]) << "\n";
                     break;
                 default:
                     return IllegalInstruction;
@@ -102,22 +107,44 @@ Vm::State Vm::getState() const {
     return state;
 }
 
+void Vm::setState(const Vm::State &new_state) {
+    state = new_state;
+}
+
 uint8_t Vm::memoryAt(uint32_t address) const {
     return memory[address];
 }
 
 uint8_t Vm::fetch_op() {
-    return memory[state.reg_ip++];
+    return memory[state.registers[Ip]++];
+}
+
+void Vm::movr(uint8_t param) {
+    uint8_t target = (param & 0x70) >> 4;
+    uint8_t source = param & 0x07;
+
+    if ((param & 0x80) && (param & 0x08)) {
+        memory[state.registers[target]] = memory[state.registers[source]];
+    }
+    else if (param & 0x80) {
+        memory[state.registers[target]] = state.registers[source];
+    }
+    else if (param & 0x08) {
+        state.registers[target] = memory[state.registers[source]];
+    }
+    else {
+        state.registers[target] = state.registers[source];
+    }
 }
 
 void Vm::push_ds(uint32_t data) {
-    state.reg_dsp -= 4;
-    put32(state.reg_dsp, data);
+    state.registers[Dsp] -= 4;
+    put32(state.registers[Dsp], data);
 }
 
 uint32_t Vm::pop_ds() {
-    uint32_t value = get32(state.reg_dsp);
-    state.reg_dsp += 4;
+    uint32_t value = get32(state.registers[Dsp]);
+    state.registers[Dsp] += 4;
     return value;
 }
 

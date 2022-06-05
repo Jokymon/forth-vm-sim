@@ -84,3 +84,24 @@ def test_trying_to_call_undefined_macro_raises_exception(assembler):
     with pytest.raises(ValueError) as parsing_error:
         assembler.parse(source)
     assert "on line 3" in str(parsing_error)
+
+
+class TestAssemblingMovrInstructions:
+    def test_moving_between_instructions(self, assembler):
+        source = """
+        codeblock
+            movr %wp, %acc1
+            movr %rsp, %acc2
+            movr [%dsp], %ip
+            movr %wp, [%acc1]
+            movr [%acc1], [%acc2]
+        end
+        """
+
+        binary = b"\x21\x14"
+        binary += b"\x21\x25"
+        binary += b"\x21\xb0"
+        binary += b"\x21\x1c"
+        binary += b"\x21\xcd"
+
+        assert binary == assembler.parse(source)
