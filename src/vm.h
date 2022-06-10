@@ -16,10 +16,12 @@ public:
         Dsp = 0x3,
         Acc1 = 0x4,
         Acc2 = 0x5,
+
+        Pc = 0x7,
     };
 
     struct State {
-        std::array<uint32_t, 6> registers;
+        std::array<uint32_t, 8> registers;
     };
 
     Vm();
@@ -54,7 +56,7 @@ private:
     void put32(uint32_t address, uint32_t value);
 
     State state = {
-        0, 0, 0, 0, 0, 0
+        0, 0, 0, 0, 0, 0, 0, 0
     };
 
     std::array<uint8_t, 32768> memory;

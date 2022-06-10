@@ -86,6 +86,24 @@ def test_trying_to_call_undefined_macro_raises_exception(assembler):
     assert "on line 3" in str(parsing_error)
 
 
+class TestAssemblingJmpInstructions:
+    def test_jmp_register_indirect(self, assembler):
+        source = """
+        codeblock
+            jmp [%ip]
+            jmp [%wp]
+            jmp [%acc1]
+            jmp [%acc2]
+        end
+        """
+        binary = b"\x60"
+        binary += b"\x61"
+        binary += b"\x62"
+        binary += b"\x63"
+
+        assert binary == assembler.parse(source)
+
+
 class TestAssemblingMovrInstructions:
     def test_moving_between_instructions(self, assembler):
         source = """

@@ -118,3 +118,66 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
     // Post: %acc1 = 0x100; %acc2 = 0x0; mem[0x0] = 0xd1201420; mem[0x3] = 0xd1201420;
     REQUIRE( 0xd1201420 == uut.wordAt(0x100) );
 }
+
+TEST_CASE("Register indirect jumping", "[opcode]") {
+    std::array<uint8_t, 20> testdata = {
+        0x60,       // jmp [%ip]
+        0x61,       // jmp [%wp]
+        0x62,       // jmp [%acc1]
+        0x63,       // jmp [%acc2]
+        0x10, 0x0, 0x0, 0x0,    // pointed to by %ip
+        0x20, 0x0, 0x0, 0x0,    // pointed to by %wp
+        0x30, 0x0, 0x0, 0x0,    // pointed to by %acc1
+        0x40, 0x0, 0x0, 0x0,    // pointed to by %acc2
+    };
+
+    Vm uut;
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    Vm::State state = uut.getState();
+    state.registers[Vm::Ip] = 0x4;
+    state.registers[Vm::Wp] = 0x8;
+    state.registers[Vm::Acc1] = 0xc;
+    state.registers[Vm::Acc2] = 0x10;
+    uut.setState(state);
+
+    SECTION("Jumping %ip indirect") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x0;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 0x00000010 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %wp indirect") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x1;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 0x00000020 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %acc1 indirect") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x2;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 0x00000030 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %acc2 indirect") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x3;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 0x00000040 == state.registers[Vm::Pc] );
+    }
+}

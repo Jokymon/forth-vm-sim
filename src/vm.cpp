@@ -10,6 +10,11 @@ enum class Opcode {
     MOVR_B = 0x21,
     ADD = 0x30,
 
+    JMPI_IP = 0x60,
+    JMPI_WP = 0x61,
+    JMPI_ACC1 = 0x62,
+    JMPI_ACC2 = 0x63,
+
     IFKT = 0xFE,
     ILLEGAL = 0xFF
 };
@@ -71,6 +76,18 @@ Vm::Result Vm::singleStep() {
             param8 = fetch_op();
             movr_b(param8);
             break;
+        case Opcode::JMPI_IP:
+            state.registers[Pc] = get32(state.registers[Ip]);
+            break;
+        case Opcode::JMPI_WP:
+            state.registers[Pc] = get32(state.registers[Wp]);
+            break;
+        case Opcode::JMPI_ACC1:
+            state.registers[Pc] = get32(state.registers[Acc1]);
+            break;
+        case Opcode::JMPI_ACC2:
+            state.registers[Pc] = get32(state.registers[Acc2]);
+            break;
         case Opcode::IFKT:
             param16 = fetch_op();
             param16 |= (fetch_op() << 8);
@@ -125,7 +142,7 @@ uint32_t Vm::wordAt(uint32_t address) const {
 }
 
 uint8_t Vm::fetch_op() {
-    return memory[state.registers[Ip]++];
+    return memory[state.registers[Pc]++];
 }
 
 void Vm::movr_b(uint8_t param) {

@@ -9,11 +9,16 @@ reg_encoding = {
     "dsp": 0x3,
     "acc1": 0x4,
     "acc2": 0x5,
+    "pc": 0x7,
 }
 
 
 MOVR_W = 0x20
 MOVR_B = 0x21
+JMPI_IP = 0x60
+JMPI_WP = 0x61
+JMPI_ACC1 = 0x62
+JMPI_ACC2 = 0x63
 
 
 instructions = {
@@ -86,6 +91,19 @@ class VmForthAssembler(Transformer):
         if mnemonic == "ifkt":
             code = struct.pack("B", instructions[mnemonic])
             code += struct.pack("<H", args[1][0])
+        elif mnemonic == "jmp":
+            print(f"Arguments: {args}")
+            register_operand = str(args[1][0])
+            if register_operand[1:-1] == "%ip":
+                code = b"\x60"
+            elif register_operand[1:-1] == "%wp":
+                code = b"\x61"
+            elif register_operand[1:-1] == "%acc1":
+                code = b"\x62"
+            elif register_operand[1:-1] == "%acc2":
+                code = b"\x63"
+            else:
+                raise ValueError(f"Unsupported operand for register indirect jump on line {args[0].line}: {register_operand}")
         elif mnemonic == "movr":
             opcode = MOVR_W
             if len(args)==3 and str(args[1])=="b":

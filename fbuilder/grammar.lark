@@ -58,6 +58,7 @@ REGISTER: "%ip"
     | "%dsp"
     | "%acc1"
     | "%acc2"
+    | "%pc"
 
 WORD_NAME: /[\x21-\x7E]+/i
 IDENTIFIER: /[a-zA-Z0-9_]+/
