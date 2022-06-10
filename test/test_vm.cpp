@@ -13,6 +13,18 @@ TEST_CASE("Memory access", "Loading VM memory through iterator") {
     REQUIRE( uut.byteAt(0x2) == 0x61 );
 }
 
+TEST_CASE("Illegal instructions return IllegalInstruction", "[opcode]") {
+    std::array<uint8_t, 1> testdata = {
+        0xfd            // just take come opcode that so far has no meaning ;-)
+    };
+
+    Vm uut;
+
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    REQUIRE( Vm::IllegalInstruction == uut.singleStep() );
+}
+
 TEST_CASE("Register based move bytes instructions", "[opcode]") {
     std::array<uint8_t, 8> testdata = {
         0x21, 0x14,     // movr.b %wp, %acc1

@@ -112,6 +112,8 @@ Vm::Result Vm::singleStep() {
             break;
         case Opcode::ILLEGAL:
             return IllegalInstruction;
+        default:
+            return IllegalInstruction;
     }
     return Success;
 }
