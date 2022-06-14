@@ -37,6 +37,22 @@ def aligned(address, alignment):
     return (address + alignment - 1) // alignment * alignment
 
 
+class RegisterOperand:
+    def __init__(self, mnemonic_name, is_indirect=False):
+        if type(mnemonic_name)!=str:
+            mnemonic_name=str(mnemonic_name)
+        self.mnemonic_name = mnemonic_name
+        self.name = mnemonic_name[1:]
+        self.encoding = reg_encoding[self.name]
+        self.is_indirect = is_indirect
+
+    def __str__(self):
+        s = f"Register {self.mnemonic_name}"
+        if self.is_indirect:
+            s += " (indirect)"
+        return s
+
+
 class VmForthAssembler(Transformer):
     def __init__(self, load_address=0):
         self.macros = {}
@@ -92,18 +108,17 @@ class VmForthAssembler(Transformer):
             code = struct.pack("B", instructions[mnemonic])
             code += struct.pack("<H", args[1][0])
         elif mnemonic == "jmp":
-            print(f"Arguments: {args}")
-            register_operand = str(args[1][0])
-            if register_operand[1:-1] == "%ip":
+            register_operand = args[1][0]
+            if register_operand.name == "ip":
                 code = b"\x60"
-            elif register_operand[1:-1] == "%wp":
+            elif register_operand.name == "wp":
                 code = b"\x61"
-            elif register_operand[1:-1] == "%acc1":
+            elif register_operand.name == "acc1":
                 code = b"\x62"
-            elif register_operand[1:-1] == "%acc2":
+            elif register_operand.name == "acc2":
                 code = b"\x63"
             else:
-                raise ValueError(f"Unsupported operand for register indirect jump on line {args[0].line}: {register_operand}")
+                raise ValueError(f"Unsupported operand for register indirect jump on line {args[0].line}: {register_operand.mnemonic_name}; must be one of %ip, %wp, %acc1 or %acc2")
         elif mnemonic == "movr":
             opcode = MOVR_W
             if len(args)==3 and str(args[1])=="b":
@@ -112,20 +127,12 @@ class VmForthAssembler(Transformer):
             indirect_source = 0x0
             reg_target = args[-1][0]
             reg_source = args[-1][1]
-            if reg_target[0] == "%":
-                reg_target = reg_target[1:]
-            else:
-                reg_target = reg_target[2:-1]
+            if reg_target.is_indirect:
                 indirect_target = 0x8
-            if reg_source[0] == "%":
-                reg_source = reg_source[1:]
-            else:
-                reg_source = reg_source[2:-1]
+            if reg_source.is_indirect:
                 indirect_source = 0x8
-            reg_target = reg_encoding[reg_target]
-            reg_source = reg_encoding[reg_source]
             code = struct.pack("BB", opcode,
-                (reg_source | indirect_source) | (reg_target | indirect_target) << 4)
+                (reg_source.encoding | indirect_source) | (reg_target.encoding | indirect_target) << 4)
         else:
             if not mnemonic in instructions:
                 raise ValueError(f"Unknown instruction '{mnemonic}' on line {args[0].line}")
@@ -148,10 +155,10 @@ class VmForthAssembler(Transformer):
         return str(args[0])
 
     def register(self, args):
-        return str(args[0])
+        return RegisterOperand(args[0])
 
     def register_indirect(self, args):
-        return "["+str(args[0])+"]"
+        return RegisterOperand(args[0], True)
 
     def immediate_number(self, args):
         number = args[0]
