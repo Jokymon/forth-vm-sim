@@ -62,6 +62,17 @@ def test_opcodes_with_single_parameter(parser):
     parser.parse(source)
 
 
+def test_mnemonics_are_prefered_over_identifiers_in_ambiguous_situations(parser):
+    source = """
+    codeblock
+        ifkt #10
+        add
+        ifkt #12
+    end
+    """
+    parser.parse(source)
+
+
 def test_hexadecimal_notation_for_numbers_supported(parser):
     source = """
     codeblock

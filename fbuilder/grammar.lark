@@ -47,7 +47,7 @@ register_indirect_postfix: "[" REGISTER decrement_increment "]"
 
 decrement_increment: UNARY_OPERATION
 
-OPCODE: "add"
+OPCODE.2: "add"
     | "ifkt"
     | "illegal"
     | "inc_wp"
