@@ -8,6 +8,11 @@ enum class Opcode {
 
     MOVR_W = 0x20,
     MOVR_B = 0x21,
+    MOVS_ID_W = 0x22,
+    MOVS_ID_B = 0x23,   // NOT IMPLEMENTED
+    MOVS_DI_W = 0x24,
+    MOVS_DI_B = 0x25,   // NOT IMPLEMENTED
+
     ADD = 0x30,
 
     JMPI_IP = 0x60,
@@ -75,6 +80,14 @@ Vm::Result Vm::singleStep() {
         case Opcode::MOVR_B:
             param8 = fetch_op();
             movr_b(param8);
+            break;
+        case Opcode::MOVS_ID_W:
+            param8 = fetch_op();
+            movs_id_w(param8);
+            break;
+        case Opcode::MOVS_DI_W:
+            param8 = fetch_op();
+            movs_di_w(param8);
             break;
         case Opcode::JMPI_IP:
             state.registers[Pc] = get32(state.registers[Ip]);
@@ -180,6 +193,62 @@ void Vm::movr_w(uint8_t param) {
     }
     else {
         state.registers[target] = state.registers[source];
+    }
+}
+
+void Vm::movs_id_w(uint8_t param) {
+    uint8_t target = (param & 0x38) >> 3;
+    uint8_t source = param & 0x07;
+
+    bool decrement = (param & 0x80);
+    bool pre = (param & 0x40);
+
+    if (pre) {
+        if (decrement) {
+            state.registers[target] -= 4;
+        }
+        else {
+            state.registers[target] += 4;
+        }
+    }
+
+    put32(state.registers[target], state.registers[source]);
+
+    if (!pre) {
+        if (decrement) {
+            state.registers[target] -= 4;
+        }
+        else {
+            state.registers[target] += 4;
+        }
+    }
+}
+
+void Vm::movs_di_w(uint8_t param) {
+    uint8_t target = (param & 0x38) >> 3;
+    uint8_t source = param & 0x07;
+
+    bool decrement = (param & 0x80);
+    bool pre = (param & 0x40);
+
+    if (pre) {
+        if (decrement) {
+            state.registers[source] -= 4;
+        }
+        else {
+            state.registers[source] += 4;
+        }
+    }
+
+    state.registers[target] = get32(state.registers[source]);
+
+    if (!pre) {
+        if (decrement) {
+            state.registers[source] -= 4;
+        }
+        else {
+            state.registers[source] += 4;
+        }
     }
 }
 

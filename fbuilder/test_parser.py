@@ -131,3 +131,16 @@ class TestParsingMovrInstructions:
         end
         """
         parser.parse(source)
+
+
+class TestParsingMovsInstructions:
+    def test_moving_between_instructions(self, parser):
+        source = """
+        codeblock
+            movs [%wp++], %acc1
+            movs [--%ip], %acc2
+            movs %acc1, [--%ip]
+            movs %acc2, [%rsp++]
+        end
+        """
+        parser.parse(source)

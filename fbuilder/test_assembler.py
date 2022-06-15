@@ -134,3 +134,98 @@ class TestAssemblingMovrInstructions:
 
         binary = b"\x20\x14\x20\x14"
         assert binary == assembler.parse(source)
+
+    def test_movr_raises_exception_when_using_increment_or_decrements(self, assembler):
+        source = """
+        codeblock
+            movr.w [%wp++], %acc1
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assembler.parse(source)
+        assert "on line 3" in str(parsing_error)
+        assert "movr doesn't support any increment or decrement operations" in str(parsing_error)
+
+
+class TestAssemblingMovsInstructions:
+    def test_moving_from_acc1_to_wp_post_increment(self, assembler):
+        source = """
+        codeblock
+            movs.w [%wp++], %acc1
+        end
+        """
+
+        binary = b"\x22\x0c"
+
+        assert binary == assembler.parse(source)
+
+    def test_moving_from_acc2_to_rsp_pre_decrement(self, assembler):
+        source = """
+        codeblock
+            movs.w [--%rsp], %acc2
+        end
+        """
+
+        binary = b"\x22\xd5"
+
+        assert binary == assembler.parse(source)
+
+    def test_moving_from_ip_pre_decrement_to_acc1(self, assembler):
+        source = """
+        codeblock
+            movs.w %acc1, [--%ip]
+        end
+        """
+
+        binary = b"\x24\xe0"
+
+        assert binary == assembler.parse(source)
+
+    def test_moving_from_indirect_to_indirect_raises_exception(self, assembler):
+        source = """
+        codeblock
+            movs.w [%acc1++], [--%ip]
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assembler.parse(source)
+        assert "on line 3" in str(parsing_error)
+        assert "only one argument can be register indirect for movs" in str(parsing_error)
+
+    def test_moving_from_direct_to_direct_raises_exception(self, assembler):
+        source = """
+        codeblock
+            movs.w %acc1, %ip
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assembler.parse(source)
+        assert "on line 3" in str(parsing_error)
+        assert "only one argument can be register direct for movs" in str(parsing_error)
+
+    def test_moving_to_indirect_without_operation_raises_exception(self, assembler):
+        source = """
+        codeblock
+            movs.w [%acc1], %ip
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assembler.parse(source)
+        assert "on line 3" in str(parsing_error)
+        assert "movs indirect target requires a pre- or post- increment or decrement" in str(parsing_error)
+
+    def test_moving_from_indirect_without_operation_raises_exception(self, assembler):
+        source = """
+        codeblock
+            movs.w %acc1, [%ip]
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assembler.parse(source)
+        assert "on line 3" in str(parsing_error)
+        assert "movs indirect source requires a pre- or post- increment or decrement" in str(parsing_error)

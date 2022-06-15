@@ -37,7 +37,15 @@ immediate_number: "#" number | IDENTIFIER
 
 number: ( DEC_NUMBER | HEX_NUMBER )
 
-register_indirect: "[" REGISTER "]"
+register_indirect: register_plain_indirect
+    | register_indirect_prefix
+    | register_indirect_postfix
+    
+register_plain_indirect: "[" REGISTER "]"
+register_indirect_prefix: "[" decrement_increment REGISTER "]"
+register_indirect_postfix: "[" REGISTER decrement_increment "]"
+
+decrement_increment: UNARY_OPERATION
 
 OPCODE: "add"
     | "ifkt"
@@ -46,6 +54,7 @@ OPCODE: "add"
     | "jmp"
     | "mov"
     | "movr"
+    | "movs"
     | "nop"
     | "popd"
     | "popr"
@@ -59,6 +68,8 @@ REGISTER: "%ip"
     | "%acc1"
     | "%acc2"
     | "%pc"
+
+UNARY_OPERATION: "++" | "--"
 
 WORD_NAME: /[\x21-\x7E]+/i
 IDENTIFIER: /[a-zA-Z0-9_]+/

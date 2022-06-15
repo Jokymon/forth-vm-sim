@@ -15,6 +15,10 @@ reg_encoding = {
 
 MOVR_W = 0x20
 MOVR_B = 0x21
+MOVS_ID_W = 0x22    # indirect <-- direct move
+MOVS_ID_B = 0x23    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
+MOVS_DI_W = 0x24    # direct <-- indirect move
+MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 JMPI_IP = 0x60
 JMPI_WP = 0x61
 JMPI_ACC1 = 0x62
@@ -38,13 +42,17 @@ def aligned(address, alignment):
 
 
 class RegisterOperand:
-    def __init__(self, mnemonic_name, is_indirect=False):
+    def __init__(self, mnemonic_name, *args):
         if type(mnemonic_name)!=str:
             mnemonic_name=str(mnemonic_name)
         self.mnemonic_name = mnemonic_name
         self.name = mnemonic_name[1:]
         self.encoding = reg_encoding[self.name]
-        self.is_indirect = is_indirect
+        self.args = args
+        self.is_indirect = "indirect" in self.args
+
+    def is_(self, property):
+        return property in self.args
 
     def __str__(self):
         s = f"Register {self.mnemonic_name}"
@@ -127,12 +135,42 @@ class VmForthAssembler(Transformer):
             indirect_source = 0x0
             reg_target = args[-1][0]
             reg_source = args[-1][1]
+            if reg_target.is_("increment") or reg_target.is_("decrement") or \
+                reg_source.is_("increment") or reg_source.is_("decrement"):
+                raise ValueError(f"movr doesn't support any increment or decrement operations on line {args[0].line}")
             if reg_target.is_indirect:
                 indirect_target = 0x8
             if reg_source.is_indirect:
                 indirect_source = 0x8
             code = struct.pack("BB", opcode,
                 (reg_source.encoding | indirect_source) | (reg_target.encoding | indirect_target) << 4)
+        elif mnemonic == "movs":
+            operand = 0x0
+            reg_target = args[-1][0]
+            reg_source = args[-1][1]
+            if reg_target.is_indirect:
+                if reg_source.is_indirect:
+                    raise ValueError(f"only one argument can be register indirect for movs on line {args[0].line}")
+                opcode = MOVS_ID_W
+                if reg_target.is_("decrement"):
+                    operand |= 0x80
+                if reg_target.is_("prefix"):
+                    operand |= 0x40
+                elif not reg_target.is_("postfix"):
+                    raise ValueError(f"movs indirect target requires a pre- or post- increment or decrement on line {args[0].line}")
+            else:
+                if not reg_source.is_indirect:
+                    raise ValueError(f"only one argument can be register direct for movs on line {args[0].line}")
+                opcode = MOVS_DI_W
+                if reg_source.is_("decrement"):
+                    operand |= 0x80
+                if reg_source.is_("prefix"):
+                    operand |= 0x40
+                elif not reg_source.is_("postfix"):
+                    raise ValueError(f"movs indirect source requires a pre- or post- increment or decrement on line {args[0].line}")
+            operand |= (reg_target.encoding << 3)
+            operand |= reg_source.encoding
+            code = struct.pack("BB", opcode, operand)
         else:
             if not mnemonic in instructions:
                 raise ValueError(f"Unknown instruction '{mnemonic}' on line {args[0].line}")
@@ -158,7 +196,22 @@ class VmForthAssembler(Transformer):
         return RegisterOperand(args[0])
 
     def register_indirect(self, args):
-        return RegisterOperand(args[0], True)
+        return args[0]
+
+    def register_plain_indirect(self, args):
+        return RegisterOperand(args[0], "indirect")
+
+    def register_indirect_prefix(self, args):
+        operation = "increment"
+        if str(args[0]) == "--":
+            operation = "decrement"
+        return RegisterOperand(args[1], "indirect", "prefix", operation)
+
+    def register_indirect_postfix(self, args):
+        operation = "increment"
+        if str(args[1]) == "--":
+            operation = "decrement"
+        return RegisterOperand(args[0], "indirect", "postfix", operation)
 
     def immediate_number(self, args):
         number = args[0]
@@ -166,6 +219,9 @@ class VmForthAssembler(Transformer):
             return self.constants[str(number)]
         else:
             return number
+
+    def decrement_increment(self, args):
+        return str(args[0])
 
     def number(self, arg):
         number_text = arg[0]

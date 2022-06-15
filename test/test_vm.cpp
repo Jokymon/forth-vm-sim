@@ -1,6 +1,14 @@
 #include <catch2/catch_test_macros.hpp>
 #include "vm.h"
 
+CATCH_REGISTER_ENUM(Vm::Result,
+    Vm::Result::Success,
+    Vm::Result::Finished,
+    Vm::Result::Error,
+    Vm::Result::IllegalInstruction
+)
+
+
 TEST_CASE("Memory access", "Loading VM memory through iterator") {
     std::array<uint8_t, 3> testdata = {0x23, 0x53, 0x61};
 
@@ -125,6 +133,66 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
     REQUIRE( Vm::Success == uut.singleStep() );
     // Post: %acc1 = 0x100; %acc2 = 0x0; mem[0x0] = 0xd1201420; mem[0x3] = 0xd1201420;
     REQUIRE( 0xd1201420 == uut.wordAt(0x100) );
+}
+
+TEST_CASE("Stack based move operations", "[opcode]") {
+    Vm uut;
+
+    SECTION("Copy acc1 to wp indirect with post increment") {
+        std::array<uint8_t, 2> testdata = {
+            0x22, 0xc   // movs.w [%wp++], %acc1
+        };
+        uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Wp] = 0x10;
+        state.registers[Vm::Acc1] = 0x1234;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x14 == state.registers[Vm::Wp] );
+        REQUIRE( 0x1234 == uut.wordAt(0x10) );
+    }
+
+    SECTION("Copy acc2 to ip indirect with pre decrement") {
+        std::array<uint8_t, 2> testdata = {
+            0x22, 0xc5   // movs.w [--%ip], %acc2
+        };
+        uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Ip] = 0x24;
+        state.registers[Vm::Acc2] = 0xabcd;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x20 == state.registers[Vm::Ip] );
+        REQUIRE( 0xabcd == uut.wordAt(0x20) );
+    }
+
+    SECTION("Copy ip indirect with post increment to wp") {
+        std::array<uint8_t, 8> testdata = {
+            0x24, 0x8,      // movs.w %wp, [%ip++]
+            0x0, 0x0,       // alignment filler
+            0x01, 0x23, 0x5a, 0xfa
+        };
+        uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Ip] = 0x4;
+        state.registers[Vm::Wp] = 0x0;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x8 == state.registers[Vm::Ip] );
+        REQUIRE( 0xfa5a2301 == state.registers[Vm::Wp] );
+    }
 }
 
 TEST_CASE("Register indirect jumping", "[opcode]") {

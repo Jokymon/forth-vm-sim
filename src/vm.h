@@ -48,6 +48,8 @@ private:
 
     void movr_b(uint8_t param);
     void movr_w(uint8_t param);
+    void movs_id_w(uint8_t param);
+    void movs_di_w(uint8_t param);
 
     void push_ds(uint32_t data);
     uint32_t pop_ds();
