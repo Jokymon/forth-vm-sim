@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.23.1)
 include(cmake/CPM.cmake)
+include(cmake/imgui.cmake)
 CPMAddPackage("gh:catchorg/Catch2@3.0.1")
 CPMAddPackage("gh:Taywee/args#6.4.1")
 
@@ -22,8 +23,14 @@ target_sources(${PROJECT_NAME}
     PRIVATE
         src/main.cpp
 )
-
 target_link_libraries(${PROJECT_NAME} vm args -static-libgcc -static-libstdc++)
+
+add_executable(${PROJECT_NAME}-gui)
+target_sources(${PROJECT_NAME}-gui
+    PRIVATE
+        src/main_gui.cpp
+)
+target_link_libraries(${PROJECT_NAME}-gui imgui vm args -static-libgcc -static-libstdc++)
 
 add_executable(test)
 target_sources(test
