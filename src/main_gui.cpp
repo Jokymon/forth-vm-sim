@@ -4,16 +4,20 @@
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_sdlrenderer.h>
 #include <iostream>
+#include "vm.h"
 
 int main(int argc, char *argv[]) {
+    Vm vm;
+
     SDL_Window *window = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("Simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("Forth VM simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.FontGlobalScale = 2.0;
 
     ImGui::StyleColorsDark();
 
@@ -35,11 +39,61 @@ int main(int argc, char *argv[]) {
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        // Window content
-        ImGui::Begin("Simulator");
-        ImGui::Text("Demo text");
+        // Full screen window
+        ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+
+        ImGui::Begin("Simulator", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize);
+
+        if (ImGui::Button("Single Step")) {
+            vm.singleStep();
+        }
+
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+            ImGui::BeginChild("Console", ImVec2(ImGui::GetContentRegionAvail().x * 0.6,
+                                                ImGui::GetContentRegionAvail().y),
+                            true, ImGuiWindowFlags_MenuBar);
+            //ImGui::Text("Content of this child window");
+            ImGui::EndChild();
+            ImGui::PopStyleVar();
+        }
+
+        ImGui::SameLine();
+
+        {
+            auto registers = vm.getState();
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+            ImGui::BeginChild("Registers", ImVec2(ImGui::GetContentRegionAvail().x,
+                                                  ImGui::GetContentRegionAvail().y * 0.6),
+                            true, ImGuiWindowFlags_MenuBar);
+
+            ImGui::BeginTable("register_values", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+
+            ImGui::TableSetupColumn("Name");
+            ImGui::TableSetupColumn("Value");
+            ImGui::TableHeadersRow();
+
+            ImGui::TableNextColumn(); ImGui::Text("Ip"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Ip]);
+            ImGui::TableNextColumn(); ImGui::Text("Wp"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Wp]);
+            ImGui::TableNextColumn(); ImGui::Text("Rsp"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Rsp]);
+            ImGui::TableNextColumn(); ImGui::Text("Dsp"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Dsp]);
+            ImGui::TableNextColumn(); ImGui::Text("Acc1"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Acc1]);
+            ImGui::TableNextColumn(); ImGui::Text("Acc2"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Acc2]);
+            ImGui::TableNextColumn(); ImGui::Text("Pc"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Pc]);
+            ImGui::EndTable();
+
+            //ImGui::Text("Registers");
+            ImGui::EndChild();
+            ImGui::PopStyleVar();
+        }
+
         ImGui::End();
 
+        ImGui::PopStyleVar();
+
+        // Render the frame
         ImGui::Render();
         SDL_RenderClear(renderer);
         ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
