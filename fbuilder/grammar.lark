@@ -14,10 +14,10 @@ macro_definition: "macro" IDENTIFIER code_line* "end"
 
 word_definition: "defword" IDENTIFIER word* "end"
 
-constant_definition: "const" IDENTIFIER "=" number
+constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 
-code_line: instruction
-    | macro_call
+code_line: instruction _NEWLINE
+    | macro_call _NEWLINE
 
 instruction: OPCODE ( "." SIZESUFFIX )? [ paramlist ]
 
@@ -77,8 +77,9 @@ SIZESUFFIX: /[bw]/i
 DEC_NUMBER: /\d+/
 HEX_NUMBER: /0x[\da-f]*/i
 
-%import common.NEWLINE
-COMMENT: "//" /(.)+/ NEWLINE
+//%import common.NEWLINE
+COMMENT: /\/\/[^\n]*/
+_NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )+
 %ignore COMMENT
 
 %import common.LETTER
