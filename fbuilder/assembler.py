@@ -23,6 +23,7 @@ JMPI_IP = 0x60
 JMPI_WP = 0x61
 JMPI_ACC1 = 0x62
 JMPI_ACC2 = 0x63
+JMPD = 0x64
 
 
 instructions = {
@@ -61,10 +62,21 @@ class RegisterOperand:
         return s
 
 
+class JumpOperand:
+    def __init__(self, jump_target):
+        self.jump_target = jump_target
+
+
 class VmForthAssembler(Transformer):
     def __init__(self, load_address=0):
+        # Modes:
+        # - APPEND for codeblocks, defcodes and defwords
+        # - STORE for macro blocks
+        self.mode = "APPEND"
         self.macros = {}
         self.constants = {}
+        self.jump_targets = {}
+        self.jumps = {}
 
         self.previous_word_start = load_address
         self.binary_code = b""
@@ -73,12 +85,18 @@ class VmForthAssembler(Transformer):
         self.binary_code += struct.pack("<I", number)
 
     def start(self, arg):
+        for location, label in self.jumps.items():
+            self.binary_code = \
+                self.binary_code[:location] + \
+                struct.pack("<I", self.jump_targets[label]) + \
+                self.binary_code[location+4:]
         return self.binary_code
 
     def code_block(self, args):
-        self.binary_code += b"".join(args)
+        self.mode = "APPEND"
 
     def code_definition(self, args):
+        self.mode = "APPEND"
         current_position = len(self.binary_code)
         # Append back-link
         self._append_uint32(self.previous_word_start)
@@ -98,6 +116,7 @@ class VmForthAssembler(Transformer):
         self.binary_code += b"".join(args[1:])
 
     def macro_definition(self, args):
+        self.mode = "STORE"
         macro_name = str(args[0])
         macro_code = b"".join(args[1:])
         self.macros[macro_name] = macro_code
@@ -108,7 +127,11 @@ class VmForthAssembler(Transformer):
         self.constants[constant_name] = constant_value
 
     def code_line(self, args):
-        return args[0]
+        if self.mode == "APPEND":
+            self.binary_code += args[0]
+            return b""
+        else:
+            return args[0]
 
     def instruction(self, args):
         mnemonic = str(args[0])
@@ -116,14 +139,17 @@ class VmForthAssembler(Transformer):
             code = struct.pack("B", instructions[mnemonic])
             code += struct.pack("<H", args[1][0])
         elif mnemonic == "jmp":
-            register_operand = args[1][0]
-            if register_operand.name == "ip":
+            operand = args[1][0]
+            if isinstance(operand, JumpOperand):
+                self.jumps[len(self.binary_code)+1] = operand.jump_target
+                code = b"\x64\x00\x00\x00\x00"
+            elif operand.name == "ip":
                 code = b"\x60"
-            elif register_operand.name == "wp":
+            elif operand.name == "wp":
                 code = b"\x61"
-            elif register_operand.name == "acc1":
+            elif operand.name == "acc1":
                 code = b"\x62"
-            elif register_operand.name == "acc2":
+            elif operand.name == "acc2":
                 code = b"\x63"
             else:
                 raise ValueError(f"Unsupported operand for register indirect jump on line {args[0].line}: {register_operand.mnemonic_name}; must be one of %ip, %wp, %acc1 or %acc2")
@@ -219,6 +245,13 @@ class VmForthAssembler(Transformer):
             return self.constants[str(number)]
         else:
             return number
+
+    def label(self, args):
+        self.jump_targets[str(args[0])] = len(self.binary_code)
+        return b""
+
+    def jump_target(self, args):
+        return JumpOperand(args[0])
 
     def decrement_increment(self, args):
         return str(args[0])

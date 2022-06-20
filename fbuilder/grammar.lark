@@ -18,6 +18,7 @@ constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 
 code_line: instruction _NEWLINE
     | macro_call _NEWLINE
+    | label _NEWLINE
 
 instruction: OPCODE ( "." SIZESUFFIX )? [ paramlist ]
 
@@ -26,8 +27,11 @@ paramlist: param ( "," param )*
 param: register
     | immediate_number
     | register_indirect
+    | jump_target
 
 macro_call: "$" IDENTIFIER "(" ")"
+
+label: IDENTIFIER ":"
 
 word: WORD_NAME
 
@@ -44,6 +48,8 @@ register_indirect: register_plain_indirect
 register_plain_indirect: "[" REGISTER "]"
 register_indirect_prefix: "[" decrement_increment REGISTER "]"
 register_indirect_postfix: "[" REGISTER decrement_increment "]"
+
+jump_target: ":" IDENTIFIER
 
 decrement_increment: UNARY_OPERATION
 

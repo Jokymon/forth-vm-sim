@@ -257,3 +257,20 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
         REQUIRE( 0x00000040 == state.registers[Vm::Pc] );
     }
 }
+
+TEST_CASE("Register direct jumping", "[opcode]") {
+    std::array<uint8_t, 20> testdata = {
+        0x64, 0x07, 0x00, 0x00, 0x00,   // jmp +7
+        0x00,       // nop
+        0x00,       // nop
+        0x00,       // nop (jump target)
+    };
+
+    Vm uut;
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    REQUIRE( Vm::Success == uut.singleStep());
+
+    Vm::State state = uut.getState();
+    REQUIRE( 0x00000007 == state.registers[Vm::Pc] );
+}

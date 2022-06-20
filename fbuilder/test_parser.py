@@ -155,3 +155,28 @@ class TestParsingMovsInstructions:
         end
         """
         parser.parse(source)
+
+
+class TestParsingLaabels:
+    def test_labels_inside_codeblock(self, parser):
+        source = """
+        codeblock
+            movs [%wp++], %acc1
+            movs [--%ip], %acc2
+        label1:
+            movs %acc1, [--%ip]
+            movs %acc2, [%rsp++]
+        end
+        """
+        parser.parse(source)
+
+    def test_jmp_to_targets(self, parser):
+        source = """
+        codeblock
+            jmp :label1
+            nop
+        label1:
+            nop
+        end
+        """
+        parser.parse(source)

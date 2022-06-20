@@ -103,6 +103,23 @@ class TestAssemblingJmpInstructions:
 
         assert binary == assembler.parse(source)
 
+    def test_jmp_absolute_to_label(self, assembler):
+        source = """
+        codeblock
+            jmp :jump_target
+            nop
+            nop
+        jump_target:
+            nop
+        end
+        """
+        binary = b"\x64\x07\x00\x00\x00"
+        binary += b"\x00"
+        binary += b"\x00"
+        binary += b"\x00"
+
+        assert binary == assembler.parse(source)
+
 
 class TestAssemblingMovrInstructions:
     def test_moving_between_instructions(self, assembler):

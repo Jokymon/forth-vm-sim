@@ -19,6 +19,7 @@ enum class Opcode {
     JMPI_WP = 0x61,
     JMPI_ACC1 = 0x62,
     JMPI_ACC2 = 0x63,
+    JMPD = 0x64,
 
     IFKT = 0xFE,
     ILLEGAL = 0xFF
@@ -63,6 +64,7 @@ Vm::Result Vm::singleStep() {
     char ch;
     uint8_t param8;
     uint16_t param16;
+    uint32_t param32;
 
     Opcode op = static_cast<Opcode>(fetch_op());
     switch (op) {
@@ -100,6 +102,10 @@ Vm::Result Vm::singleStep() {
             break;
         case Opcode::JMPI_ACC2:
             state.registers[Pc] = get32(state.registers[Acc2]);
+            break;
+        case Opcode::JMPD:
+            param32 = get32(state.registers[Pc]);
+            state.registers[Pc] = param32;
             break;
         case Opcode::IFKT:
             param16 = fetch_op();
