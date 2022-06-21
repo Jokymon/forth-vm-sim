@@ -69,10 +69,6 @@ class JumpOperand:
 
 class VmForthAssembler(Transformer):
     def __init__(self, load_address=0):
-        # Modes:
-        # - APPEND for codeblocks, defcodes and defwords
-        # - STORE for macro blocks
-        self.mode = "APPEND"
         self.macros = {}
         self.constants = {}
         self.jump_targets = {}
@@ -93,10 +89,19 @@ class VmForthAssembler(Transformer):
         return self.binary_code
 
     def code_block(self, args):
-        self.mode = "APPEND"
+        code = b"".join(args)
+        start_of_jump = code.find(b"``")
+        while start_of_jump >= 0:
+            self.binary_code += code[:start_of_jump]
+            code = code[start_of_jump+2:]
+            end_of_jump = code.find(b"``")
+            jump_target = code[:end_of_jump].decode("utf-8")
+            self.jump_targets[jump_target] = len(self.binary_code)
+            code = code[end_of_jump+2:]
+            start_of_jump = code.find(b"``")
+        self.binary_code += code
 
     def code_definition(self, args):
-        self.mode = "APPEND"
         current_position = len(self.binary_code)
         # Append back-link
         self._append_uint32(self.previous_word_start)
@@ -116,7 +121,6 @@ class VmForthAssembler(Transformer):
         self.binary_code += b"".join(args[1:])
 
     def macro_definition(self, args):
-        self.mode = "STORE"
         macro_name = str(args[0])
         macro_code = b"".join(args[1:])
         self.macros[macro_name] = macro_code
@@ -127,11 +131,7 @@ class VmForthAssembler(Transformer):
         self.constants[constant_name] = constant_value
 
     def code_line(self, args):
-        if self.mode == "APPEND":
-            self.binary_code += args[0]
-            return b""
-        else:
-            return args[0]
+        return args[0]
 
     def instruction(self, args):
         mnemonic = str(args[0])
@@ -247,8 +247,7 @@ class VmForthAssembler(Transformer):
             return number
 
     def label(self, args):
-        self.jump_targets[str(args[0])] = len(self.binary_code)
-        return b""
+        return b"``"+bytes(str(args[0]), encoding="utf-8")+b"``"
 
     def jump_target(self, args):
         return JumpOperand(args[0])
