@@ -25,6 +25,8 @@ JMPI_ACC1 = 0x62
 JMPI_ACC2 = 0x63
 JMPD = 0x64
 
+JUMP_MARKER = b"\x64\xff\xaa"
+
 
 instructions = {
     "nop": 0x00,
@@ -72,7 +74,7 @@ class VmForthAssembler(Transformer):
         self.macros = {}
         self.constants = {}
         self.jump_targets = {}
-        self.jumps = {}
+        self.jumps = []
 
         self.previous_word_start = load_address
         self.binary_code = b""
@@ -81,11 +83,19 @@ class VmForthAssembler(Transformer):
         self.binary_code += struct.pack("<I", number)
 
     def start(self, arg):
-        for location, label in self.jumps.items():
-            self.binary_code = \
-                self.binary_code[:location] + \
-                struct.pack("<I", self.jump_targets[label]) + \
-                self.binary_code[location+4:]
+        new_code = b""
+        old_code = self.binary_code
+        start_of_jump = old_code.find(JUMP_MARKER)
+        while start_of_jump >= 0:
+            new_code += old_code[:start_of_jump+1]  # +1 to keep the 0x64
+            jmp_index = struct.unpack("<H", old_code[start_of_jump+3:start_of_jump+5])[0]
+            jump_target = self.jumps[jmp_index]
+            new_code += struct.pack("<I", self.jump_targets[jump_target])
+            old_code = old_code[start_of_jump+5:]
+            start_of_jump = old_code.find(JUMP_MARKER)
+        new_code += old_code
+        self.binary_code = new_code
+
         return self.binary_code
 
     def code_block(self, args):
@@ -141,8 +151,9 @@ class VmForthAssembler(Transformer):
         elif mnemonic == "jmp":
             operand = args[1][0]
             if isinstance(operand, JumpOperand):
-                self.jumps[len(self.binary_code)+1] = operand.jump_target
-                code = b"\x64\x00\x00\x00\x00"
+                next_jumps_index = len(self.jumps)
+                self.jumps.append(operand.jump_target)
+                code = JUMP_MARKER + struct.pack("<H", next_jumps_index)
             elif operand.name == "ip":
                 code = b"\x60"
             elif operand.name == "wp":

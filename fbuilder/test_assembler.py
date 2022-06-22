@@ -120,6 +120,25 @@ class TestAssemblingJmpInstructions:
 
         assert binary == assembler.parse(source)
 
+    def test_jmp_absolute_to_label_complex_case(self, assembler):
+        source = """
+        codeblock
+            jmp :target1    // offset 0x0
+        target2:
+            jmp :target3    // offset 0x5
+        target1:
+            jmp :target2    // offset 0xa
+        target3:
+            nop             // offset 0xf
+        end
+        """
+        binary = b"\x64\x0a\x00\x00\x00"
+        binary += b"\x64\x0f\x00\x00\x00"
+        binary += b"\x64\x05\x00\x00\x00"
+        binary += b"\x00"
+
+        assert binary == assembler.parse(source)
+
 
 class TestAssemblingMovrInstructions:
     def test_moving_between_instructions(self, assembler):
