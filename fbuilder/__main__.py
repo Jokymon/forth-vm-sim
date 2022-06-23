@@ -1,24 +1,18 @@
 import argparse
 import pathlib
 from lark import Lark
-from assembler import VmForthAssembler
+from assembler import assemble  # VmForthAssembler
 
 
 def compile_forth(input_path, output_path, output_format):
-    script_dir = pathlib.Path(__file__).parent
-    lark_grammar_path = script_dir / "grammar.lark"
-
-    grammar = lark_grammar_path.read_text()
-    lark_parser = Lark(grammar, parser='lalr', transformer=VmForthAssembler())
-
     dictionary_source = pathlib.Path(input_path).read_text()
 
     if output_format == "bin":
         with open(output_path, "wb") as output_file:
-            output_file.write(lark_parser.parse(dictionary_source))
+            output_file.write(assemble(dictionary_source))
     else:
         with open(output_path, "w") as output_file:
-            data = lark_parser.parse(dictionary_source)
+            data = assemble(dictionary_source)
             output = ", ".join(map(hex, data))
             output_file.write(output)
 

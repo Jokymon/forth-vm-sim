@@ -1,5 +1,6 @@
+import pathlib
 import struct
-from lark import Transformer
+from lark import Lark, Transformer
 
 
 reg_encoding = {
@@ -272,3 +273,12 @@ class VmForthAssembler(Transformer):
             return int(number_text[2:], 16)
         else:
             return int(number_text)
+
+
+def assemble(input_text):
+    script_dir = pathlib.Path(__file__).parent
+    lark_grammar_path = script_dir / "grammar.lark"
+    grammar = lark_grammar_path.read_text()
+    lark_parser = Lark(grammar, parser='lalr', transformer=VmForthAssembler())
+
+    return lark_parser.parse(input_text)
