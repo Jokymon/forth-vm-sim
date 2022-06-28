@@ -24,13 +24,13 @@ def test_hexadecimal_number_is_correctly_parsed():
 
 def test_constant_is_replaced_in_parameters():
     source = """
-    const IFKT_VALUE = 0x1234
+    const IFKT_VALUE = 0x1236
     codeblock
         ifkt IFKT_VALUE
     end
     """
 
-    binary = b"\xfe\x34\x12"
+    binary = b"\xfe\x36\x12"
 
     assert binary == assemble(source)
 
