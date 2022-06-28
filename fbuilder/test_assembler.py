@@ -1,5 +1,4 @@
 from assembler import *
-import pathlib
 import pytest
 
 
@@ -266,3 +265,47 @@ class TestAssemblingMovsInstructions:
             assemble(source)
         assert "on line 3" in str(parsing_error)
         assert "movs indirect source requires a pre- or post- increment or decrement" in str(parsing_error)
+
+
+class TestCodeDefinitions:
+    def test_code_definition_starts_with_backlink(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defcode WORD1
+            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            nop
+            // additional offset 1
+        end
+        defcode WORD2
+            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            nop
+            // additional offset 1
+        end
+        """
+        result = assemble(source)
+        assert result[1:5] == b"\x00\x00\x00\x00"       # backlink for WORD1 is 0
+        assert result[16:20] == b"\x01\x00\x00\x00"     # backlink for WORD2 points to WORD1
+
+    def test_code_definition_contains_word_name(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defcode WORD1
+            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            nop
+            // additional offset 1
+        end
+        defcode WORD2
+            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            nop
+            // additional offset 1
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 5  # word length in characters
+        assert result[6:11] == b"WORD1"

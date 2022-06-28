@@ -78,7 +78,11 @@ class VmForthAssembler(Interpreter):
 
         self.mode = 'APPEND'    # or 'RETAIN' for macros
 
+        self.previous_word_start = 0x0
         self.binary_code = b""
+
+    def _append_uint32(self, number):
+        self.binary_code += struct.pack("<I", number)
 
     def code_block(self, tree):
         self.visit_children(tree)
@@ -95,6 +99,23 @@ class VmForthAssembler(Interpreter):
             start_of_jump = old_code.find(JUMP_MARKER)
         new_code += old_code
         self.binary_code = new_code
+
+    def code_definition(self, tree):
+        current_position = len(self.binary_code)
+        # Append back-link
+        self._append_uint32(self.previous_word_start)
+        self.previous_word_start = current_position
+
+        # Append length and word text
+        word_name = str(tree.children[0])
+        self.binary_code += struct.pack("B", len(word_name))
+        self.binary_code += bytes(word_name, encoding="utf-8")
+
+        # Append CFA field which is just the current address +4 for code words
+        current_position = len(self.binary_code)
+        self._append_uint32(current_position+4)
+
+        self.visit_children(tree)
 
     def macro_definition(self, tree):
         self.mode = 'RETAIN'
