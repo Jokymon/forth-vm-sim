@@ -208,6 +208,17 @@ class TestAssemblingMovsInstructions:
 
         assert binary == assemble(source)
 
+    def test_moving_from_rsp_post_decrement_to_acc2(self):
+        source = """
+        codeblock
+            movs.w %acc2, [%rsp--]
+        end
+        """
+
+        binary = b"\x24\xaa"
+
+        assert binary == assemble(source)
+
     def test_moving_from_indirect_to_indirect_raises_exception(self):
         source = """
         codeblock

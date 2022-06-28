@@ -40,8 +40,6 @@ def aligned(address, alignment):
 
 class RegisterOperand:
     def __init__(self, mnemonic_name, *args):
-        if type(mnemonic_name)!=str:
-            mnemonic_name=str(mnemonic_name)
         self.mnemonic_name = mnemonic_name
         self.name = mnemonic_name[1:]
         self.encoding = reg_encoding[self.name]
@@ -50,12 +48,6 @@ class RegisterOperand:
 
     def is_(self, property):
         return property in self.args
-
-    def __str__(self):
-        s = f"Register {self.mnemonic_name}"
-        if self.is_indirect:
-            s += " (indirect)"
-        return s
 
     def __repr__(self):
         s = f"Register {self.mnemonic_name}"

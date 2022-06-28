@@ -1,5 +1,6 @@
 *.swp
 *.pyc
+.coverage
 
 .venv/
 __pycache__/
