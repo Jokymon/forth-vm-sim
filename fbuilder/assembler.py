@@ -210,6 +210,8 @@ class VmForthAssembler(Interpreter):
             bytecode = struct.pack("B", NOP)
         elif mnemonic == "illegal":
             bytecode = struct.pack("B", ILLEGAL)
+        else:
+            raise ValueError(f"Opcode '{mnemonic}' currently not implemented on line {tree.children[0].line}")
 
         if self.mode=="APPEND":
             self.binary_code += bytecode

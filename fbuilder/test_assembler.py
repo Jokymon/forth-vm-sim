@@ -9,6 +9,19 @@ def test_alignment_function():
     assert aligned(43, 16) == 48
 
 
+class TestOpcodeHandling:
+    def test_currently_unsupported_opcodes_are_reported(self):
+        source = """
+        codeblock
+            add
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "Opcode 'add' currently not implemented" in str(parsing_error)
+
 def test_hexadecimal_number_is_correctly_parsed():
     source = """
     codeblock
