@@ -54,6 +54,7 @@ jump_target: ":" IDENTIFIER
 decrement_increment: UNARY_OPERATION
 
 OPCODE.2: "add"
+    | "dw"
     | "ifkt"
     | "illegal"
     | "inc_wp"

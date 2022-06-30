@@ -31,7 +31,7 @@ JMPD = 0x64
 IFTK = 0xfe
 ILLEGAL = 0xff
 
-JUMP_MARKER = b"\x64\xff\xaa"
+LABEL_MARKER = b"\xff\xaa"
 
 
 def aligned(address, alignment):
@@ -89,14 +89,14 @@ class VmForthAssembler(Interpreter):
 
         new_code = b""
         old_code = self.binary_code
-        start_of_jump = old_code.find(JUMP_MARKER)
+        start_of_jump = old_code.find(LABEL_MARKER)
         while start_of_jump >= 0:
-            new_code += old_code[:start_of_jump+1]  # +1 to keep the 0x64
-            jmp_index = struct.unpack("<H", old_code[start_of_jump+3:start_of_jump+5])[0]
+            new_code += old_code[:start_of_jump]
+            jmp_index = struct.unpack("<H", old_code[start_of_jump+2:start_of_jump+4])[0]
             jump_target = self.jumps[jmp_index]
             new_code += struct.pack("<I", self.labels[jump_target])
-            old_code = old_code[start_of_jump+5:]
-            start_of_jump = old_code.find(JUMP_MARKER)
+            old_code = old_code[start_of_jump+4:]
+            start_of_jump = old_code.find(LABEL_MARKER)
         new_code += old_code
         self.binary_code = new_code
 
@@ -144,7 +144,14 @@ class VmForthAssembler(Interpreter):
                 parameters = [self.visit(child) for child in tree.children[1:]][0]
         else:
             parameters = []
-        if mnemonic == "ifkt":
+        if mnemonic == "dw":
+            if isinstance(parameters[0], JumpOperand):
+                next_jumps_index = len(self.jumps)
+                self.jumps.append(parameters[0].jump_target)
+                bytecode = LABEL_MARKER + struct.pack("<H", next_jumps_index)
+            else:
+                bytecode = struct.pack("<I", parameters[0].number)
+        elif mnemonic == "ifkt":
             bytecode = struct.pack("B", IFTK)
             bytecode += struct.pack("<H", parameters[0].number)
         elif mnemonic == "jmp":
@@ -152,7 +159,7 @@ class VmForthAssembler(Interpreter):
             if isinstance(operand, JumpOperand):
                 next_jumps_index = len(self.jumps)
                 self.jumps.append(operand.jump_target)
-                bytecode = JUMP_MARKER + struct.pack("<H", next_jumps_index)
+                bytecode = b"\x64" + LABEL_MARKER + struct.pack("<H", next_jumps_index)
             elif operand.name == "ip":
                 bytecode = struct.pack("B", JMPI_IP)
             elif operand.name == "wp":

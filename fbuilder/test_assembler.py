@@ -88,6 +88,40 @@ def test_trying_to_call_undefined_macro_raises_exception():
     assert "on line 3" in str(parsing_error)
 
 
+class TestAssemblingDwInstructions:
+    def test_immediate_32bit_values_are_inserted_in_correct_byte_order(self):
+        source = """
+        codeblock
+            dw #0x12345678
+        end
+        """
+        binary = b"\x78\x56\x34\x12"
+
+        assert binary == assemble(source)
+
+    def test_constants_are_inserted_in_correct_byte_order(self):
+        source = """
+        const MY_VALUE = 0x36295372
+        codeblock
+            dw MY_VALUE
+        end
+        """
+        binary = b"\x72\x53\x29\x36"
+
+        assert binary == assemble(source)
+
+    def test_labels_are_inserted_in_correct_byte_order(self):
+        source = """
+        codeblock
+            dw :mylabel
+        mylabel:
+        end
+        """
+        binary = b"\x04\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+
 class TestAssemblingJmpInstructions:
     def test_jmp_register_indirect(self):
         source = """

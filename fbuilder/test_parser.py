@@ -134,6 +134,34 @@ def test_comments(parser):
     """
 
 
+class TestParsingDataDefinitions:
+    def test_defining_immediate_32bit_value(self, parser):
+        source = """
+        codeblock
+            dw #0x12345678
+        end
+        """
+        parser.parse(source)
+
+    def test_defining_32bit_value_with_constant(self, parser):
+        source = """
+        const MY_VALUE = 23
+        codeblock
+            dw MY_VALUE
+        end
+        """
+        parser.parse(source)
+
+    def test_defining_32bit_value_with_label(self, parser):
+        source = """
+        codeblock
+        mylabel:
+            dw :mylabel
+        end
+        """
+        parser.parse(source)
+
+
 class TestParsingMovrInstructions:
     def test_moving_between_instructions(self, parser):
         source = """
