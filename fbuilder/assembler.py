@@ -76,8 +76,6 @@ class VmForthAssembler(Interpreter):
         self.labels = {}
         self.jumps = []
 
-        self.mode = 'APPEND'    # or 'RETAIN' for macros
-
         self.previous_word_start = 0x0
         self.binary_code = b""
 
@@ -118,12 +116,8 @@ class VmForthAssembler(Interpreter):
         self.visit_children(tree)
 
     def macro_definition(self, tree):
-        self.mode = 'RETAIN'
         macro_name = str(tree.children[0])
-        children = [self.visit(child) for child in tree.children[1:]]
-        macro_code = b"".join(children)
-        self.macros[macro_name] = macro_code
-        self.mode = 'APPEND'
+        self.macros[macro_name] = tree.children[1:]  # macro_code
 
     def constant_definition(self, tree):
         constant_name = str(tree.children[0])
@@ -220,16 +214,14 @@ class VmForthAssembler(Interpreter):
         else:
             raise ValueError(f"Opcode '{mnemonic}' currently not implemented on line {tree.children[0].line}")
 
-        if self.mode=="APPEND":
-            self.binary_code += bytecode
-        else:
-            return bytecode
+        self.binary_code += bytecode
 
     def macro_call(self, tree):
         macro_name = str(tree.children[0])
         if not macro_name in self.macros:
             raise ValueError(f"Undefined Macro: '{macro_name}' on line {tree.children[0].line}")
-        self.binary_code += self.macros[macro_name]
+        for child in self.macros[macro_name]:
+            self.visit(child)
 
     def paramlist(self, tree):
         return [ self.visit(child) for child in tree.children ]
