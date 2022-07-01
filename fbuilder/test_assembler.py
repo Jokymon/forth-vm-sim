@@ -67,7 +67,7 @@ def test_calling_macros_inserts_the_code():
     end
 
     codeblock
-        $TEST()
+        TEST()
     end
     """
 
@@ -79,7 +79,7 @@ def test_calling_macros_inserts_the_code():
 def test_trying_to_call_undefined_macro_raises_exception():
     source = """
     codeblock
-        $MISSING_MACRO()
+        MISSING_MACRO()
     end
     """
 

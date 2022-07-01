@@ -29,7 +29,7 @@ param: register
     | register_indirect
     | jump_target
 
-macro_call: "$" IDENTIFIER "(" ")"
+macro_call: IDENTIFIER "(" ")"
 
 label: IDENTIFIER ":"
 

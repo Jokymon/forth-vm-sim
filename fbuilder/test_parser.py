@@ -119,7 +119,7 @@ def test_calling_a_macro(parser):
     end
 
     codeblock
-        $TEST_MACRO()
+        TEST_MACRO()
     end
     """
     parser.parse(source)
