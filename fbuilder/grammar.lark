@@ -28,6 +28,7 @@ param: register
     | immediate_number
     | register_indirect
     | jump_target
+    | current_address_expression
 
 macro_call: IDENTIFIER "(" ")"
 
@@ -50,6 +51,10 @@ register_indirect_prefix: "[" decrement_increment REGISTER "]"
 register_indirect_postfix: "[" REGISTER decrement_increment "]"
 
 jump_target: ":" IDENTIFIER
+
+current_address_expression: current_address ( OPERATOR number )*
+
+current_address: "$"
 
 decrement_increment: UNARY_OPERATION
 
@@ -77,6 +82,8 @@ REGISTER: "%ip"
     | "%pc"
 
 UNARY_OPERATION: "++" | "--"
+
+OPERATOR: "+" | "-"
 
 WORD_NAME: /[\x21-\x7E]+/i
 IDENTIFIER: /[a-zA-Z0-9_]+/

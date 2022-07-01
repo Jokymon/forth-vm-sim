@@ -265,6 +265,20 @@ class VmForthAssembler(Interpreter):
     def jump_target(self, tree):
         return JumpOperand(tree.children[0])
 
+    def current_address_expression(self, tree):
+        value = self.visit(tree.children[0])
+        expression_rest = tree.children[1:]
+        for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
+            operand = self.visit(value_node)
+            if str(operator)=="+":
+                value.number += operand
+            else:
+                value.number -= operand
+        return value
+
+    def current_address(self, tree):
+        return NumberOperand(len(self.binary_code))
+
     def decrement_increment(self, tree):
         return str(tree.children[0])
 

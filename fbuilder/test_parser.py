@@ -101,6 +101,24 @@ def test_opcodes_with_two_parameter(parser):
     parser.parse(source)
 
 
+def test_current_address_as_parameter(parser):
+    source = """
+    codeblock
+        dw $
+    end
+    """
+    parser.parse(source)
+
+
+def test_simple_current_address_based_expression_as_parameter(parser):
+    source = """
+    codeblock
+        dw $+4
+    end
+    """
+    parser.parse(source)
+
+
 def test_macro_with_instructions(parser):
     source = """
     macro TEST_MACRO

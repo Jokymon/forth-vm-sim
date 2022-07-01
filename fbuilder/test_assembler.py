@@ -122,6 +122,65 @@ class TestAssemblingDwInstructions:
         assert binary == assemble(source)
 
 
+class TestCurrentAddressExpressions:
+    def test_dollar_inserts_current_address(self):
+        source = """
+        codeblock
+            nop // to get a little offset such that $ is not 0x0
+            nop
+            dw $
+        end
+        """
+        binary = b"\x00\x00"
+        binary += b"\x02\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+    def test_dollar_based_addition_expression_is_properly_evaluated(self):
+        source = """
+        codeblock
+            nop // to get a little offset such that $ is not 0x0
+            nop
+            dw $+4
+        end
+        """
+        binary = b"\x00\x00"
+        binary += b"\x06\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+    def test_dollar_based_subtraction_expression_is_properly_evaluated(self):
+        source = """
+        codeblock
+            nop // to get a little offset such that $ is not 0x0
+            nop
+            dw $-2
+        end
+        """
+        binary = b"\x00\x00"
+        binary += b"\x00\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+    def test_dollar_inside_macro_uses_the_address_at_insertion(self):
+        source = """
+        macro CURRENT_ADDRESS
+            dw $
+        end
+
+        codeblock
+            nop
+            CURRENT_ADDRESS()
+            CURRENT_ADDRESS()
+        end
+        """
+        binary = b"\x00"
+        binary += b"\x01\x00\x00\x00"
+        binary += b"\x05\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+
 class TestAssemblingJmpInstructions:
     def test_jmp_register_indirect(self):
         source = """
