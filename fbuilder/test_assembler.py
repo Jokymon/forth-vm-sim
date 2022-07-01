@@ -381,19 +381,19 @@ class TestCodeDefinitions:
         end
         // code offset 0x1
         defcode WORD1
-            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
         end
         defcode WORD2
-            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
         end
         """
         result = assemble(source)
         assert result[1:5] == b"\x00\x00\x00\x00"       # backlink for WORD1 is 0
-        assert result[16:20] == b"\x01\x00\x00\x00"     # backlink for WORD2 points to WORD1
+        assert result[12:16] == b"\x01\x00\x00\x00"     # backlink for WORD2 points to WORD1
 
     def test_code_definition_contains_word_name(self):
         source = """
@@ -402,12 +402,12 @@ class TestCodeDefinitions:
         end
         // code offset 0x1
         defcode WORD1
-            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
         end
         defcode WORD2
-            // backlink (4) + word size (1) + word name (5) + cfa field (4)
+            // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
         end
@@ -415,3 +415,19 @@ class TestCodeDefinitions:
         result = assemble(source)
         assert result[5] == 5  # word length in characters
         assert result[6:11] == b"WORD1"
+
+    def test_cfa_is_filled_with_macro(self):
+        source = """
+        macro __DEFCODE_CFA
+            dw #0x3829af7b
+        end
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defcode WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x7b\xaf\x29\x38"

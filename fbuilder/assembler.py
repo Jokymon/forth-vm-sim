@@ -110,8 +110,9 @@ class VmForthAssembler(Interpreter):
         self.binary_code += bytes(word_name, encoding="utf-8")
 
         # Append CFA field which is just the current address +4 for code words
-        current_position = len(self.binary_code)
-        self._append_uint32(current_position+4)
+        if "__DEFCODE_CFA" in self.macros:
+            for child in self.macros["__DEFCODE_CFA"]:
+                self.visit(child)
 
         self.visit_children(tree)
 
