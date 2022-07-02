@@ -180,11 +180,11 @@ class TestParsingDataDefinitions:
         parser.parse(source)
 
 
-class TestParsingMovrInstructions:
-    def test_moving_between_instructions(self, parser):
+class TestParsingMovInstructions:
+    def test_moving_between_registers_instructions(self, parser):
         source = """
         codeblock
-            movr %wp, %acc1
+            mov %wp, %acc1
         end
         """
         parser.parse(source)
@@ -194,10 +194,10 @@ class TestParsingMovsInstructions:
     def test_moving_between_instructions(self, parser):
         source = """
         codeblock
-            movs [%wp++], %acc1
-            movs [--%ip], %acc2
-            movs %acc1, [--%ip]
-            movs %acc2, [%rsp++]
+            mov [%wp++], %acc1
+            mov [--%ip], %acc2
+            mov %acc1, [--%ip]
+            mov %acc2, [%rsp++]
         end
         """
         parser.parse(source)
@@ -207,11 +207,11 @@ class TestParsingLaabels:
     def test_labels_inside_codeblock(self, parser):
         source = """
         codeblock
-            movs [%wp++], %acc1
-            movs [--%ip], %acc2
+            mov [%wp++], %acc1
+            mov [--%ip], %acc2
         label1:
-            movs %acc1, [--%ip]
-            movs %acc2, [%rsp++]
+            mov %acc1, [--%ip]
+            mov %acc2, [%rsp++]
         end
         """
         parser.parse(source)

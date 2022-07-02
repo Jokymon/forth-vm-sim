@@ -235,15 +235,15 @@ class TestAssemblingJmpInstructions:
         assert binary == assemble(source)
 
 
-class TestAssemblingMovrInstructions:
+class TestAssemblingMovInstructions:
     def test_moving_between_instructions(self):
         source = """
         codeblock
-            movr.b %wp, %acc1
-            movr.b %rsp, %acc2
-            movr.b [%dsp], %ip
-            movr.b %wp, [%acc1]
-            movr.b [%acc1], [%acc2]
+            mov.b %wp, %acc1
+            mov.b %rsp, %acc2
+            mov.b [%dsp], %ip
+            mov.b %wp, [%acc1]
+            mov.b [%acc1], [%acc2]
         end
         """
 
@@ -258,32 +258,18 @@ class TestAssemblingMovrInstructions:
     def test_word_based_moving(self):
         source = """
         codeblock
-            movr.w %wp, %acc1
-            movr %wp, %acc1     // without suffix, 'word' is assumed
+            mov.w %wp, %acc1
+            mov %wp, %acc1     // without suffix, 'word' is assumed
         end
         """
 
         binary = b"\x20\x14\x20\x14"
         assert binary == assemble(source)
 
-    def test_movr_raises_exception_when_using_increment_or_decrements(self):
-        source = """
-        codeblock
-            movr.w [%wp++], %acc1
-        end
-        """
-
-        with pytest.raises(ValueError) as parsing_error:
-            assemble(source)
-        assert "on line 3" in str(parsing_error)
-        assert "movr doesn't support any increment or decrement operations" in str(parsing_error)
-
-
-class TestAssemblingMovsInstructions:
     def test_moving_from_acc1_to_wp_post_increment(self):
         source = """
         codeblock
-            movs.w [%wp++], %acc1
+            mov.w [%wp++], %acc1
         end
         """
 
@@ -294,7 +280,7 @@ class TestAssemblingMovsInstructions:
     def test_moving_from_acc2_to_rsp_pre_decrement(self):
         source = """
         codeblock
-            movs.w [--%rsp], %acc2
+            mov.w [--%rsp], %acc2
         end
         """
 
@@ -305,7 +291,7 @@ class TestAssemblingMovsInstructions:
     def test_moving_from_ip_pre_decrement_to_acc1(self):
         source = """
         codeblock
-            movs.w %acc1, [--%ip]
+            mov.w %acc1, [--%ip]
         end
         """
 
@@ -316,7 +302,7 @@ class TestAssemblingMovsInstructions:
     def test_moving_from_rsp_post_decrement_to_acc2(self):
         source = """
         codeblock
-            movs.w %acc2, [%rsp--]
+            mov.w %acc2, [%rsp--]
         end
         """
 
@@ -327,50 +313,14 @@ class TestAssemblingMovsInstructions:
     def test_moving_from_indirect_to_indirect_raises_exception(self):
         source = """
         codeblock
-            movs.w [%acc1++], [--%ip]
+            mov.w [%acc1++], [--%ip]
         end
         """
 
         with pytest.raises(ValueError) as parsing_error:
             assemble(source)
         assert "on line 3" in str(parsing_error)
-        assert "only one argument can be register indirect for movs" in str(parsing_error)
-
-    def test_moving_from_direct_to_direct_raises_exception(self):
-        source = """
-        codeblock
-            movs.w %acc1, %ip
-        end
-        """
-
-        with pytest.raises(ValueError) as parsing_error:
-            assemble(source)
-        assert "on line 3" in str(parsing_error)
-        assert "only one argument can be register direct for movs" in str(parsing_error)
-
-    def test_moving_to_indirect_without_operation_raises_exception(self):
-        source = """
-        codeblock
-            movs.w [%acc1], %ip
-        end
-        """
-
-        with pytest.raises(ValueError) as parsing_error:
-            assemble(source)
-        assert "on line 3" in str(parsing_error)
-        assert "movs indirect target requires a pre- or post- increment or decrement" in str(parsing_error)
-
-    def test_moving_from_indirect_without_operation_raises_exception(self):
-        source = """
-        codeblock
-            movs.w %acc1, [%ip]
-        end
-        """
-
-        with pytest.raises(ValueError) as parsing_error:
-            assemble(source)
-        assert "on line 3" in str(parsing_error)
-        assert "movs indirect source requires a pre- or post- increment or decrement" in str(parsing_error)
+        assert "only one argument can be register indirect for mov" in str(parsing_error)
 
 
 class TestCodeDefinitions:

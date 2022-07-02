@@ -163,51 +163,43 @@ class VmForthAssembler(Interpreter):
                 bytecode = struct.pack("B", JMPI_ACC1)
             elif operand.name == "acc2":
                 bytecode = struct.pack("B", JMPI_ACC2)
-        elif mnemonic == "movr":
-            if suffix == "b":
-                opcode = MOVR_B
-            else:
-                opcode = MOVR_W
-            indirect_target = 0x0
-            indirect_source = 0x0
-            reg_target = parameters[0]
-            reg_source = parameters[1]
-            if reg_target.is_("increment") or reg_target.is_("decrement") or \
-                reg_source.is_("increment") or reg_source.is_("decrement"):
-                raise ValueError(f"movr doesn't support any increment or decrement operations on line {tree.children[0].line}")
-            if reg_target.is_indirect:
-                indirect_target = 0x8
-            if reg_source.is_indirect:
-                indirect_source = 0x8
-            bytecode = struct.pack("BB", opcode,
-                (reg_source.encoding | indirect_source) | (reg_target.encoding | indirect_target) << 4)
-        elif mnemonic == "movs":
+        elif mnemonic == "mov":
             operand = 0x0
             reg_target = parameters[0]
             reg_source = parameters[1]
-            if reg_target.is_indirect:
-                if reg_source.is_indirect:
-                    raise ValueError(f"only one argument can be register indirect for movs on line {tree.children[0].line}")
-                opcode = MOVS_ID_W
-                if reg_target.is_("decrement"):
-                    operand |= 0x80
-                if reg_target.is_("prefix"):
-                    operand |= 0x40
-                elif not reg_target.is_("postfix"):
-                    raise ValueError(f"movs indirect target requires a pre- or post- increment or decrement on line {tree.children[0].line}")
+
+            if reg_target.is_("increment") or reg_target.is_("decrement") or \
+                reg_source.is_("increment") or reg_source.is_("decrement"):
+                if reg_target.is_indirect:
+                    if reg_source.is_indirect:
+                        raise ValueError(f"only one argument can be register indirect for movs on line {tree.children[0].line}")
+                    opcode = MOVS_ID_W
+                    if reg_target.is_("decrement"):
+                        operand |= 0x80
+                    if reg_target.is_("prefix"):
+                        operand |= 0x40
+                else:
+                    opcode = MOVS_DI_W
+                    if reg_source.is_("decrement"):
+                        operand |= 0x80
+                    if reg_source.is_("prefix"):
+                        operand |= 0x40
+                operand |= (reg_target.encoding << 3)
+                operand |= reg_source.encoding
+                bytecode = struct.pack("BB", opcode, operand)
             else:
-                if not reg_source.is_indirect:
-                    raise ValueError(f"only one argument can be register direct for movs on line {tree.children[0].line}")
-                opcode = MOVS_DI_W
-                if reg_source.is_("decrement"):
-                    operand |= 0x80
-                if reg_source.is_("prefix"):
-                    operand |= 0x40
-                elif not reg_source.is_("postfix"):
-                    raise ValueError(f"movs indirect source requires a pre- or post- increment or decrement on line {tree.children[0].line}")
-            operand |= (reg_target.encoding << 3)
-            operand |= reg_source.encoding
-            bytecode = struct.pack("BB", opcode, operand)
+                if suffix == "b":
+                    opcode = MOVR_B
+                else:
+                    opcode = MOVR_W
+                indirect_target = 0x0
+                indirect_source = 0x0
+                if reg_target.is_indirect:
+                    indirect_target = 0x8
+                if reg_source.is_indirect:
+                    indirect_source = 0x8
+                bytecode = struct.pack("BB", opcode,
+                    (reg_source.encoding | indirect_source) | (reg_target.encoding | indirect_target) << 4)
         elif mnemonic == "nop":
             bytecode = struct.pack("B", NOP)
         elif mnemonic == "illegal":
