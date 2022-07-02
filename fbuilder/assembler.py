@@ -165,27 +165,27 @@ class VmForthAssembler(Interpreter):
                 bytecode = struct.pack("B", JMPI_ACC2)
         elif mnemonic == "mov":
             operand = 0x0
-            reg_target = parameters[0]
-            reg_source = parameters[1]
+            target_param = parameters[0]
+            source_param = parameters[1]
 
-            if reg_target.is_("increment") or reg_target.is_("decrement") or \
-                reg_source.is_("increment") or reg_source.is_("decrement"):
-                if reg_target.is_indirect:
-                    if reg_source.is_indirect:
+            if target_param.is_("increment") or target_param.is_("decrement") or \
+                source_param.is_("increment") or source_param.is_("decrement"):
+                if target_param.is_indirect:
+                    if source_param.is_indirect:
                         raise ValueError(f"only one argument can be register indirect for movs on line {tree.children[0].line}")
                     opcode = MOVS_ID_W
-                    if reg_target.is_("decrement"):
+                    if target_param.is_("decrement"):
                         operand |= 0x80
-                    if reg_target.is_("prefix"):
+                    if target_param.is_("prefix"):
                         operand |= 0x40
                 else:
                     opcode = MOVS_DI_W
-                    if reg_source.is_("decrement"):
+                    if source_param.is_("decrement"):
                         operand |= 0x80
-                    if reg_source.is_("prefix"):
+                    if source_param.is_("prefix"):
                         operand |= 0x40
-                operand |= (reg_target.encoding << 3)
-                operand |= reg_source.encoding
+                operand |= (target_param.encoding << 3)
+                operand |= source_param.encoding
                 bytecode = struct.pack("BB", opcode, operand)
             else:
                 if suffix == "b":
@@ -194,12 +194,12 @@ class VmForthAssembler(Interpreter):
                     opcode = MOVR_W
                 indirect_target = 0x0
                 indirect_source = 0x0
-                if reg_target.is_indirect:
+                if target_param.is_indirect:
                     indirect_target = 0x8
-                if reg_source.is_indirect:
+                if source_param.is_indirect:
                     indirect_source = 0x8
                 bytecode = struct.pack("BB", opcode,
-                    (reg_source.encoding | indirect_source) | (reg_target.encoding | indirect_target) << 4)
+                    (source_param.encoding | indirect_source) | (target_param.encoding | indirect_target) << 4)
         elif mnemonic == "nop":
             bytecode = struct.pack("B", NOP)
         elif mnemonic == "illegal":
