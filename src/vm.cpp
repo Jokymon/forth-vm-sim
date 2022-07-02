@@ -12,6 +12,7 @@ enum class Opcode {
     MOVS_ID_B = 0x23,   // NOT IMPLEMENTED
     MOVS_DI_W = 0x24,
     MOVS_DI_B = 0x25,   // NOT IMPLEMENTED
+    MOVI_ACC1 = 0x26,
 
     ADD = 0x30,
 
@@ -90,6 +91,11 @@ Vm::Result Vm::singleStep() {
         case Opcode::MOVS_DI_W:
             param8 = fetch_op();
             movs_di_w(param8);
+            break;
+        case Opcode::MOVI_ACC1:
+            param32 = get32(state.registers[Pc]);
+            state.registers[Pc] += 4;
+            state.registers[Acc1] = param32;
             break;
         case Opcode::JMPI_IP:
             state.registers[Pc] = get32(state.registers[Ip]);

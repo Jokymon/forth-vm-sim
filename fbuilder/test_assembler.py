@@ -337,6 +337,33 @@ class TestAssemblingMovInstructions:
         assert "on line 3" in str(parsing_error)
         assert "only one argument can be register indirect for mov" in str(parsing_error)
 
+    def test_moving_from_label_to_acc1_register(self):
+        source = """
+        codeblock
+            nop
+        test1:
+            mov.w %acc1, :test1
+        end
+        """
+
+        binary = b"\x00\x26\x01\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+    def test_moving_label_to_register_other_than_acc1_raises_exception(self):
+        source = """
+        codeblock
+            nop
+        test1:
+            mov.w %acc2, :test1
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 5" in str(parsing_error)
+        assert "label can only be moved to acc1" in str(parsing_error)
+
 
 class TestCodeDefinitions:
     def test_code_definition_starts_with_backlink(self):

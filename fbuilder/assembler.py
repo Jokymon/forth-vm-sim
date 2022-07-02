@@ -23,6 +23,7 @@ MOVS_ID_W = 0x22    # indirect <-- direct move
 MOVS_ID_B = 0x23    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 MOVS_DI_W = 0x24    # direct <-- indirect move
 MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
+MOVI_ACC1 = 0x26
 JMPI_IP = 0x60
 JMPI_WP = 0x61
 JMPI_ACC1 = 0x62
@@ -109,6 +110,10 @@ class VmForthAssembler(Interpreter):
         self.binary_code += struct.pack("B", len(word_name))
         self.binary_code += bytes(word_name, encoding="utf-8")
 
+        # creating a label for the word
+        label_text = word_name.lower() + "_cfa"
+        self.labels[label_text] = len(self.binary_code)
+
         # Append CFA field which is just the current address +4 for code words
         if "__DEFCODE_CFA" in self.macros:
             for child in self.macros["__DEFCODE_CFA"]:
@@ -168,7 +173,13 @@ class VmForthAssembler(Interpreter):
             target_param = parameters[0]
             source_param = parameters[1]
 
-            if target_param.is_("increment") or target_param.is_("decrement") or \
+            if isinstance(source_param, JumpOperand):
+                if target_param.name != "acc1":
+                    raise ValueError(f"label can only be moved to acc1 on line {tree.children[0].line}")
+                next_jumps_index = len(self.jumps)
+                self.jumps.append(source_param.jump_target)
+                bytecode = struct.pack("<B2sH", MOVI_ACC1, LABEL_MARKER, next_jumps_index)
+            elif target_param.is_("increment") or target_param.is_("decrement") or \
                 source_param.is_("increment") or source_param.is_("decrement"):
                 if target_param.is_indirect:
                     if source_param.is_indirect:

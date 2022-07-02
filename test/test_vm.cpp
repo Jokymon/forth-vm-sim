@@ -195,6 +195,21 @@ TEST_CASE("Stack based move operations", "[opcode]") {
     }
 }
 
+TEST_CASE("Move label to acc1", "[opcode]") {
+    std::array<uint8_t, 5> testdata = {
+        0x26, 0x10, 0x41, 0x32, 0x22
+    };
+
+    Vm uut;
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    REQUIRE( Vm::Success == uut.singleStep() );
+
+    Vm::State state = uut.getState();
+    REQUIRE( 0x22324110 == state.registers[Vm::Acc1] );
+    REQUIRE( 0x5 == state.registers[Vm::Pc] );
+}
+
 TEST_CASE("Register indirect jumping", "[opcode]") {
     std::array<uint8_t, 20> testdata = {
         0x60,       // jmp [%ip]
