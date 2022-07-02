@@ -234,6 +234,21 @@ class TestAssemblingJmpInstructions:
 
         assert binary == assemble(source)
 
+    def test_jmp_across_codeblocks_works(self):
+        source = """
+        codeblock
+            jmp :target1    // offset 0x0
+        end
+        codeblock
+        target1:
+            nop
+        end
+        """
+        binary = b"\x64\x05\x00\x00\x00"
+        binary += b"\x00"
+
+        assert binary == assemble(source)
+
 
 class TestAssemblingMovInstructions:
     def test_moving_between_instructions(self):

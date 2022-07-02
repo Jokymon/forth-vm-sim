@@ -82,7 +82,7 @@ class VmForthAssembler(Interpreter):
     def _append_uint32(self, number):
         self.binary_code += struct.pack("<I", number)
 
-    def code_block(self, tree):
+    def start(self, tree):
         self.visit_children(tree)
 
         new_code = b""
