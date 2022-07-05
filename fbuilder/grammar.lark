@@ -8,11 +8,11 @@ definition: code_block
 
 code_block: "codeblock" code_line* "end"
 
-code_definition: "defcode" IDENTIFIER code_line* "end"
+code_definition: "defcode" WORD_NAME code_line* "end"
 
 macro_definition: "macro" IDENTIFIER code_line* "end"
 
-word_definition: "defword" IDENTIFIER word* "end"
+word_definition: "defword" WORD_NAME word* "end"
 
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 

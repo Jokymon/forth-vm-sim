@@ -20,20 +20,37 @@ def test_codeblock(parser):
     parser.parse(source)
 
 
-def test_defcode(parser):
-    source = """
-    defcode TEST_CODE
-    end
-    """
-    parser.parse(source)
+class TestCodeBlocks:
+    def test_defcode(self, parser):
+        source = """
+        defcode TEST_CODE
+        end
+        """
+        parser.parse(source)
+
+    def test_defcode_can_be_word_definitions_with_special_characters(self, parser):
+        source = """
+        defcode @!#HELLO
+        end
+        """
+        parser.parse(source)
 
 
-def test_defword(parser):
-    source = """
-    defword TEST_WORD
-    end
-    """
-    parser.parse(source)
+class TestWordBlocks:
+    def test_defword(self, parser):
+        source = """
+        defword TEST_WORD
+        end
+        """
+        parser.parse(source)
+
+    def test_defword_can_be_word_definitions_with_special_characters(self, parser):
+        source = """
+        defword @!#HELLO
+        end
+        """
+        parser.parse(source)
+
 
 
 def test_empty_macro(parser):
