@@ -43,6 +43,8 @@ public:
     uint8_t byteAt(uint32_t address) const;
     uint32_t wordAt(uint32_t address) const;
 
+    std::string disassembleAtPc() const;
+
 private:
     uint8_t fetch_op();
 
@@ -51,9 +53,14 @@ private:
     void movs_id_w(uint8_t param);
     void movs_di_w(uint8_t param);
 
+    std::string disassemble_movr_parameters(uint8_t parameter) const;
+    enum class MoveTarget { Direct, Indirect };
+    std::string disassemble_movs_parameters(uint8_t parameter, MoveTarget move_target) const;
+
     void push_ds(uint32_t data);
     uint32_t pop_ds();
 
+    uint16_t get16(uint32_t address) const;
     uint32_t get32(uint32_t address) const;
     void put32(uint32_t address, uint32_t value);
 

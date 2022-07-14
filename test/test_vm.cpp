@@ -35,10 +35,10 @@ TEST_CASE("Illegal instructions return IllegalInstruction", "[opcode]") {
 
 TEST_CASE("Register based move bytes instructions", "[opcode]") {
     std::array<uint8_t, 8> testdata = {
-        0x21, 0x14,     // movr.b %wp, %acc1
-        0x21, 0xd1,     // movr.b [%acc2], %wp
-        0x21, 0x4b,     // movr.b %acc1, [%dsp]
-        0x21, 0xcd,     // movr.b [%acc1], [%acc2]
+        0x21, 0x14,     // mov.b %wp, %acc1
+        0x21, 0xd1,     // mov.b [%acc2], %wp
+        0x21, 0x4b,     // mov.b %acc1, [%dsp]
+        0x21, 0xcd,     // mov.b [%acc1], [%acc2]
     };
 
     Vm uut;
@@ -86,10 +86,10 @@ TEST_CASE("Register based move bytes instructions", "[opcode]") {
 
 TEST_CASE("Register based move words instructions", "[opcode]") {
     std::array<uint8_t, 8> testdata = {
-        0x20, 0x14,     // movr.w %wp, %acc1
-        0x20, 0xd1,     // movr.w [%acc2], %wp
-        0x20, 0x4b,     // movr.w %acc1, [%dsp]
-        0x20, 0xcd,     // movr.w [%acc1], [%acc2]
+        0x20, 0x14,     // mov.w %wp, %acc1
+        0x20, 0xd1,     // mov.w [%acc2], %wp
+        0x20, 0x4b,     // mov.w %acc1, [%dsp]
+        0x20, 0xcd,     // mov.w [%acc1], [%acc2]
     };
 
     Vm uut;
@@ -140,7 +140,7 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 
     SECTION("Copy acc1 to wp indirect with post increment") {
         std::array<uint8_t, 2> testdata = {
-            0x22, 0xc   // movs.w [%wp++], %acc1
+            0x22, 0xc   // mov.w [%wp++], %acc1
         };
         uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
@@ -158,7 +158,7 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 
     SECTION("Copy acc2 to ip indirect with pre decrement") {
         std::array<uint8_t, 2> testdata = {
-            0x22, 0xc5   // movs.w [--%ip], %acc2
+            0x22, 0xc5   // mov.w [--%ip], %acc2
         };
         uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
@@ -176,7 +176,7 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 
     SECTION("Copy ip indirect with post increment to wp") {
         std::array<uint8_t, 8> testdata = {
-            0x24, 0x8,      // movs.w %wp, [%ip++]
+            0x24, 0x8,      // mov.w %wp, [%ip++]
             0x0, 0x0,       // alignment filler
             0x01, 0x23, 0x5a, 0xfa
         };
@@ -197,7 +197,7 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 
 TEST_CASE("Move label to acc1", "[opcode]") {
     std::array<uint8_t, 5> testdata = {
-        0x26, 0x10, 0x41, 0x32, 0x22
+        0x26, 0x10, 0x41, 0x32, 0x22    // mov %acc1, 0x22324110
     };
 
     Vm uut;
@@ -288,4 +288,164 @@ TEST_CASE("Register direct jumping", "[opcode]") {
 
     Vm::State state = uut.getState();
     REQUIRE( 0x00000007 == state.registers[Vm::Pc] );
+}
+
+TEST_CASE("Disassembling") {
+    std::array<uint8_t, 43> testdata = {
+        0x00,               // nop
+        0xff,               // illegal
+        0xfe, 0x34, 0x12,   // ifkt 0x1234
+        0x60,               // jmp [%ip]
+        0x61,               // jmp [%wp]
+        0x62,               // jmp [%acc1]
+        0x63,               // jmp [%acc2]
+        0x64, 0x07, 0x00, 0x00, 0x00,   // jmp 0x7
+        0x26, 0x10, 0x41, 0x32, 0x22,   // mov %acc1, 0x22324110
+        0x20, 0x14,         // mov.w %wp, %acc1
+        0x20, 0xd1,         // mov.w [%acc2], %wp
+        0x20, 0x4b,         // mov.w %acc1, [%dsp]
+        0x20, 0xcd,         // mov.w [%acc1], [%acc2]
+        0x21, 0x14,         // mov.b %wp, %acc1
+        0x21, 0xd1,         // mov.b [%acc2], %wp
+        0x21, 0x4b,         // mov.b %acc1, [%dsp]
+        0x21, 0xcd,         // mov.b [%acc1], [%acc2]
+        0x22, 0xc,          // mov.w [%wp++], %acc1
+        0x22, 0xc5,         // mov.w [--%ip], %acc2
+        0x24, 0x8,          // mov.w %wp, [%ip++]
+        0x24, 0xcb,         // mov.w %wp, [--%dsp]
+    };
+
+    Vm uut;
+    auto state = uut.getState();
+
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    SECTION("Disassembling nop instruction") {
+        state.registers[Vm::Pc] = 0;
+        uut.setState(state);
+        REQUIRE( "nop" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling illegal instruction") {
+        state.registers[Vm::Pc] = 1;
+        uut.setState(state);
+        REQUIRE( "illegal" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling ifkt") {
+        state.registers[Vm::Pc] = 2;
+        uut.setState(state);
+        REQUIRE( "ifkt 0x1234" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jmp ip indirect") {
+        state.registers[Vm::Pc] = 5;
+        uut.setState(state);
+        REQUIRE( "jmp [%ip]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jmp wp indirect") {
+        state.registers[Vm::Pc] = 6;
+        uut.setState(state);
+        REQUIRE( "jmp [%wp]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jmp acc1 indirect") {
+        state.registers[Vm::Pc] = 7;
+        uut.setState(state);
+        REQUIRE( "jmp [%acc1]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jmp acc2 indirect") {
+        state.registers[Vm::Pc] = 8;
+        uut.setState(state);
+        REQUIRE( "jmp [%acc2]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jmp direct") {
+        state.registers[Vm::Pc] = 9;
+        uut.setState(state);
+        REQUIRE( "jmp 0x7" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov immediate to acc1") {
+        state.registers[Vm::Pc] = 14;
+        uut.setState(state);
+        REQUIRE( "mov %acc1, 0x22324110" == uut.disassembleAtPc() );
+    }
+
+    // ------ mov word instructions -----------------------------------------
+    SECTION("Disassembling mov value from acc1 to wp") {
+        state.registers[Vm::Pc] = 19;
+        uut.setState(state);
+        REQUIRE( "mov.w %wp, %acc1" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov value from wp to acc2 indirect") {
+        state.registers[Vm::Pc] = 21;
+        uut.setState(state);
+        REQUIRE( "mov.w [%acc2], %wp" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov value from dsp indirect to acc1") {
+        state.registers[Vm::Pc] = 23;
+        uut.setState(state);
+        REQUIRE( "mov.w %acc1, [%dsp]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov value from acc2 indirect to acc1 indirect") {
+        state.registers[Vm::Pc] = 25;
+        uut.setState(state);
+        REQUIRE( "mov.w [%acc1], [%acc2]" == uut.disassembleAtPc() );
+    }
+
+    // ------ mov byte instructions -----------------------------------------
+    SECTION("Disassembling mov byte value from acc1 to wp") {
+        state.registers[Vm::Pc] = 27;
+        uut.setState(state);
+        REQUIRE( "mov.b %wp, %acc1" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov byte value from wp to acc2 indirect") {
+        state.registers[Vm::Pc] = 29;
+        uut.setState(state);
+        REQUIRE( "mov.b [%acc2], %wp" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov byte value from dsp indirect to acc1") {
+        state.registers[Vm::Pc] = 31;
+        uut.setState(state);
+        REQUIRE( "mov.b %acc1, [%dsp]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov byte value from acc2 indirect to acc1 indirect") {
+        state.registers[Vm::Pc] = 33;
+        uut.setState(state);
+        REQUIRE( "mov.b [%acc1], [%acc2]" == uut.disassembleAtPc() );
+    }
+
+    // ------ stack based mov instructions -----------------------------------
+    SECTION("Disassembling mov acc1 to wp indirect with post increment") {
+        state.registers[Vm::Pc] = 35;
+        uut.setState(state);
+        REQUIRE( "mov.w [%wp++], %acc1" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov acc2 to ip indirect with pre decrement") {
+        state.registers[Vm::Pc] = 37;
+        uut.setState(state);
+        REQUIRE( "mov.w [--%ip], %acc2" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov ip indirect with post increment to wp") {
+        state.registers[Vm::Pc] = 39;
+        uut.setState(state);
+        REQUIRE( "mov.w %wp, [%ip++]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov dsp indirect with pre decrement to wp") {
+        state.registers[Vm::Pc] = 41;
+        uut.setState(state);
+        REQUIRE( "mov.w %wp, [--%dsp]" == uut.disassembleAtPc() );
+    }
 }

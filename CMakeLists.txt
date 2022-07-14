@@ -3,6 +3,8 @@ include(cmake/CPM.cmake)
 include(cmake/imgui.cmake)
 CPMAddPackage("gh:catchorg/Catch2@3.0.1")
 CPMAddPackage("gh:Taywee/args#6.4.1")
+CPMAddPackage("gh:fmtlib/fmt#8.1.1")
+CPMAddPackage("gh:abseil/abseil-cpp#20220623.0")
 
 project(forth-vm-sim)
 
@@ -17,13 +19,14 @@ target_sources(vm
     PRIVATE
         src/vm.cpp
 )
+target_link_libraries(vm fmt)
 
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
     PRIVATE
         src/main.cpp
 )
-target_link_libraries(${PROJECT_NAME} vm args -static-libgcc -static-libstdc++)
+target_link_libraries(${PROJECT_NAME} vm absl::strings args -static-libgcc -static-libstdc++)
 
 add_executable(${PROJECT_NAME}-gui)
 target_sources(${PROJECT_NAME}-gui

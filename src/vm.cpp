@@ -1,7 +1,9 @@
 #include "vm.h"
+#include "fmt/core.h"
 #include <conio.h>
 #include <iostream>
 #include <fstream>
+#include <map>
 
 enum class Opcode {
     NOP = 0x0,
@@ -32,6 +34,16 @@ enum class IfktCodes {
 
     TERMINATE = 0xf0,
     DUMP = 0xf1,
+};
+
+const std::map<uint8_t, std::string> register_name_mapping = {
+    {Vm::Ip, "%ip"},
+    {Vm::Wp, "%wp"},
+    {Vm::Rsp, "%rsp"},
+    {Vm::Dsp, "%dsp"},
+    {Vm::Acc1, "%acc1"},
+    {Vm::Acc2, "%acc2"},
+    {Vm::Pc, "%pc"}
 };
 
 Vm::Vm() {
@@ -168,6 +180,49 @@ uint32_t Vm::wordAt(uint32_t address) const {
     return get32(address);
 }
 
+std::string Vm::disassembleAtPc() const {
+    uint32_t param;
+
+    switch (static_cast<Opcode>(memory[state.registers[Pc]])) {
+        case Opcode::NOP:
+            return "nop";
+        case Opcode::MOVR_W:
+            param = memory[state.registers[Pc]+1];
+            return fmt::format("mov.w {}", disassemble_movr_parameters(param));
+        case Opcode::MOVR_B:
+            param = memory[state.registers[Pc]+1];
+            return fmt::format("mov.b {}", disassemble_movr_parameters(param));
+        case Opcode::MOVS_ID_W:
+            param = memory[state.registers[Pc]+1];
+            return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Direct));
+        case Opcode::MOVS_DI_W:
+            param = memory[state.registers[Pc]+1];
+            return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Indirect));
+        case Opcode::MOVI_ACC1:
+            param = get32(state.registers[Pc]+1);
+            return fmt::format("mov %acc1, {:#x}", param);
+        case Opcode::JMPI_IP:
+            return "jmp [%ip]";
+        case Opcode::JMPI_WP:
+            return "jmp [%wp]";
+        case Opcode::JMPI_ACC1:
+            return "jmp [%acc1]";
+        case Opcode::JMPI_ACC2:
+            return "jmp [%acc2]";
+        case Opcode::JMPD:
+            param = get32(state.registers[Pc]+1);
+            return fmt::format("jmp {:#x}", param);
+        case Opcode::IFKT:
+            param = get16(state.registers[Pc]+1);
+            return fmt::format("ifkt {:#x}", param);
+        case Opcode::ILLEGAL:
+            return "illegal";
+        default:
+            return fmt::format("<unknown {:x}>", memory[state.registers[Pc]]);
+    }
+}
+
+
 uint8_t Vm::fetch_op() {
     return memory[state.registers[Pc]++];
 }
@@ -264,6 +319,64 @@ void Vm::movs_di_w(uint8_t param) {
     }
 }
 
+std::string Vm::disassemble_movr_parameters(uint8_t parameter) const {
+    uint8_t target = (parameter & 0x70) >> 4;
+    uint8_t source = parameter & 0x07;
+
+    if ((parameter & 0x80) && (parameter & 0x08)) {
+        return fmt::format("[{}], [{}]",
+            register_name_mapping.at(target),
+            register_name_mapping.at(source)
+            );
+    }
+    else if (parameter & 0x80) {
+        return fmt::format("[{}], {}",
+            register_name_mapping.at(target),
+            register_name_mapping.at(source)
+            );
+    }
+    else if (parameter & 0x08) {
+        return fmt::format("{}, [{}]",
+            register_name_mapping.at(target),
+            register_name_mapping.at(source)
+            );
+    }
+    else {
+        return fmt::format("{}, {}",
+            register_name_mapping.at(target),
+            register_name_mapping.at(source)
+            );
+    }
+}
+
+std::string Vm::disassemble_movs_parameters(uint8_t parameter, MoveTarget move_target) const {
+    uint8_t target = (parameter & 0x38) >> 3;
+    uint8_t source = parameter & 0x07;
+
+    bool decrement = (parameter & 0x80);
+    bool pre = (parameter & 0x40);
+
+    std::string pre_operation = decrement ? "--" : "++";
+    std::string post_operation = "";
+    if (!pre) {
+        std::swap(pre_operation, post_operation);
+    }
+
+    if (MoveTarget::Direct == move_target) {
+        return fmt::format("[{}{}{}], {}",
+            pre_operation, register_name_mapping.at(target), post_operation,
+            register_name_mapping.at(source)
+            );
+    }
+    else {
+        return fmt::format("{}, [{}{}{}]",
+            register_name_mapping.at(target),
+            pre_operation, register_name_mapping.at(source), post_operation
+            );
+    }
+}
+
+
 void Vm::push_ds(uint32_t data) {
     state.registers[Dsp] -= 4;
     put32(state.registers[Dsp], data);
@@ -273,6 +386,10 @@ uint32_t Vm::pop_ds() {
     uint32_t value = get32(state.registers[Dsp]);
     state.registers[Dsp] += 4;
     return value;
+}
+
+uint16_t Vm::get16(uint32_t address) const {
+    return (memory[address] | (memory[address+1] << 8));
 }
 
 uint32_t Vm::get32(uint32_t address) const {
