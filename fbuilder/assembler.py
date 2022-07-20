@@ -83,6 +83,22 @@ class VmForthAssembler(Interpreter):
     def _append_uint32(self, number):
         self.binary_code += struct.pack("<I", number)
 
+    def _get_uint32_at(self, address):
+        binary_code = self.binary_code[address:address+4]
+        return struct.unpack("<I", binary_code)[0]
+
+    def _get_cfa_from_word(self, word):
+        word_len = len(word)
+        current_lfa = self.previous_word_start
+        while current_lfa != 0x0:
+            if self.binary_code[current_lfa+4] == word_len:
+                word_start = current_lfa+5
+                current_word = self.binary_code[word_start:word_start+word_len].decode("utf-8")
+                if current_word == word:
+                    return current_lfa + 4 + 1 + word_len
+            current_lfa = self._get_uint32_at(current_lfa)
+        return 0x0
+
     def start(self, tree):
         self.visit_children(tree)
 
@@ -117,6 +133,24 @@ class VmForthAssembler(Interpreter):
         # Append CFA field which is just the current address +4 for code words
         if "__DEFCODE_CFA" in self.macros:
             for child in self.macros["__DEFCODE_CFA"]:
+                self.visit(child)
+
+        self.visit_children(tree)
+
+    def word_definition(self, tree):
+        current_position = len(self.binary_code)
+        # Append back-link
+        self._append_uint32(self.previous_word_start)
+        self.previous_word_start = current_position
+
+        # Append length and word text
+        word_name = str(tree.children[0])
+        self.binary_code += struct.pack("B", len(word_name))
+        self.binary_code += bytes(word_name, encoding="utf-8")
+
+        # Append CFA field which is just the current address +4 for code words
+        if "__DEFWORD_CFA" in self.macros:
+            for child in self.macros["__DEFWORD_CFA"]:
                 self.visit(child)
 
         self.visit_children(tree)
@@ -265,6 +299,22 @@ class VmForthAssembler(Interpreter):
     def label(self, tree):
         label_text = str(tree.children[0])
         self.labels[label_text] = len(self.binary_code)
+
+    def word(self, tree):
+        word = str(tree.children[0])
+        cfa = self._get_cfa_from_word(word)
+        if cfa==0 and not word.endswith(":") and not word.startswith(":"):
+            raise ValueError(f"Word '{word}' not found in current dictionary on line {tree.children[0].line}")
+        if word.endswith(":"):
+            label_text = word[:-1]
+            self.labels[label_text] = len(self.binary_code)
+        elif word.startswith(":"):
+            label_text = word[1:]
+            next_jumps_index = len(self.jumps)
+            self.jumps.append(label_text)
+            self.binary_code += LABEL_MARKER + struct.pack("<H", next_jumps_index)
+        else:
+            self._append_uint32(cfa)
 
     def jump_target(self, tree):
         return JumpOperand(tree.children[0])

@@ -423,3 +423,118 @@ class TestCodeDefinitions:
         """
         result = assemble(source)
         assert result[11:15] == b"\x7b\xaf\x29\x38"
+
+
+class TestWordDefinitions:
+    def test_word_definition_starts_with_backlink(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) //+ word size (1) + word name (5)
+        end
+        defword WORD2
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[1:5] == b"\x00\x00\x00\x00"       # backlink for WORD1 is 0
+        assert result[11:15] == b"\x01\x00\x00\x00"     # backlink for WORD2 points to WORD1
+
+    def test_word_definition_contains_word_name(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 5  # word length in characters
+        assert result[6:11] == b"WORD1"
+
+    def test_cfa_is_filled_with_macro(self):
+        source = """
+        macro __DEFWORD_CFA
+            dw #0x3829af7b
+        end
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x7b\xaf\x29\x38"
+
+    def test_words_are_compiled_into_cfas(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        defword WORD2
+            // backlink (4) + word size (1) + word name (5)
+            WORD1
+        end
+        """
+        result = assemble(source)
+        assert result[21:26] == b"\x0b\x00\x00\x00"
+
+    def test_missing_words_raise_an_exception(self):
+        source = """
+        codeblock
+            nop
+        end
+        defword WORD1
+            missing_word
+        end
+        """
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "Word 'missing_word' not found in current dictionary" in str(parsing_error)
+        assert "on line 6" in str(parsing_error)
+
+    def test_non_existing_words_ending_with_colon_in_definitions_are_treated_as_labels(self):
+        source = """
+        codeblock
+            nop
+        end
+        defword WORD1
+            missing_word:
+        end
+        """
+        
+        assemble(source)
+
+    def test_missing_words_beginning_with_colon_are_resolved_as_label_targets(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        defword WORD2
+            // offset 11d
+            // backlink (4) + word size (1) + word name (5)
+            // offset 21d = 15h
+            word_label:     // no code generated
+            WORD1           // 4 bytes for CFA
+            // offset 25d
+            :word_label     // 4 bytes for resolved word_label
+        end
+        """
+
+        result = assemble(source)
+        assert result[25:30] == b"\x15\x00\x00\x00"
