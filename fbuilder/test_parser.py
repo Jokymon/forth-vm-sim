@@ -243,3 +243,14 @@ class TestParsingLaabels:
         end
         """
         parser.parse(source)
+
+    def test_jump_if_zero_to_targets(self, parser):
+        source = """
+        codeblock
+            jz :label1
+            nop
+        label1:
+            nop
+        end
+        """
+        parser.parse(source)

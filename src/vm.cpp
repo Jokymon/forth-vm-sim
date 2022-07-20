@@ -23,6 +23,7 @@ enum class Opcode {
     JMPI_ACC1 = 0x62,
     JMPI_ACC2 = 0x63,
     JMPD = 0x64,
+    JZ = 0x65,
 
     IFKT = 0xFE,
     ILLEGAL = 0xFF
@@ -125,6 +126,15 @@ Vm::Result Vm::singleStep() {
             param32 = get32(state.registers[Pc]);
             state.registers[Pc] = param32;
             break;
+        case Opcode::JZ:
+            if (state.registers[Acc1]==0) {
+                param32 = get32(state.registers[Pc]);
+                state.registers[Pc] = param32;
+            }
+            else {
+                state.registers[Pc] += 4;
+            }
+            break;
         case Opcode::IFKT:
             param16 = fetch_op();
             param16 |= (fetch_op() << 8);
@@ -212,6 +222,9 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::JMPD:
             param = get32(state.registers[Pc]+1);
             return fmt::format("jmp {:#x}", param);
+        case Opcode::JZ:
+            param = get32(state.registers[Pc]+1);
+            return fmt::format("jz {:#x}", param);
         case Opcode::IFKT:
             param = get16(state.registers[Pc]+1);
             return fmt::format("ifkt {:#x}", param);

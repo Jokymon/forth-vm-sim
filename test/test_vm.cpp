@@ -290,8 +290,42 @@ TEST_CASE("Register direct jumping", "[opcode]") {
     REQUIRE( 0x00000007 == state.registers[Vm::Pc] );
 }
 
+TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
+    std::array<uint8_t, 20> testdata = {
+        0x65, 0x07, 0x00, 0x00, 0x00,   // jmp +7
+        0x00,       // nop
+        0x00,       // nop
+        0x00,       // nop (jump target)
+    };
+
+    Vm uut;
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    SECTION("Should jump if acc1 is 0") {
+        auto state = uut.getState();
+        state.registers[Vm::Acc1] = 0x0;
+        uut.setState(state);
+        
+        REQUIRE( Vm::Success == uut.singleStep());
+
+        state = uut.getState();
+        REQUIRE( 0x00000007 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Should not jump if acc1 is != 0") {
+        auto state = uut.getState();
+        state.registers[Vm::Acc1] = 0xff;
+        uut.setState(state);
+        
+        REQUIRE( Vm::Success == uut.singleStep());
+
+        state = uut.getState();
+        REQUIRE( 0x00000005 == state.registers[Vm::Pc] );
+    }
+}
+
 TEST_CASE("Disassembling") {
-    std::array<uint8_t, 43> testdata = {
+    std::array<uint8_t, 48> testdata = {
         0x00,               // nop
         0xff,               // illegal
         0xfe, 0x34, 0x12,   // ifkt 0x1234
@@ -313,6 +347,7 @@ TEST_CASE("Disassembling") {
         0x22, 0xc5,         // mov.w [--%ip], %acc2
         0x24, 0x8,          // mov.w %wp, [%ip++]
         0x24, 0xcb,         // mov.w %wp, [--%dsp]
+        0x65, 0x07, 0x00, 0x00, 0x00,   // jz 0x7
     };
 
     Vm uut;
@@ -368,13 +403,19 @@ TEST_CASE("Disassembling") {
         REQUIRE( "jmp 0x7" == uut.disassembleAtPc() );
     }
 
+    SECTION("Disassembling jz direct") {
+        state.registers[Vm::Pc] = 43;
+        uut.setState(state);
+        REQUIRE( "jz 0x7" == uut.disassembleAtPc() );
+    }
+
+    // ------ mov word instructions -----------------------------------------
     SECTION("Disassembling mov immediate to acc1") {
         state.registers[Vm::Pc] = 14;
         uut.setState(state);
         REQUIRE( "mov %acc1, 0x22324110" == uut.disassembleAtPc() );
     }
 
-    // ------ mov word instructions -----------------------------------------
     SECTION("Disassembling mov value from acc1 to wp") {
         state.registers[Vm::Pc] = 19;
         uut.setState(state);

@@ -29,6 +29,7 @@ JMPI_WP = 0x61
 JMPI_ACC1 = 0x62
 JMPI_ACC2 = 0x63
 JMPD = 0x64
+JZ = 0x65
 IFTK = 0xfe
 ILLEGAL = 0xff
 
@@ -202,6 +203,11 @@ class VmForthAssembler(Interpreter):
                 bytecode = struct.pack("B", JMPI_ACC1)
             elif operand.name == "acc2":
                 bytecode = struct.pack("B", JMPI_ACC2)
+        elif mnemonic == "jz":
+            operand = parameters[0]
+            next_jumps_index = len(self.jumps)
+            self.jumps.append(operand.jump_target)
+            bytecode = b"\x65" + LABEL_MARKER + struct.pack("<H", next_jumps_index)
         elif mnemonic == "mov":
             operand = 0x0
             target_param = parameters[0]
