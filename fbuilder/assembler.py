@@ -149,6 +149,10 @@ class VmForthAssembler(Interpreter):
         self.binary_code += struct.pack("B", len(word_name))
         self.binary_code += bytes(word_name, encoding="utf-8")
 
+        # creating a label for the word
+        label_text = word_name.lower() + "_cfa"
+        self.labels[label_text] = len(self.binary_code)
+
         # Append CFA field which is just the current address +4 for code words
         if "__DEFWORD_CFA" in self.macros:
             for child in self.macros["__DEFWORD_CFA"]:

@@ -442,6 +442,19 @@ class TestCodeDefinitions:
         result = assemble(source)
         assert result[11:15] == b"\x7b\xaf\x29\x38"
 
+    def test_address_of_cfa_is_available_as_label(self):
+        source = """
+        codeblock
+            dw :word1_cfa
+        end
+        // code offset 0x4
+        defcode WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x0e\x00\x00\x00"
+
 
 class TestWordDefinitions:
     def test_word_definition_starts_with_backlink(self):
@@ -556,3 +569,16 @@ class TestWordDefinitions:
 
         result = assemble(source)
         assert result[25:30] == b"\x15\x00\x00\x00"
+
+    def test_address_of_cfa_is_available_as_label(self):
+        source = """
+        codeblock
+            dw :word1_cfa
+        end
+        // code offset 0x4
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x0e\x00\x00\x00"
