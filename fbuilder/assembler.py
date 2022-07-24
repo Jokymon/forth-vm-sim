@@ -1,136 +1,50 @@
 import pathlib
-import struct
 
+from operands import *
+from emitter import *
 from lark import Lark, Token, Transformer
 from lark.visitors import Interpreter
-
-
-reg_encoding = {
-    "ip": 0x0,
-    "wp": 0x1,
-    "rsp": 0x2,
-    "dsp": 0x3,
-    "acc1": 0x4,
-    "acc2": 0x5,
-    "pc": 0x7,
-}
-
-
-NOP = 0x00
-MOVR_W = 0x20
-MOVR_B = 0x21
-MOVS_ID_W = 0x22    # indirect <-- direct move
-MOVS_ID_B = 0x23    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
-MOVS_DI_W = 0x24    # direct <-- indirect move
-MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
-MOVI_ACC1 = 0x26
-ADDR_W = 0x30
-JMPI_IP = 0x60
-JMPI_WP = 0x61
-JMPI_ACC1 = 0x62
-JMPI_ACC2 = 0x63
-JMPD = 0x64
-JZ = 0x65
-IFTK = 0xfe
-ILLEGAL = 0xff
-
-LABEL_MARKER = b"\xff\xaa"
 
 
 def aligned(address, alignment):
     return (address + alignment - 1) // alignment * alignment
 
 
-class RegisterOperand:
-    def __init__(self, mnemonic_name, *args):
-        self.mnemonic_name = mnemonic_name
-        self.name = mnemonic_name[1:]
-        self.encoding = reg_encoding[self.name]
-        self.args = args
-        self.is_indirect = "indirect" in self.args
-
-    def is_(self, property):
-        return property in self.args
-
-    def __repr__(self):
-        s = f"Register {self.mnemonic_name}"
-        if self.is_indirect:
-            s += " (indirect)"
-        return s
-
-
-class JumpOperand:
-    def __init__(self, jump_target):
-        self.jump_target = jump_target
-
-    def __repr__(self):
-        return f"Jump to {self.jump_target}"
-
-
-class NumberOperand:
-    def __init__(self, number):
-        self.number = number
-
-
 class VmForthAssembler(Interpreter):
     def __init__(self):
         self.constants = {}
         self.macros = {}
-        self.labels = {}
-        self.jumps = []
 
+        self.word_addresses = {}
         self.previous_word_start = 0x0
-        self.binary_code = b""
 
-    def _append_uint32(self, number):
-        self.binary_code += struct.pack("<I", number)
-
-    def _get_uint32_at(self, address):
-        binary_code = self.binary_code[address:address+4]
-        return struct.unpack("<I", binary_code)[0]
+        self.emitter = MachineCodeEmitter()
 
     def _get_cfa_from_word(self, word):
-        word_len = len(word)
-        current_lfa = self.previous_word_start
-        while current_lfa != 0x0:
-            if self.binary_code[current_lfa+4] == word_len:
-                word_start = current_lfa+5
-                current_word = self.binary_code[word_start:word_start+word_len].decode("utf-8")
-                if current_word == word:
-                    return current_lfa + 4 + 1 + word_len
-            current_lfa = self._get_uint32_at(current_lfa)
-        return 0x0
+        if word in self.word_addresses:
+            return self.word_addresses[word]
+        else:
+            return 0x0
 
     def start(self, tree):
         self.visit_children(tree)
 
-        new_code = b""
-        old_code = self.binary_code
-        start_of_jump = old_code.find(LABEL_MARKER)
-        while start_of_jump >= 0:
-            new_code += old_code[:start_of_jump]
-            jmp_index = struct.unpack("<H", old_code[start_of_jump+2:start_of_jump+4])[0]
-            jump_target = self.jumps[jmp_index]
-            new_code += struct.pack("<I", self.labels[jump_target])
-            old_code = old_code[start_of_jump+4:]
-            start_of_jump = old_code.find(LABEL_MARKER)
-        new_code += old_code
-        self.binary_code = new_code
+        self.emitter.finalize()
 
     def code_definition(self, tree):
-        current_position = len(self.binary_code)
+        current_position = self.emitter.get_current_code_address()
         # Append back-link
-        self._append_uint32(self.previous_word_start)
+        self.emitter.emit_data_32(self.previous_word_start)
         self.previous_word_start = current_position
 
         # Append length and word text
         word_name = str(tree.children[0])
-        self.binary_code += struct.pack("B", len(word_name))
-        self.binary_code += bytes(word_name, encoding="utf-8")
+        self.emitter.emit_data_8(len(word_name))
+        self.emitter.emit_data_string(word_name)
 
         # creating a label for the word
-        label_text = word_name.lower() + "_cfa"
-        self.labels[label_text] = len(self.binary_code)
+        self.emitter.mark_label(word_name.lower() + "_cfa")
+        self.word_addresses[word_name] = self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
         if "__DEFCODE_CFA" in self.macros:
@@ -140,19 +54,19 @@ class VmForthAssembler(Interpreter):
         self.visit_children(tree)
 
     def word_definition(self, tree):
-        current_position = len(self.binary_code)
+        current_position = self.emitter.get_current_code_address()
         # Append back-link
-        self._append_uint32(self.previous_word_start)
+        self.emitter.emit_data_32(self.previous_word_start)
         self.previous_word_start = current_position
 
         # Append length and word text
         word_name = str(tree.children[0])
-        self.binary_code += struct.pack("B", len(word_name))
-        self.binary_code += bytes(word_name, encoding="utf-8")
+        self.emitter.emit_data_8(len(word_name))
+        self.emitter.emit_data_string(word_name)
 
         # creating a label for the word
-        label_text = word_name.lower() + "_cfa"
-        self.labels[label_text] = len(self.binary_code)
+        self.emitter.mark_label(word_name.lower() + "_cfa")
+        self.word_addresses[word_name] = self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
         if "__DEFWORD_CFA" in self.macros:
@@ -185,102 +99,23 @@ class VmForthAssembler(Interpreter):
         else:
             parameters = []
         if mnemonic == "add":
-            opcode = ADDR_W
-            operand1 = 0x0
-            operand2 = 0x0
-            target_param = parameters[0]
-            source1_param = parameters[1]
-            source2_param = parameters[2]
-
-            operand1 |= (target_param.encoding << 4)
-            operand1 |= source1_param.encoding
-            operand2 |= source2_param.encoding
-
-            bytecode = struct.pack("BBB", opcode, operand1, operand2)
+            self.emitter.emit_add(parameters[0], parameters[1], parameters[2])
         elif mnemonic == "dw":
-            if isinstance(parameters[0], JumpOperand):
-                next_jumps_index = len(self.jumps)
-                self.jumps.append(parameters[0].jump_target)
-                bytecode = LABEL_MARKER + struct.pack("<H", next_jumps_index)
-            else:
-                bytecode = struct.pack("<I", parameters[0].number)
+            self.emitter.emit_data_32(parameters[0])
         elif mnemonic == "ifkt":
-            bytecode = struct.pack("B", IFTK)
-            bytecode += struct.pack("<H", parameters[0].number)
+            self.emitter.emit_ifkt(parameters[0])
         elif mnemonic == "jmp":
-            operand = parameters[0]
-            if isinstance(operand, JumpOperand):
-                next_jumps_index = len(self.jumps)
-                self.jumps.append(operand.jump_target)
-                bytecode = b"\x64" + LABEL_MARKER + struct.pack("<H", next_jumps_index)
-            elif operand.name == "ip":
-                bytecode = struct.pack("B", JMPI_IP)
-            elif operand.name == "wp":
-                bytecode = struct.pack("B", JMPI_WP)
-            elif operand.name == "acc1":
-                bytecode = struct.pack("B", JMPI_ACC1)
-            elif operand.name == "acc2":
-                bytecode = struct.pack("B", JMPI_ACC2)
+            self.emitter.emit_jump(parameters[0])
         elif mnemonic == "jz":
-            operand = parameters[0]
-            next_jumps_index = len(self.jumps)
-            self.jumps.append(operand.jump_target)
-            bytecode = b"\x65" + LABEL_MARKER + struct.pack("<H", next_jumps_index)
+            self.emitter.emit_conditional_jump(parameters[0])
         elif mnemonic == "mov":
-            operand = 0x0
-            target_param = parameters[0]
-            source_param = parameters[1]
-
-            if isinstance(source_param, JumpOperand):
-                if target_param.name != "acc1":
-                    raise ValueError(f"label can only be moved to acc1 on line {tree.children[0].line}")
-                next_jumps_index = len(self.jumps)
-                self.jumps.append(source_param.jump_target)
-                bytecode = struct.pack("<B2sH", MOVI_ACC1, LABEL_MARKER, next_jumps_index)
-            elif isinstance(source_param, NumberOperand):
-                if target_param.name != "acc1":
-                    raise ValueError(f"immediate value can only be moved to acc1 on line {tree.children[0].line}")
-                bytecode = struct.pack("<BI", MOVI_ACC1, source_param.number)
-            elif target_param.is_("increment") or target_param.is_("decrement") or \
-                source_param.is_("increment") or source_param.is_("decrement"):
-                if target_param.is_indirect:
-                    if source_param.is_indirect:
-                        raise ValueError(f"only one argument can be register indirect for movs on line {tree.children[0].line}")
-                    opcode = MOVS_ID_W
-                    if target_param.is_("decrement"):
-                        operand |= 0x80
-                    if target_param.is_("prefix"):
-                        operand |= 0x40
-                else:
-                    opcode = MOVS_DI_W
-                    if source_param.is_("decrement"):
-                        operand |= 0x80
-                    if source_param.is_("prefix"):
-                        operand |= 0x40
-                operand |= (target_param.encoding << 3)
-                operand |= source_param.encoding
-                bytecode = struct.pack("BB", opcode, operand)
-            else:
-                if suffix == "b":
-                    opcode = MOVR_B
-                else:
-                    opcode = MOVR_W
-                indirect_target = 0x0
-                indirect_source = 0x0
-                if target_param.is_indirect:
-                    indirect_target = 0x8
-                if source_param.is_indirect:
-                    indirect_source = 0x8
-                bytecode = struct.pack("BB", opcode,
-                    (source_param.encoding | indirect_source) | (target_param.encoding | indirect_target) << 4)
+            self.emitter.emit_mov(suffix, parameters[0], parameters[1])
         elif mnemonic == "nop":
-            bytecode = struct.pack("B", NOP)
+            self.emitter.emit_nop()
         elif mnemonic == "illegal":
-            bytecode = struct.pack("B", ILLEGAL)
+            self.emitter.emit_illegal()
         else:
             raise ValueError(f"Opcode '{mnemonic}' currently not implemented on line {tree.children[0].line}")
-
-        self.binary_code += bytecode
 
     def macro_call(self, tree):
         macro_name = str(tree.children[0])
@@ -296,25 +131,25 @@ class VmForthAssembler(Interpreter):
         return self.visit(tree.children[0])
 
     def register(self, tree):
-        return RegisterOperand(str(tree.children[0]))
+        return RegisterOperand(tree.children[0])
 
     def register_indirect(self, tree):
         return self.visit(tree.children[0])
 
     def register_plain_indirect(self, tree):
-        return RegisterOperand(str(tree.children[0]), "indirect")
+        return RegisterOperand(tree.children[0], "indirect")
 
     def register_indirect_prefix(self, tree):
         operation = "increment"
         if self.visit(tree.children[0]) == "--":
             operation = "decrement"
-        return RegisterOperand(str(tree.children[1]), "indirect", "prefix", operation)
+        return RegisterOperand(tree.children[1], "indirect", "prefix", operation)
 
     def register_indirect_postfix(self, tree):
         operation = "increment"
         if self.visit(tree.children[1]) == "--":
             operation = "decrement"
-        return RegisterOperand(str(tree.children[0]), "indirect", "postfix", operation)
+        return RegisterOperand(tree.children[0], "indirect", "postfix", operation)
 
     def immediate_number(self, tree):
         number_node = tree.children[0]
@@ -325,8 +160,7 @@ class VmForthAssembler(Interpreter):
             return NumberOperand(self.visit(number_node))
 
     def label(self, tree):
-        label_text = str(tree.children[0])
-        self.labels[label_text] = len(self.binary_code)
+        self.emitter.mark_label(str(tree.children[0]))
 
     def word(self, tree):
         word = str(tree.children[0])
@@ -334,15 +168,11 @@ class VmForthAssembler(Interpreter):
         if cfa==0 and not word.endswith(":") and not word.startswith(":"):
             raise ValueError(f"Word '{word}' not found in current dictionary on line {tree.children[0].line}")
         if word.endswith(":"):
-            label_text = word[:-1]
-            self.labels[label_text] = len(self.binary_code)
+            self.emitter.mark_label(word[:-1])
         elif word.startswith(":"):
-            label_text = word[1:]
-            next_jumps_index = len(self.jumps)
-            self.jumps.append(label_text)
-            self.binary_code += LABEL_MARKER + struct.pack("<H", next_jumps_index)
+            self.emitter.emit_label_target(word[1:])
         else:
-            self._append_uint32(cfa)
+            self.emitter.emit_data_32(cfa)
 
     def jump_target(self, tree):
         return JumpOperand(tree.children[0])
@@ -359,7 +189,7 @@ class VmForthAssembler(Interpreter):
         return value
 
     def current_address(self, tree):
-        return NumberOperand(len(self.binary_code))
+        return NumberOperand(self.emitter.get_current_code_address())
 
     def decrement_increment(self, tree):
         return str(tree.children[0])
@@ -382,4 +212,4 @@ def assemble(input_text):
 
     assembler = VmForthAssembler()
     assembler.visit(parse_tree)
-    return assembler.binary_code
+    return assembler.emitter.binary_code
