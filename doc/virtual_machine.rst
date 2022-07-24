@@ -9,14 +9,18 @@ The virtual machine implements a simple byte-code instruction set with variable 
 Operand types
 ^^^^^^^^^^^^^
 
-All number types comprising of more than one byte are stored in little-endian format.
-
 +--------------+--------------------------------------------------------------------------+
 | Abbreviation | Explanation                                                              |
 +==============+==========================================================================+
 | `imm8`       | 8-bit immediate value                                                    |
 +--------------+--------------------------------------------------------------------------+
 | `imm16`      | 16-bit immediate value                                                   |
++--------------+--------------------------------------------------------------------------+
+| `imm32`      | 32-bit immediate value                                                   |
++--------------+--------------------------------------------------------------------------+
+| `label`      | 32-bit jump target address                                               |
++--------------+--------------------------------------------------------------------------+
+| `reg`        | A register                                                               |
 +--------------+--------------------------------------------------------------------------+
 | `regi`       | Register or register indirect expression                                 |
 +--------------+--------------------------------------------------------------------------+
@@ -27,11 +31,6 @@ Encodings
 ^^^^^^^^^
 
 In most cases when registers need to be encoded in the opcodes, the following mapping is used.
-
- * `u16` - unsigned 16-bit immediate operand in little endian encoding
- * `rr` - encoding for operations between two registers
- * `rop` - encoding for operations between a direct register and indirect
-   register with prefix or postfix operations
 
 +-----------+----------+
 | Register  | Encoding |
@@ -51,19 +50,43 @@ In most cases when registers need to be encoded in the opcodes, the following ma
 | ``%pc``   | 0x7      |
 +-----------+----------+
 
-NOP - No Operation
-------------------
+All number types comprising of more than one byte are stored in little-endian format.
+
+ * `u32` - unsigned 32-bit immediate operand in little endian encoding
+ * `u16` - unsigned 16-bit immediate operand in little endian encoding
+ * `rr` - encoding for operations between two registers
+ * `3r` - encoding for operations between three registers
+ * `rop` - encoding for operations between a direct register and indirect
+   register with prefix or postfix operations
+
+ADD - Add
+---------
 
 .. table::
     :widths: 15 25 70
 
-    +--------+----------+--------------+
-    | Opcode | Mnemonic | Description  |
-    +========+==========+==============+
-    | 00     | NOP      | No operation |
-    +--------+----------+--------------+
+    +-----------+-------------------------+-------------------------+
+    | Opcode    | Mnemonic                | Description             |
+    +===========+=========================+=========================+
+    | 30 `/3r`  | ADD `reg`, `reg`, `reg` | Add values in registers |
+    +-----------+-------------------------+-------------------------+
 
-This instruction has no effect and can be used to fill memory.
+This instruction adds two registers together and stores the result in a third
+register. The addition is performed unsigned. 
+
+IFKT - Interface functions
+--------------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+--------------+---------------------------------------------+
+    | Opcode    | Mnemonic     | Description                                 |
+    +===========+==============+=============================================+
+    | FE `/u16` | IFKT `imm16` | Calling virtual machine interface functions |
+    +-----------+--------------+---------------------------------------------+
+
+Allows calling certain functions special to the virtual machine.
 
 ILLEGAL - Illegal instruction
 -----------------------------
@@ -83,19 +106,26 @@ purposes, the mnemonic ``illegal`` and the opcode ``0xFF`` are explicitly
 declared to be illegal instructions and shall remain so even with future
 instruction set extensions.
 
-IFKT - Interface functions
+JMP - Jump unconditionally
 --------------------------
 
 .. table::
     :widths: 15 25 70
 
-    +-----------+--------------+---------------------------------------------+
-    | Opcode    | Mnemonic     | Description                                 |
-    +===========+==============+=============================================+
-    | FE `/u16` | IFKT `imm16` | Calling virtual machine interface functions |
-    +-----------+--------------+---------------------------------------------+
+    +-----------+-------------+-------------------------------------------------+
+    | Opcode    | Mnemonic    | Description                                     |
+    +===========+=============+=================================================+
+    | 60        | JMP %ip     | Jump to register %ip indirect                   |
+    +-----------+-------------+-------------------------------------------------+
+    | 61        | JMP %wp     | Jump to register %wp indirect                   |
+    +-----------+-------------+-------------------------------------------------+
+    | 62        | JMP %acc1   | Jump to register %acc1 indirect                 |
+    +-----------+-------------+-------------------------------------------------+
+    | 63        | JMP %acc2   | Jump to register %acc2 indirect                 |
+    +-----------+-------------+-------------------------------------------------+
+    | 64 `/u32` | JMP `label` | Jump to immediate address                       |
+    +-----------+-------------+-------------------------------------------------+
 
-Allows calling certain functions special to the virtual machine.
 
 MOV - Move
 ----------
@@ -103,43 +133,40 @@ MOV - Move
 .. table::
     :widths: 15 25 70
 
-    +-----------+----------------------+---------------------------------------------+
-    | Opcode    | Mnemonic             | Description                                 |
-    +===========+======================+=============================================+
-    | 20 `/rr`  | MOV `regi`, `regi`   | Move register to register word sized        |
-    +-----------+----------------------+---------------------------------------------+
-    | 21 `/rr`  | MOV.B `regi`, `regi` | Move register to register byte sized        |
-    +-----------+----------------------+---------------------------------------------+
-
-mov reg, reg
-mov [reg], reg
-mov reg, [reg]
-mov [reg], [reg]
-
-movi reg, imm32/imm8
-movi [reg], imm32/imm8
+    +-----------+----------------------+-------------------------------------------------+
+    | Opcode    | Mnemonic             | Description                                     |
+    +===========+======================+=================================================+
+    | 20 `/rr`  | MOV.W `regi`, `regi` | Move register to register word sized            |
+    +-----------+----------------------+-------------------------------------------------+
+    | 21 `/rr`  | MOV.B `regi`, `regi` | Move register to register byte sized            |
+    +-----------+----------------------+-------------------------------------------------+
+    | 22 `/rr`  | MOV.W `regi`, `regi` | Move register to register byte sized            |
+    +-----------+----------------------+-------------------------------------------------+
+    | 24 `/rr`  | MOV.W `regi`, `regi` | Move register to register byte sized            |
+    +-----------+----------------------+-------------------------------------------------+
+    | 25 `/rr`  | MOV.W `regi`, `regi` | Move register to register byte sized            |
+    +-----------+----------------------+-------------------------------------------------+
+    | 26 `/u16` | MOV.W `imm32`        | Move an immediate 32-bit value to register acc1 |
+    +-----------+----------------------+-------------------------------------------------+
 
 mov [rsp++], reg   // pushr reg
 mov reg, [--rsp]   // popr reg
 mov [rdp++], reg   // pushd reg
 mov reg, [--rdp]   // popd reg
 
-The ``mov`` instruction is meant for all sorts of stack operations. The encoding was chosen because of the following reasons:
+NOP - No Operation
+------------------
 
- * instead of using the two 4-bit nibbles for source and target register encodings, the source and target registers are encoded as 3-bit values 
-   in the lowest 6 bits of the operand. Unlike ``mov``, we can't encode all possible "configurations" of source and target together with the
-   register values in one 8-bit operand.
- * the only possible combinations are one indirect operand with post/prefix-operation and one immediate register operand, therefore we keep
-   the configuration of the indirect operand in the highest 2 bits of the operand
- * the direction, respectively the configuration of source and target operands is encoded in the opcode; either it is an direct to indirect
-   move in which case the target register is interpreted as indirect post/pre- increment or decrement or it is an indirect to direct
-   move where the source register gets all the configurations
+.. table::
+    :widths: 15 25 70
 
-JMP - Jump instructions
------------------------
+    +--------+----------+--------------+
+    | Opcode | Mnemonic | Description  |
+    +========+==========+==============+
+    | 00     | NOP      | No operation |
+    +--------+----------+--------------+
 
-jmp [reg]
-jmp imm32 (?)
+This instruction has no effect and can be used to fill memory.
 
 Mathematical instructions
 -------------------------
