@@ -16,7 +16,7 @@ enum class Opcode {
     MOVS_DI_B = 0x25,   // NOT IMPLEMENTED
     MOVI_ACC1 = 0x26,
 
-    ADD = 0x30,
+    ADDR_W = 0x30,
 
     JMPI_IP = 0x60,
     JMPI_WP = 0x61,
@@ -84,10 +84,18 @@ Vm::Result Vm::singleStep() {
     switch (op) {
         case Opcode::NOP:
             break;
-        case Opcode::ADD:
-            state.registers[Acc1] = pop_ds();
-            state.registers[Acc2] = pop_ds();
-            push_ds(state.registers[Acc1] + state.registers[Acc2]);
+        case Opcode::ADDR_W:
+            {
+                param8 = fetch_op();
+                uint8_t target = (param8 & 0x70) >> 4;
+                uint8_t source1 = param8 & 0x7;
+
+                param8 = fetch_op();
+                uint8_t source2 = param8 & 0x7;
+
+                state.registers[target] = state.registers[source1] + state.registers[source2];
+            }
+
             break;
         case Opcode::MOVR_W:
             param8 = fetch_op();
@@ -196,6 +204,20 @@ std::string Vm::disassembleAtPc() const {
     switch (static_cast<Opcode>(memory[state.registers[Pc]])) {
         case Opcode::NOP:
             return "nop";
+        case Opcode::ADDR_W:
+            {
+                uint8_t param1 = memory[state.registers[Pc]+1];
+                uint8_t param2 = memory[state.registers[Pc]+2];
+
+                uint8_t target = (param1 & 0x70) >> 4;
+                uint8_t source1 = param1 & 0x7;
+                uint8_t source2 = param2 & 0x7;
+                return fmt::format("add.w {}, {}, {}",
+                    register_name_mapping.at(target),
+                    register_name_mapping.at(source1),
+                    register_name_mapping.at(source2)
+                );
+            }
         case Opcode::MOVR_W:
             param = memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movr_parameters(param));

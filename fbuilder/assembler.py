@@ -24,6 +24,7 @@ MOVS_ID_B = 0x23    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 MOVS_DI_W = 0x24    # direct <-- indirect move
 MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 MOVI_ACC1 = 0x26
+ADDR_W = 0x30
 JMPI_IP = 0x60
 JMPI_WP = 0x61
 JMPI_ACC1 = 0x62
@@ -183,7 +184,20 @@ class VmForthAssembler(Interpreter):
                 parameters = [self.visit(child) for child in tree.children[1:]][0]
         else:
             parameters = []
-        if mnemonic == "dw":
+        if mnemonic == "add":
+            opcode = ADDR_W
+            operand1 = 0x0
+            operand2 = 0x0
+            target_param = parameters[0]
+            source1_param = parameters[1]
+            source2_param = parameters[2]
+
+            operand1 |= (target_param.encoding << 4)
+            operand1 |= source1_param.encoding
+            operand2 |= source2_param.encoding
+
+            bytecode = struct.pack("BBB", opcode, operand1, operand2)
+        elif mnemonic == "dw":
             if isinstance(parameters[0], JumpOperand):
                 next_jumps_index = len(self.jumps)
                 self.jumps.append(parameters[0].jump_target)

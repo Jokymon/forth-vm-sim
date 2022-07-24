@@ -71,6 +71,7 @@ OPCODE.2: "add"
     | "popr"
     | "pushd"
     | "pushr"
+    | "unsup"
 
 REGISTER: "%ip"
     | "%wp"

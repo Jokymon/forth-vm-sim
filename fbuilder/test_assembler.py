@@ -13,14 +13,14 @@ class TestOpcodeHandling:
     def test_currently_unsupported_opcodes_are_reported(self):
         source = """
         codeblock
-            add
+            unsup
         end
         """
 
         with pytest.raises(ValueError) as parsing_error:
             assemble(source)
         assert "on line 3" in str(parsing_error)
-        assert "Opcode 'add' currently not implemented" in str(parsing_error)
+        assert "Opcode 'unsup' currently not implemented" in str(parsing_error)
 
 def test_hexadecimal_number_is_correctly_parsed():
     source = """
@@ -605,3 +605,16 @@ class TestWordDefinitions:
         """
         result = assemble(source)
         assert result[0:4] == b"\x0e\x00\x00\x00"
+
+
+class TestAddInstruction:
+    def test_adding_three_registers(self):
+        source = """
+        codeblock
+            add.w %ip, %wp, %acc1
+        end
+        """
+
+        binary = b"\x30\x01\x04"
+
+        assert binary == assemble(source)
