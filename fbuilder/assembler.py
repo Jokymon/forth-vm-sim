@@ -223,6 +223,10 @@ class VmForthAssembler(Interpreter):
                 next_jumps_index = len(self.jumps)
                 self.jumps.append(source_param.jump_target)
                 bytecode = struct.pack("<B2sH", MOVI_ACC1, LABEL_MARKER, next_jumps_index)
+            elif isinstance(source_param, NumberOperand):
+                if target_param.name != "acc1":
+                    raise ValueError(f"immediate value can only be moved to acc1 on line {tree.children[0].line}")
+                bytecode = struct.pack("<BI", MOVI_ACC1, source_param.number)
             elif target_param.is_("increment") or target_param.is_("decrement") or \
                 source_param.is_("increment") or source_param.is_("decrement"):
                 if target_param.is_indirect:

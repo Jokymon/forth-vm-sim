@@ -382,6 +382,29 @@ class TestAssemblingMovInstructions:
         assert "on line 5" in str(parsing_error)
         assert "label can only be moved to acc1" in str(parsing_error)
 
+    def test_moving_from_immediate_value_to_acc1_register(self):
+        source = """
+        codeblock
+            mov.w %acc1, #0xab0356
+        end
+        """
+
+        binary = b"\x26\x56\x03\xab\x00"
+
+        assert binary == assemble(source)
+
+    def test_moving_immediate_value_to_register_other_than_acc1_raises_exception(self):
+        source = """
+        codeblock
+            mov.w %acc2, #0x123532
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "immediate value can only be moved to acc1" in str(parsing_error)
+
 
 class TestCodeDefinitions:
     def test_code_definition_starts_with_backlink(self):
