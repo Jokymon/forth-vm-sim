@@ -19,29 +19,26 @@ JZ = 0x65
 IFTK = 0xfe
 ILLEGAL = 0xff
 
-LABEL_MARKER = b"\xff\xaa"
-
 
 class MachineCodeEmitter:
     def __init__(self):
         self.binary_code = b""
 
         self.labels = {}
-        self.jumps = []
+        self.jumps = {}
 
     def finalize(self):
-        new_code = b""
-        old_code = self.binary_code
-        start_of_jump = old_code.find(LABEL_MARKER)
-        while start_of_jump >= 0:
-            new_code += old_code[:start_of_jump]
-            jmp_index = struct.unpack("<H", old_code[start_of_jump+2:start_of_jump+4])[0]
-            jump_target = self.jumps[jmp_index]
-            new_code += struct.pack("<I", self.labels[jump_target])
-            old_code = old_code[start_of_jump+4:]
-            start_of_jump = old_code.find(LABEL_MARKER)
-        new_code += old_code
-        self.binary_code = new_code
+        code_buffer = self.binary_code
+
+        print(self.jumps)
+        for address, label in self.jumps.items():
+            changed_code = code_buffer[:address]
+            changed_code += struct.pack("<I", self.labels[label])
+            changed_code += code_buffer[address+4:]
+
+            code_buffer = changed_code
+
+        self.binary_code = code_buffer
 
     def get_current_code_address(self):
         return len(self.binary_code)
@@ -49,10 +46,12 @@ class MachineCodeEmitter:
     def mark_label(self, label_text):
         self.labels[label_text] = len(self.binary_code)
 
+    def _insert_jump_marker(self, label):
+        self.jumps[self.get_current_code_address()] = str(label)
+        self.binary_code += struct.pack("<I", 0x0)
+
     def emit_label_target(self, label_text):
-        next_jumps_index = len(self.jumps)
-        self.jumps.append(label_text)
-        self.binary_code += LABEL_MARKER + struct.pack("<H", next_jumps_index)
+        self._insert_jump_marker(label_text)
 
     def emit_add(self, target_reg, source1_reg, source2_reg):
         opcode = ADDR_W
@@ -66,18 +65,15 @@ class MachineCodeEmitter:
         self.binary_code += struct.pack("BBB", opcode, operand1, operand2)
 
     def emit_conditional_jump(self, target):
-        next_jumps_index = len(self.jumps)
-        self.jumps.append(target.jump_target)
-        self.binary_code += struct.pack("<B2sH", JZ, LABEL_MARKER, next_jumps_index)
+        self.binary_code += struct.pack("B", JZ)
+        self._insert_jump_marker(target.jump_target)
 
     def emit_data_8(self, data):
         self.binary_code += struct.pack("B", data)
 
     def emit_data_32(self, data):
         if isinstance(data, JumpOperand):
-            next_jumps_index = len(self.jumps)
-            self.jumps.append(data.jump_target)
-            self.binary_code += LABEL_MARKER + struct.pack("<H", next_jumps_index)
+            self._insert_jump_marker(data.jump_target)
         elif isinstance(data, NumberOperand):
             self.binary_code += struct.pack("<I", data.number)
         else:
@@ -98,9 +94,8 @@ class MachineCodeEmitter:
         if isinstance(source, JumpOperand):
             if target.name != "acc1":
                 raise ValueError(f"label can only be moved to acc1 on line {target.line_no}")
-            next_jumps_index = len(self.jumps)
-            self.jumps.append(source.jump_target)
-            self.binary_code += struct.pack("<B2sH", MOVI_ACC1, LABEL_MARKER, next_jumps_index)
+            self.binary_code += struct.pack("<B", MOVI_ACC1)
+            self._insert_jump_marker(source.jump_target)
         elif isinstance(source, NumberOperand):
             if target.name != "acc1":
                 raise ValueError(f"immediate value can only be moved to acc1 on line {target.line_no}")
@@ -143,9 +138,8 @@ class MachineCodeEmitter:
 
     def emit_jump(self, target):
         if isinstance(target, JumpOperand):
-            next_jumps_index = len(self.jumps)
-            self.jumps.append(target.jump_target)
-            self.binary_code += struct.pack("<B2sH", JMPD, LABEL_MARKER, next_jumps_index)
+            self.binary_code += struct.pack("B", JMPD)
+            self._insert_jump_marker(target.jump_target)
         elif target.name == "ip":
             self.binary_code += struct.pack("B", JMPI_IP)
         elif target.name == "wp":
