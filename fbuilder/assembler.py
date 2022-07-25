@@ -55,7 +55,6 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
-        self.word_addresses[word_name] = self.emitter.get_current_code_address()
 
     def word_definition(self, tree):
         current_position = self.emitter.get_current_code_address()
@@ -81,7 +80,6 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
-        self.word_addresses[word_name] = self.emitter.get_current_code_address()
 
     def macro_definition(self, tree):
         macro_name = str(tree.children[0])

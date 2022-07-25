@@ -713,6 +713,48 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[0:4] == b"\x0e\x00\x00\x00"
 
+    def test_defcode_addresses_are_properly_resolved_with_cfas(self):
+        source = """
+        macro __DEFCODE_CFA
+            dw #0x0
+        end
+        // code offset 0
+        defcode A
+            // backlink (4) + word size (1) + word name (1)
+            // offset 6
+            // CFA (4) --> offset 10
+            illegal
+        end
+        // code offset 11
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+            // offset 21
+            A
+        end
+        """
+        result = assemble(source)
+        assert result[21:25] == b"\x06\x00\x00\x00"
+
+    def test_defword_addresses_are_properly_resolved_with_cfas(self):
+        source = """
+        macro __DEFWORD_CFA
+            dw #0x0
+        end
+        // code offset 0
+        defword A
+            // backlink (4) + word size (1) + word name (1) + CFA (4)
+            // offset 10
+        end
+        // code offset 10
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5) + CFA(4)
+            // offset 24
+            A
+        end
+        """
+        result = assemble(source)
+        assert result[24:29] == b"\x06\x00\x00\x00"
+
     def test_first_address_after_word_is_available_as_label(self):
         source = """
         codeblock
