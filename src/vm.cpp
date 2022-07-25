@@ -149,6 +149,10 @@ Vm::Result Vm::singleStep() {
             switch (static_cast<IfktCodes>(param16)) {
                 case IfktCodes::INPUT:
                     ch = getch();
+                    if (0x3 == ch) {
+                        std::cout << "Ctrl-C\n";
+                        exit(0);
+                    }
                     push_ds(ch);
                     std::cout << ch;
                     break;
