@@ -169,6 +169,26 @@ def test_comments(parser):
     """
 
 
+class TestParsingSysVariableDefinitions:
+    def test_simple_variable_definition(self, parser):
+        source = """
+        defsysvar SP0
+        """
+        parser.parse(source)
+
+    def test_variable_with_initial_value(self, parser):
+        source = """
+        defsysvar SP0 0x23155
+        """
+        parser.parse(source)
+
+    def test_variable_with_initial_label_value(self, parser):
+        source = """
+        defsysvar SP0 :stack_start
+        """
+        parser.parse(source)
+
+
 class TestParsingDataDefinitions:
     def test_defining_immediate_32bit_value(self, parser):
         source = """

@@ -5,6 +5,7 @@ definition: code_block
     | macro_definition
     | word_definition
     | constant_definition
+    | system_variable_definition
 
 code_block: "codeblock" code_line* "end"
 
@@ -15,6 +16,8 @@ macro_definition: "macro" IDENTIFIER code_line* "end"
 word_definition: "defword" WORD_NAME word* "end"
 
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
+
+system_variable_definition: "defsysvar" WORD_NAME (number | jump_target)? _NEWLINE
 
 code_line: instruction _NEWLINE
     | macro_call _NEWLINE

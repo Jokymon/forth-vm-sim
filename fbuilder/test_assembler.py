@@ -88,6 +88,100 @@ def test_trying_to_call_undefined_macro_raises_exception():
     assert "on line 3" in str(parsing_error)
 
 
+class TestAssemblingDefSysVarDefinitions:
+    def test_variable_definition_starts_with_backlink(self):
+        source = """
+        codeblock
+            nop
+        end
+
+        defsysvar SP0
+        """
+
+        result = assemble(source)
+        assert result[1:5] == b"\x00\x00\x00\x00"
+
+    def test_variable_definition_contains_variable_name(self):
+        source = """
+        codeblock
+            nop
+        end
+    
+        defsysvar SP0
+        """
+
+        result = assemble(source)
+        assert result[5] == 3
+        assert result[6:9] == b"SP0"
+
+    def test_variable_definition_contains_contains_default_0_value(self):
+        source = """
+        codeblock
+            nop
+        end
+
+        defsysvar SP0
+        """
+
+        result = assemble(source)
+        assert result[9:13] == b"\x00\x00\x00\x00"
+
+    def test_variable_definition_contains_given_default_value(self):
+        source = """
+        codeblock
+            nop
+        end
+
+        defsysvar SP0 0xab78cd11
+        """
+
+        result = assemble(source)
+        assert result[9:13] == b"\x11\xcd\x78\xab"
+
+    def test_variable_definition_contains_given_label_target(self):
+        source = """
+        codeblock
+            nop
+        test_target:
+        end
+
+        defsysvar SP0 :test_target
+        """
+
+        result = assemble(source)
+        assert result[9:13] == b"\x01\x00\x00\x00"
+
+    def test_address_of_variable_is_provided_as_label(self):
+        source = """
+        codeblock
+            nop
+            dw :sp0_var
+        end
+
+        defsysvar SP0
+        """
+
+        result = assemble(source)
+        # Address must be calculated from backlink, variable name length
+        # and variable name itself
+        assert result[1:5] == b"\x0d\x00\x00\x00"
+
+    def test_cfa_of_variable_is_filled_with_macro(self):
+        source = """
+        macro __DEFVAR_CFA
+            dw #0x17fcaa55
+        end
+        codeblock
+            nop
+        end
+
+        defsysvar SP0
+        """
+
+        result = assemble(source)
+        assert result[9:13] == b"\x55\xaa\xfc\x17"
+
+
 class TestAssemblingDwInstructions:
     def test_immediate_32bit_values_are_inserted_in_correct_byte_order(self):
         source = """
@@ -478,6 +572,19 @@ class TestCodeDefinitions:
         result = assemble(source)
         assert result[0:4] == b"\x0e\x00\x00\x00"
 
+    def test_first_address_after_word_is_available_as_label(self):
+        source = """
+        codeblock
+            dw :word1_end
+        end
+        // code offset 0x4
+        defcode WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x0e\x00\x00\x00"
+
 
 class TestWordDefinitions:
     def test_word_definition_starts_with_backlink(self):
@@ -597,6 +704,19 @@ class TestWordDefinitions:
         source = """
         codeblock
             dw :word1_cfa
+        end
+        // code offset 0x4
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x0e\x00\x00\x00"
+
+    def test_first_address_after_word_is_available_as_label(self):
+        source = """
+        codeblock
+            dw :word1_end
         end
         // code offset 0x4
         defword WORD1
