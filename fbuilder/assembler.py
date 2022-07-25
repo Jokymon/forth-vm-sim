@@ -11,14 +11,14 @@ def aligned(address, alignment):
 
 
 class VmForthAssembler(Interpreter):
-    def __init__(self):
+    def __init__(self, emitter):
         self.constants = {}
         self.macros = {}
 
         self.word_addresses = {}
         self.previous_word_start = 0x0
 
-        self.emitter = MachineCodeEmitter()
+        self.emitter = emitter
 
     def _get_cfa_from_word(self, word):
         if word in self.word_addresses:
@@ -210,6 +210,19 @@ def assemble(input_text):
 
     parse_tree = lark_parser.parse(input_text)
 
-    assembler = VmForthAssembler()
+    assembler = VmForthAssembler(MachineCodeEmitter())
     assembler.visit(parse_tree)
     return assembler.emitter.binary_code
+
+
+def assemble_with_diassassembly(input_text):
+    script_dir = pathlib.Path(__file__).parent
+    lark_grammar_path = script_dir / "grammar.lark"
+    grammar = lark_grammar_path.read_text()
+    lark_parser = Lark(grammar, parser='lalr')
+
+    parse_tree = lark_parser.parse(input_text)
+
+    assembler = VmForthAssembler(DisassemblyEmitter())
+    assembler.visit(parse_tree)
+    return assembler.emitter.disassembly

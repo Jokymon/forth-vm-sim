@@ -30,7 +30,6 @@ class MachineCodeEmitter:
     def finalize(self):
         code_buffer = self.binary_code
 
-        print(self.jumps)
         for address, label in self.jumps.items():
             changed_code = code_buffer[:address]
             changed_code += struct.pack("<I", self.labels[label])
@@ -148,3 +147,130 @@ class MachineCodeEmitter:
             self.binary_code += struct.pack("B", JMPI_ACC1)
         elif target.name == "acc2":
             self.binary_code += struct.pack("B", JMPI_ACC2)
+
+
+class DisassemblyEmitter:
+    def __init__(self):
+        self.disassembly = ""
+
+        self.binary_emitter = MachineCodeEmitter()
+
+    def finalize(self):
+        pass
+
+    def get_current_code_address(self):
+        return self.binary_emitter.get_current_code_address()
+
+    def mark_label(self, label):
+        self.disassembly += f"    {label}:\n"
+        self.binary_emitter.mark_label(label)
+
+    def emit_add(self, target_reg, source1_reg, source2_reg):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_add(target_reg, source1_reg, source2_reg)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} add {target_reg}, {source1_reg}, {source2_reg}\n"
+
+    def emit_conditional_jump(self, target):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_conditional_jump(target)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} jz {target}\n"
+
+    def emit_data_8(self, data):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_data_8(data)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} db #0x{data:x}\n"
+
+    def emit_data_32(self, data):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_data_32(data)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} dw {data}\n"
+
+    def emit_data_string(self, data):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_data_string(data)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} ds \"{data}\"\n"
+
+    def emit_ifkt(self, function_number):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_ifkt(function_number)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} ifkt {function_number}\n"
+
+    def emit_illegal(self):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_illegal()
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} illegal\n"
+
+    def emit_jump(self, target):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_jump(target)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} jmp {target}\n"
+
+    def emit_label_target(self, label_text):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_label_target(label_text)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} dw {label_text}\n"
+
+    def emit_mov(self, suffix, target, source):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_mov(suffix, target, source)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} mov.{suffix} {target}, {source}\n"

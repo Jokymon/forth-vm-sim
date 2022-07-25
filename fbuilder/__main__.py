@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 from lark import Lark
-from assembler import assemble  # VmForthAssembler
+from assembler import assemble, assemble_with_diassassembly
 
 
 def compile_forth(input_path, output_path, output_format):
@@ -10,6 +10,9 @@ def compile_forth(input_path, output_path, output_format):
     if output_format == "bin":
         with open(output_path, "wb") as output_file:
             output_file.write(assemble(dictionary_source))
+    elif output_format == "disassembly":
+        with open(output_path, "w") as output_file:
+            output_file.write(assemble_with_diassassembly(dictionary_source))
     else:
         with open(output_path, "w") as output_file:
             data = assemble(dictionary_source)
@@ -23,7 +26,7 @@ def main():
                         help="input file for compilation")
     parser.add_argument('-o', '--output', dest='output', type=str, required=True,
                         help="output file for compiled data")
-    parser.add_argument('-f', '--format', dest='format', choices=['bin', 'carray'], default="bin",
+    parser.add_argument('-f', '--format', dest='format', choices=['bin', 'carray', 'disassembly'], default="bin",
                         help="output format for the assembled code")
 
     args = parser.parse_args()
