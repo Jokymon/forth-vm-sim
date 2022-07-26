@@ -52,6 +52,35 @@ In most cases when registers need to be encoded in the opcodes, the following ma
 
 All number types comprising of more than one byte are stored in little-endian format.
 
+.. list-table::
+    :header-rows: 1
+
+    * - Encoding
+      - Description
+
+    * - ``u32``
+      - A 32-bit unsigned integer value in little-endian encoding
+
+    * - ``rr``
+      - .. wavedrom:: images/encoding_rr.json
+
+        - ``DI_T`` Flag to indicate whether the target register is used
+          direct or indirect. A ``1`` means indirect.
+        - ``reg_target`` The target register encoded as described above.
+        - ``DI_S`` Flag to indicate whether the source register is used
+          direct or indirect. A ``1`` means indirect.
+        - ``reg_source`` The source register encoded as described above.
+
+    * - ``rop``
+      - .. wavedrom:: images/encoding_rop.json
+
+        - ``DI``
+        - ``PP``
+        - ``reg_target``
+        - ``reg_source``
+
+Next list
+
  * `u32` - unsigned 32-bit immediate operand in little endian encoding
  * `u16` - unsigned 16-bit immediate operand in little endian encoding
  * `rr` - encoding for operations between two registers

@@ -28,7 +28,8 @@ author = 'Silvan Wegmann'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinxcontrib.plantuml'
+    'sphinxcontrib.plantuml',
+    'sphinxcontrib.wavedrom'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,3 +56,5 @@ html_static_path = ['_static']
 # -- Settings for plugins ----------------------------------------------------
 
 plantuml = os.environ["PLANTUML"]
+
+render_using_wavedrompy = True
