@@ -212,6 +212,8 @@ class DisassemblyEmitter:
             new_pos = self.get_current_code_address()
             new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
             machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+            if not isinstance(data, NumberOperand):
+                data = f"#{data:x}"
             self.disassembly += f"{machine_code:<18} dw {data}\n"
 
     def emit_data_string(self, data):
