@@ -10,6 +10,15 @@ def aligned(address, alignment):
     return (address + alignment - 1) // alignment * alignment
 
 
+class MacroDefinition:
+    def __init__(self, nodes):
+        self.nodes = nodes
+
+    def evaluate(self, assembler):
+        for node in self.nodes:
+            assembler.visit(node)
+
+
 class VmForthAssembler(Interpreter):
     def __init__(self, emitter):
         self.constants = {}
@@ -48,8 +57,7 @@ class VmForthAssembler(Interpreter):
 
         # Append CFA field which is just the current address +4 for code words
         if "__DEFCODE_CFA" in self.macros:
-            for child in self.macros["__DEFCODE_CFA"]:
-                self.visit(child)
+            self.macros["__DEFCODE_CFA"].evaluate(self)
 
         self.visit_children(tree)
 
@@ -73,8 +81,7 @@ class VmForthAssembler(Interpreter):
 
         # Append CFA field which is just the current address +4 for code words
         if "__DEFWORD_CFA" in self.macros:
-            for child in self.macros["__DEFWORD_CFA"]:
-                self.visit(child)
+            self.macros["__DEFWORD_CFA"].evaluate(self)
 
         self.visit_children(tree)
 
@@ -83,7 +90,7 @@ class VmForthAssembler(Interpreter):
 
     def macro_definition(self, tree):
         macro_name = str(tree.children[0])
-        self.macros[macro_name] = tree.children[1:]  # macro_code
+        self.macros[macro_name] = MacroDefinition(tree.children[1:])  # macro_code
 
     def constant_definition(self, tree):
         constant_name = str(tree.children[0])
@@ -103,8 +110,7 @@ class VmForthAssembler(Interpreter):
 
         # Append CFA field
         if "__DEFVAR_CFA" in self.macros:
-            for child in self.macros["__DEFVAR_CFA"]:
-                self.visit(child)
+            self.macros["__DEFVAR_CFA"].evaluate(self)
 
         # create a label for the variable value
         self.emitter.mark_label(variable_name.lower() + "_var")
@@ -151,8 +157,7 @@ class VmForthAssembler(Interpreter):
         macro_name = str(tree.children[0])
         if not macro_name in self.macros:
             raise ValueError(f"Undefined Macro: '{macro_name}' on line {tree.children[0].line}")
-        for child in self.macros[macro_name]:
-            self.visit(child)
+        self.macros[macro_name].evaluate(self)
 
     def paramlist(self, tree):
         return [ self.visit(child) for child in tree.children ]
