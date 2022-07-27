@@ -214,12 +214,13 @@ class VmForthAssembler(Interpreter):
     def word(self, tree):
         word = str(tree.children[0])
         cfa = self._get_cfa_from_word(word)
-        if cfa==0 and not word.endswith(":") and not word.startswith(":"):
-            raise ValueError(f"Word '{word}' not found in current dictionary on line {tree.children[0].line}")
-        if word.endswith(":"):
-            self.emitter.mark_label(word[:-1])
-        elif word.startswith(":"):
-            self.emitter.emit_label_target(word[1:])
+        if cfa==0:
+            if word.endswith(":"):
+                self.emitter.mark_label(word[:-1])
+            elif word.startswith(":"):
+                self.emitter.emit_label_target(word[1:])
+            else:
+                raise ValueError(f"Word '{word}' not found in current dictionary on line {tree.children[0].line}")
         else:
             self.emitter.emit_data_32(cfa)
 
