@@ -153,11 +153,11 @@ Vm::Result Vm::singleStep() {
                         std::cout << "Ctrl-C\n";
                         exit(0);
                     }
-                    push_ds(ch);
+                    state.registers[Acc1] = ch;
                     std::cout << ch;
                     break;
                 case IfktCodes::OUTPUT:
-                    ch = pop_ds() & 0xff;
+                    ch = state.registers[Acc1] & 0xff;
                     std::cout << ch;
                     break;
                 case IfktCodes::TERMINATE:
@@ -413,18 +413,6 @@ std::string Vm::disassemble_movs_parameters(uint8_t parameter, MoveTarget move_t
             pre_operation, register_name_mapping.at(source), post_operation
             );
     }
-}
-
-
-void Vm::push_ds(uint32_t data) {
-    state.registers[Dsp] -= 4;
-    put32(state.registers[Dsp], data);
-}
-
-uint32_t Vm::pop_ds() {
-    uint32_t value = get32(state.registers[Dsp]);
-    state.registers[Dsp] += 4;
-    return value;
 }
 
 uint16_t Vm::get16(uint32_t address) const {
