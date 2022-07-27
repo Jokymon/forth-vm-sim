@@ -830,6 +830,47 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[0:4] == b"\x0e\x00\x00\x00"
 
+    def test_words_that_are_immediate_numbers_will_be_inserted_as_plain_numbers(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+            #0x1234
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x34\x12\x00\x00"
+
+    def test_words_that_are_hex_numbers_will_be_inserted_as_plain_numbers(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+            0x1234
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x34\x12\x00\x00"
+
+    def test_words_that_are_dec_numbers_will_be_inserted_as_plain_numbers(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5)
+            234153
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\xa9\x92\x03\x00"
 
 class TestAddInstruction:
     def test_adding_three_registers(self):

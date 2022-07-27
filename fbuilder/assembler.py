@@ -219,6 +219,12 @@ class VmForthAssembler(Interpreter):
                 self.emitter.mark_label(word[:-1])
             elif word.startswith(":"):
                 self.emitter.emit_label_target(word[1:])
+            elif word.startswith("#0x"):
+                self.emitter.emit_data_32(int(word[3:], 16))
+            elif word.startswith("0x"):
+                self.emitter.emit_data_32(int(word[2:], 16))
+            elif word.isnumeric():
+                self.emitter.emit_data_32(int(word))
             else:
                 raise ValueError(f"Word '{word}' not found in current dictionary on line {tree.children[0].line}")
         else:
