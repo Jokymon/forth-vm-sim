@@ -11,7 +11,8 @@ def aligned(address, alignment):
 
 
 class MacroDefinition:
-    def __init__(self, nodes):
+    def __init__(self, parameters, nodes):
+        self.parameters = parameters
         self.nodes = nodes
 
     def evaluate(self, assembler):
@@ -23,6 +24,7 @@ class VmForthAssembler(Interpreter):
     def __init__(self, emitter):
         self.constants = {}
         self.macros = {}
+        self.macro_scope = {}
 
         self.word_addresses = {}
         self.previous_word_start = 0x0
@@ -90,7 +92,9 @@ class VmForthAssembler(Interpreter):
 
     def macro_definition(self, tree):
         macro_name = str(tree.children[0])
-        self.macros[macro_name] = MacroDefinition(tree.children[1:])  # macro_code
+        arguments = list(map(str, filter(lambda x: x is not None, tree.children[1].children)))
+        macro_code = tree.children[2:]
+        self.macros[macro_name] = MacroDefinition(arguments, macro_code)
 
     def constant_definition(self, tree):
         constant_name = str(tree.children[0])
@@ -157,7 +161,17 @@ class VmForthAssembler(Interpreter):
         macro_name = str(tree.children[0])
         if not macro_name in self.macros:
             raise ValueError(f"Undefined Macro: '{macro_name}' on line {tree.children[0].line}")
+        parameter_len = len(self.macros[macro_name].parameters)
+        argument_len = 0
+        if tree.children[1] is not None:
+            parameters = self.macros[macro_name].parameters
+            arguments = tree.children[1].children
+            argument_len = len(arguments)
+            self.macro_scope = dict(zip(parameters, arguments))
+        if parameter_len != argument_len:
+            raise ValueError(f"Calling macro with {argument_len} parameter where {parameter_len} are expected on line {tree.children[0].line}")
         self.macros[macro_name].evaluate(self)
+        self.macro_scope = {}
 
     def paramlist(self, tree):
         return [ self.visit(child) for child in tree.children ]
@@ -222,6 +236,12 @@ class VmForthAssembler(Interpreter):
             else:
                 value.number -= operand
         return value
+
+    def macro_parameter(self, tree):
+        parameter_name = str(tree.children[0])
+        if not parameter_name in self.macro_scope:
+            raise ValueError(f"Unknown macro argument '{parameter_name}' on line {tree.children[0].line}")
+        return self.visit(self.macro_scope[parameter_name])
 
     def current_address(self, tree):
         return NumberOperand(self.emitter.get_current_code_address())

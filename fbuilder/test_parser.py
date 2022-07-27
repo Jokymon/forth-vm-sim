@@ -53,12 +53,77 @@ class TestWordBlocks:
 
 
 
-def test_empty_macro(parser):
-    source = """
-    macro TEST_MACRO
-    end
-    """
-    parser.parse(source)
+class TestMacros:
+    def test_empty_macro(self, parser):
+        source = """
+        macro TEST_MACRO()
+        end
+        """
+        parser.parse(source)
+
+    def test_macro_with_instructions(self, parser):
+        source = """
+        macro TEST_MACRO()
+            nop
+            nop
+        end
+        """
+        parser.parse(source)
+
+    def test_macro_with_register_argument(self, parser):
+        source = """
+        macro TEST_MACRO(reg)
+            mov %acc1, @reg
+        end
+        """
+        parser.parse(source)
+
+    def test_macro_with_multiple_register_arguments(self, parser):
+        source = """
+        macro TEST_MACRO(reg1, reg2)
+            mov %acc1, @reg1
+            mov @reg2, %acc2
+        end
+        """
+        parser.parse(source)
+
+    def test_calling_a_macro(self, parser):
+        source = """
+        macro TEST_MACRO()
+            nop
+            nop
+        end
+
+        codeblock
+            TEST_MACRO()
+        end
+        """
+        parser.parse(source)
+
+    def test_calling_a_macro_with_one_argument(self, parser):
+        source = """
+        macro TEST_MACRO(reg)
+            mov %acc1, @reg
+        end
+
+        codeblock
+            TEST_MACRO(%dsp)
+        end
+        """
+        parser.parse(source)
+
+    def test_calling_a_macro_with_two_arguments(self, parser):
+        source = """
+        macro TEST_MACRO(reg1, reg2)
+            mov %acc1, @reg1
+            mov @reg2, %acc2
+        end
+
+        codeblock
+            TEST_MACRO(%dsp, %rsp)
+        end
+        """
+        parser.parse(source)
 
 
 def test_constant_definition(parser):
@@ -131,30 +196,6 @@ def test_simple_current_address_based_expression_as_parameter(parser):
     source = """
     codeblock
         dw $+4
-    end
-    """
-    parser.parse(source)
-
-
-def test_macro_with_instructions(parser):
-    source = """
-    macro TEST_MACRO
-        nop
-        nop
-    end
-    """
-    parser.parse(source)
-
-
-def test_calling_a_macro(parser):
-    source = """
-    macro TEST_MACRO
-        nop
-        nop
-    end
-
-    codeblock
-        TEST_MACRO()
     end
     """
     parser.parse(source)

@@ -11,13 +11,15 @@ code_block: "codeblock" code_line* "end"
 
 code_definition: "defcode" WORD_NAME code_line* "end"
 
-macro_definition: "macro" IDENTIFIER code_line* "end"
+macro_definition: "macro" IDENTIFIER "(" macro_parameters ")" code_line* "end"
 
 word_definition: "defword" WORD_NAME word* "end"
 
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 
 system_variable_definition: "defsysvar" WORD_NAME (number | jump_target)? _NEWLINE
+
+macro_parameters: [ IDENTIFIER ( "," IDENTIFIER )* ]
 
 code_line: instruction _NEWLINE
     | macro_call _NEWLINE
@@ -32,8 +34,9 @@ param: register
     | register_indirect
     | jump_target
     | current_address_expression
+    | macro_parameter
 
-macro_call: IDENTIFIER "(" ")"
+macro_call: IDENTIFIER "(" [ paramlist ] ")"
 
 label: IDENTIFIER ":"
 
@@ -56,6 +59,8 @@ register_indirect_postfix: "[" REGISTER decrement_increment "]"
 jump_target: ":" IDENTIFIER
 
 current_address_expression: current_address ( OPERATOR number )*
+
+macro_parameter: "@" IDENTIFIER
 
 current_address: "$"
 

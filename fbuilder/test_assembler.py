@@ -60,32 +60,94 @@ def test_ifkt_is_translated_with_16bit_argument():
     assert binary == assemble(source)
 
 
-def test_calling_macros_inserts_the_code():
-    source = """
-    macro TEST
-        illegal
-    end
+class TestAssemblingMacros:
+    def test_calling_macros_inserts_the_code(self):
+        source = """
+        macro TEST()
+            illegal
+        end
 
-    codeblock
-        TEST()
-    end
-    """
+        codeblock
+            TEST()
+        end
+        """
 
-    binary = b"\xff"    # online contains the 'illegal' instruction once
+        binary = b"\xff"    # online contains the 'illegal' instruction once
 
-    assert binary == assemble(source)
+        assert binary == assemble(source)
 
+    def test_calling_macro_with_register_inserts_correctly(self):
+        source = """
+        macro TEST(reg)
+            mov %acc1, @reg
+        end
 
-def test_trying_to_call_undefined_macro_raises_exception():
-    source = """
-    codeblock
-        MISSING_MACRO()
-    end
-    """
+        codeblock
+            TEST(%dsp)
+        end
+        """
 
-    with pytest.raises(ValueError) as parsing_error:
-        assemble(source)
-    assert "on line 3" in str(parsing_error)
+        binary = b"\x20\x43"
+
+        assert binary == assemble(source)
+
+    def test_calling_macro_with_value_and_register_inserts_correctly(self):
+        source = """
+        macro LOAD_IMMEDIATE(reg, value)
+            mov %acc1, @value
+            mov @reg, %acc1
+        end
+
+        codeblock
+            LOAD_IMMEDIATE(%dsp, #0x34)
+        end
+        """
+        binary = b"\x26\x34\x00\x00\x00\x20\x34"
+
+        assert binary == assemble(source)
+
+    def test_trying_to_call_undefined_macro_raises_exception(self):
+        source = """
+        codeblock
+            MISSING_MACRO()
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+
+    def test_trying_to_call_with_mismatching_amount_of_arguments_raises_exception(self):
+        source = """
+        macro LOAD_IMMEDIATE(reg, value)
+            mov %acc1, @value
+            mov @reg, %acc1
+        end
+
+        codeblock
+            LOAD_IMMEDIATE(%dsp)
+        end
+        """
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 8" in str(parsing_error)
+        assert "Calling macro with 1 parameter where 2 are expected" in str(parsing_error)
+
+    def test_trying_to_call_with_unknown_argument_raises_exception(self):
+        source = """
+        macro LOAD_IMMEDIATE(reg)
+            mov %acc1, @value
+            mov @reg, %acc1
+        end
+
+        codeblock
+            LOAD_IMMEDIATE(%dsp)
+        end
+        """
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "Unknown macro argument 'value'" in str(parsing_error)
 
 
 class TestAssemblingDefSysVarDefinitions:
@@ -168,7 +230,7 @@ class TestAssemblingDefSysVarDefinitions:
 
     def test_cfa_of_variable_is_filled_with_macro(self):
         source = """
-        macro __DEFVAR_CFA
+        macro __DEFVAR_CFA()
             dw #0x17fcaa55
         end
         codeblock
@@ -258,7 +320,7 @@ class TestCurrentAddressExpressions:
 
     def test_dollar_inside_macro_uses_the_address_at_insertion(self):
         source = """
-        macro CURRENT_ADDRESS
+        macro CURRENT_ADDRESS()
             dw $
         end
 
@@ -545,7 +607,7 @@ class TestCodeDefinitions:
 
     def test_cfa_is_filled_with_macro(self):
         source = """
-        macro __DEFCODE_CFA
+        macro __DEFCODE_CFA()
             dw #0x3829af7b
         end
         codeblock
@@ -620,7 +682,7 @@ class TestWordDefinitions:
 
     def test_cfa_is_filled_with_macro(self):
         source = """
-        macro __DEFWORD_CFA
+        macro __DEFWORD_CFA()
             dw #0x3829af7b
         end
         codeblock
@@ -715,7 +777,7 @@ class TestWordDefinitions:
 
     def test_defcode_addresses_are_properly_resolved_with_cfas(self):
         source = """
-        macro __DEFCODE_CFA
+        macro __DEFCODE_CFA()
             dw #0x0
         end
         // code offset 0
@@ -737,7 +799,7 @@ class TestWordDefinitions:
 
     def test_defword_addresses_are_properly_resolved_with_cfas(self):
         source = """
-        macro __DEFWORD_CFA
+        macro __DEFWORD_CFA()
             dw #0x0
         end
         // code offset 0
