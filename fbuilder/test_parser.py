@@ -219,13 +219,19 @@ class TestParsingSysVariableDefinitions:
 
     def test_variable_with_initial_value(self, parser):
         source = """
-        defsysvar SP0 0x23155
+        defsysvar SP0 #0x23155
         """
         parser.parse(source)
 
     def test_variable_with_initial_label_value(self, parser):
         source = """
         defsysvar SP0 :stack_start
+        """
+        parser.parse(source)
+
+    def test_variable_with_initial_constant_value(self, parser):
+        source = """
+        defsysvar SP0 SP_BASE
         """
         parser.parse(source)
 

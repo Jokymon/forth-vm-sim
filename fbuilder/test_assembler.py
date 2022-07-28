@@ -194,7 +194,7 @@ class TestAssemblingDefSysVarDefinitions:
             nop
         end
 
-        defsysvar SP0 0xab78cd11
+        defsysvar SP0 #0xab78cd11
         """
 
         result = assemble(source)
@@ -212,6 +212,20 @@ class TestAssemblingDefSysVarDefinitions:
 
         result = assemble(source)
         assert result[9:13] == b"\x01\x00\x00\x00"
+
+    def test_variable_definition_contains_given_constant_value(self):
+        source = """
+        const SP0_BASE = 0x5000
+        codeblock
+            nop
+        test_target:
+        end
+
+        defsysvar SP0 SP0_BASE
+        """
+
+        result = assemble(source)
+        assert result[9:13] == b"\x00\x50\x00\x00"
 
     def test_address_of_variable_is_provided_as_label(self):
         source = """

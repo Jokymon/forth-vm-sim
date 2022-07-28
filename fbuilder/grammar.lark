@@ -17,7 +17,7 @@ word_definition: "defword" WORD_NAME word* "end"
 
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 
-system_variable_definition: "defsysvar" WORD_NAME (number | jump_target)? _NEWLINE
+system_variable_definition: "defsysvar" WORD_NAME (immediate_number | jump_target)? _NEWLINE
 
 macro_parameters: [ IDENTIFIER ( "," IDENTIFIER )* ]
 
