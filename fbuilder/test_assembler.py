@@ -831,6 +831,24 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[24:29] == b"\x06\x00\x00\x00"
 
+    def test_defsysvar_addresses_are_properly_resolved_with_cfas(self):
+        source = """
+        macro __DEFWORD_CFA()
+            dw #0x0
+        end
+        // code offset 0
+        defsysvar A
+            // backlink (4) + word size (1) + word name (1) + value (4)
+            // offset 10
+        defword WORD1
+            // backlink (4) + word size (1) + word name (5) + CFA(4)
+            // offset 24
+            A
+        end
+        """
+        result = assemble(source)
+        assert result[24:29] == b"\x06\x00\x00\x00"
+
     def test_first_address_after_word_is_available_as_label(self):
         source = """
         codeblock
