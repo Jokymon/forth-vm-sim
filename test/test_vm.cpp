@@ -345,8 +345,29 @@ TEST_CASE("Add instruction") {
     REQUIRE( 0x3 == state.registers[Vm::Pc] );
 }
 
+TEST_CASE("Sub instruction") {
+    std::array<uint8_t, 3> testdata = {
+        0x32, 0x01, 0x4,    // sub.w %ip, %wp, %acc1
+    };
+
+    Vm uut;
+    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+
+    auto state = uut.getState();
+    state.registers[Vm::Acc1] = 0x562a;
+    state.registers[Vm::Wp] = 0x723828;
+    state.registers[Vm::Ip] = 0x0;
+    uut.setState(state);
+
+    REQUIRE( Vm::Success == uut.singleStep());
+
+    state = uut.getState();
+    REQUIRE( (0x723828 - 0x562a) == state.registers[Vm::Ip] );
+    REQUIRE( 0x3 == state.registers[Vm::Pc] );
+}
+
 TEST_CASE("Disassembling") {
-    std::array<uint8_t, 51> testdata = {
+    std::array<uint8_t, 54> testdata = {
         0x00,               // nop
         0xff,               // illegal
         0xfe, 0x34, 0x12,   // ifkt 0x1234
@@ -370,6 +391,7 @@ TEST_CASE("Disassembling") {
         0x24, 0xcb,         // mov.w %wp, [--%dsp]
         0x65, 0x07, 0x00, 0x00, 0x00,   // jz 0x7
         0x30, 0x01, 0x4,    // add.w %ip, %wp, %acc1
+        0x32, 0x01, 0x4,    // sub.w %ip, %wp, %acc1
     };
 
     Vm uut;
@@ -512,10 +534,16 @@ TEST_CASE("Disassembling") {
         REQUIRE( "mov.w %wp, [--%dsp]" == uut.disassembleAtPc() );
     }
 
-    // ------ add instructions -----------------------------------
+    // ------ ALU instructions -----------------------------------
     SECTION("Disassembling add with registers") {
         state.registers[Vm::Pc] = 48;
         uut.setState(state);
         REQUIRE( "add.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling add with registers") {
+        state.registers[Vm::Pc] = 51;
+        uut.setState(state);
+        REQUIRE( "sub.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
 }

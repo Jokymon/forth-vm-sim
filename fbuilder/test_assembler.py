@@ -904,8 +904,8 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[11:15] == b"\xa9\x92\x03\x00"
 
-class TestAddInstruction:
-    def test_adding_three_registers(self):
+class TestALUInstruction:
+    def test_adding_two_registers(self):
         source = """
         codeblock
             add.w %ip, %wp, %acc1
@@ -913,5 +913,16 @@ class TestAddInstruction:
         """
 
         binary = b"\x30\x01\x04"
+
+        assert binary == assemble(source)
+
+    def test_subtracting_two_registers(self):
+        source = """
+        codeblock
+            sub.w %ip, %wp, %acc1
+        end
+        """
+
+        binary = b"\x32\x01\x04"
 
         assert binary == assemble(source)

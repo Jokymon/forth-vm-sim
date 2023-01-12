@@ -74,6 +74,7 @@ OPCODE.2: "add"
     | "jz"
     | "mov"
     | "nop"
+    | "sub"
     | "unsup"
 
 REGISTER: "%ip"
