@@ -11,6 +11,7 @@ MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 MOVI_ACC1 = 0x26
 ADDR_W = 0x30
 SUBR_W = 0x32
+SRA_W = 0x3c
 JMPI_IP = 0x60
 JMPI_WP = 0x61
 JMPI_ACC1 = 0x62
@@ -74,6 +75,13 @@ class MachineCodeEmitter:
         operand2 |= source2_reg.encoding
 
         self.binary_code += struct.pack("BBB", opcode, operand1, operand2)
+
+    def emit_sra(self, reg, value):
+        opcode = SRA_W
+        operand = value.number & 0x1F
+        operand |= reg.encoding << 5
+
+        self.binary_code += struct.pack("BB", opcode, operand)
 
     def emit_conditional_jump(self, target):
         self.binary_code += struct.pack("B", JZ)
@@ -204,6 +212,17 @@ class DisassemblyEmitter:
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
         self.disassembly += f"{machine_code:<18} sub {target_reg}, {source1_reg}, {source2_reg}\n"
+
+    def emit_sra(self, reg, value):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_sub(reg, value)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} sra {reg}, #0x{value:x}\n"
 
     def emit_conditional_jump(self, target):
         previous_pos = self.get_current_code_address()

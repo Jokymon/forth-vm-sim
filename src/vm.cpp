@@ -18,6 +18,7 @@ enum class Opcode {
 
     ADDR_W = 0x30,
     SUBR_W = 0x32,
+    SRA_W = 0x3C,
 
     JMPI_IP = 0x60,
     JMPI_WP = 0x61,
@@ -110,6 +111,15 @@ Vm::Result Vm::singleStep() {
                 state.registers[target] = state.registers[source1] - state.registers[source2];
             }
 
+            break;
+        case Opcode::SRA_W:
+            {
+                param8 = fetch_op();
+                uint8_t reg = (param8 >> 5) & 0x7;
+                uint8_t imm5 = param8 & 0x1f;
+
+                state.registers[reg] = (int32_t)state.registers[reg] >> imm5;
+            }
             break;
         case Opcode::MOVR_W:
             param8 = fetch_op();
@@ -248,6 +258,16 @@ std::string Vm::disassembleAtPc() const {
                     register_name_mapping.at(target),
                     register_name_mapping.at(source1),
                     register_name_mapping.at(source2)
+                );
+            }
+        case Opcode::SRA_W:
+            {
+                uint8_t param = memory[state.registers[Pc]+1];
+                uint8_t reg = (param >> 5) & 0x7;
+                uint8_t imm5 = param & 0x1f;
+                return fmt::format("sra.w {}, {:#x}",
+                    register_name_mapping.at(reg),
+                    imm5
                 );
             }
         case Opcode::MOVR_W:

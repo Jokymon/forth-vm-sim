@@ -144,6 +144,8 @@ class VmForthAssembler(Interpreter):
             self.emitter.emit_add(parameters[0], parameters[1], parameters[2])
         elif mnemonic == "sub":
             self.emitter.emit_sub(parameters[0], parameters[1], parameters[2])
+        elif mnemonic == "sra":
+            self.emitter.emit_sra(parameters[0], parameters[1])
         elif mnemonic == "dw":
             self.emitter.emit_data_32(parameters[0])
         elif mnemonic == "ifkt":

@@ -926,3 +926,14 @@ class TestALUInstruction:
         binary = b"\x32\x01\x04"
 
         assert binary == assemble(source)
+
+    def test_shift_right_arithmetically(self):
+        source = """
+        codeblock
+            sra.w %dsp, #5
+        end
+        """
+
+        binary = b"\x3c\x65"
+
+        assert binary == assemble(source)

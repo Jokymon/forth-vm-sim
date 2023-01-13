@@ -1,0 +1,9 @@
+{
+    "reg": [
+        { "name": "val5", "bits": 5 },
+        { "name": "reg",  "bits": 3 }
+    ],
+    "config": {
+        "hspace": 300
+    }
+}

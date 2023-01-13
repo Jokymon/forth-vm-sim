@@ -12,6 +12,8 @@ Operand types
 +--------------+--------------------------------------------------------------------------+
 | Abbreviation | Explanation                                                              |
 +==============+==========================================================================+
+| `imm5`       | 5-bit immediate value                                                    |
++--------------+--------------------------------------------------------------------------+
 | `imm8`       | 8-bit immediate value                                                    |
 +--------------+--------------------------------------------------------------------------+
 | `imm16`      | 16-bit immediate value                                                   |
@@ -79,11 +81,15 @@ All number types comprising of more than one byte are stored in little-endian fo
         - ``reg_target``
         - ``reg_source``
 
+    * - ``ri5``
+      - .. wavedrom:: images/encoding_ri5.json
+
+        - ``reg`` The affected register as described above.
+        - ``val5`` A 5-bit immediate value.
+
 Next list
 
- * `u32` - unsigned 32-bit immediate operand in little endian encoding
  * `u16` - unsigned 16-bit immediate operand in little endian encoding
- * `rr` - encoding for operations between two registers
  * `3r` - encoding for operations between three registers
  * `rop` - encoding for operations between a direct register and indirect
    register with prefix or postfix operations
@@ -196,6 +202,22 @@ NOP - No Operation
     +--------+----------+--------------+
 
 This instruction has no effect and can be used to fill memory.
+
+SRA - Shift Right Arithmetically
+--------------------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+---------------------+-------------------------------------------------------------------+
+    | Opcode    | Mnemonic            | Description                                                       |
+    +===========+=====================+===================================================================+
+    | 3C `/ri5` | SRA.W `reg`, `imm5` | Arithmetically shift the given register right by the given amount |
+    +-----------+---------------------+-------------------------------------------------------------------+
+
+Shift the given register arithmetically right by the given 5-bit immediate value.
+It shifts the most significant bit, number 31, into the following less significant
+bits.
 
 Mathematical instructions
 -------------------------
