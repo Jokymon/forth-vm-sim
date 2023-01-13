@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_sdlrenderer.h>
+#include <ImGuiFileDialog.h>
 #include <iostream>
 #include "vm.h"
 
@@ -44,10 +45,36 @@ int main(int argc, char *argv[]) {
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
-        ImGui::Begin("Simulator", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize);
+        ImGui::Begin("Simulator", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar);
+
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Open...", "Ctrl+O"))
+                {
+                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose VM image", ".bin", ".");
+                }
+
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMenuBar();
+        }
 
         if (ImGui::Button("Single Step")) {
             vm.singleStep();
+        }
+
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                vm.loadImageFromFile(filePathName);
+            }
+
+            ImGuiFileDialog::Instance()->Close();
         }
 
         {

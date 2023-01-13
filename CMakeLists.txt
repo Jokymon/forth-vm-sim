@@ -33,7 +33,7 @@ target_sources(${PROJECT_NAME}-gui
     PRIVATE
         src/main_gui.cpp
 )
-target_link_libraries(${PROJECT_NAME}-gui imgui vm args -static-libgcc -static-libstdc++)
+target_link_libraries(${PROJECT_NAME}-gui ImGuiFileDialog imgui vm args -static-libgcc -static-libstdc++)
 
 add_executable(test)
 target_sources(test

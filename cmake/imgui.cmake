@@ -13,6 +13,13 @@ CPMAddPackage(
     DOWNLOAD_ONLY YES
 )
 
+CPMAddPackage(
+    NAME ImGuiFileDialog
+    GITHUB_REPOSITORY aiekick/ImGuiFileDialog
+    VERSION 0.6.4
+    DOWNLOAD_ONLY YES
+)
+
 if (imgui_ADDED)
     add_library(imgui STATIC
         ${imgui_SOURCE_DIR}/imgui.cpp
@@ -31,5 +38,21 @@ if (imgui_ADDED)
     target_link_libraries(imgui
         PUBLIC
             SDL2-static
+    )
+endif()
+
+if (ImGuiFileDialog_ADDED)
+    configure_file(${CMAKE_SOURCE_DIR}/patch/ImGuiFileDialogConfig.h ${ImGuiFileDialog_SOURCE_DIR}/ImGuiFileDialogConfig.h COPYONLY)
+    add_library(ImGuiFileDialog STATIC
+        ${ImGuiFileDialog_SOURCE_DIR}/ImGuiFileDialog.cpp
+    )
+
+    target_include_directories(ImGuiFileDialog
+    PUBLIC
+        $<BUILD_INTERFACE:${ImGuiFileDialog_SOURCE_DIR}>
+    )
+    target_link_libraries(ImGuiFileDialog
+    PUBLIC
+        imgui
     )
 endif()
