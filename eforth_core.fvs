@@ -1,0 +1,337 @@
+// -----------------------------------------------------------
+
+const CELLSIZE = 4
+const FKT_KEY = 0x1
+const FKT_EMIT = 0x2
+const FKT_DUMP = 0xf1
+
+const TIBB = 0x3000
+
+// -----------------------------------------------------------
+// macros
+macro NEXT()
+    mov %wp, [%ip++]
+    jmp [%wp]
+end
+
+macro __DEFCODE_CFA()
+    dw $ + 0x4
+end
+
+macro __DEFWORD_CFA()
+    dw :doLIST
+end
+
+macro __DEFVAR_CFA()
+    dw :do_var
+end
+
+// dsp always points to the TOS
+macro PUSHD(reg)
+    mov [--%dsp], @reg
+end
+
+macro POPD(reg)
+    mov @reg, [%dsp++]
+end
+
+macro PUSHR(reg)
+    mov [%rsp++], @reg
+end
+
+macro POPR(reg)
+    mov @reg, [--%rsp]
+end
+
+// -----------------------------------------------------------
+
+codeblock
+    mov %acc1, :start_word
+    mov %ip, %acc1
+    NEXT()
+start_word:
+    dw :testw_cfa
+
+doLIST:
+    mov [%rsp++], %ip
+    mov %acc1, CELLSIZE
+    add %ip, %wp, %acc1
+    NEXT()
+
+do_var:
+    mov %acc1, $ + 0x4
+    PUSHD(%acc1)
+    NEXT()
+end
+
+// -------------------------------------------------------------------------
+// kernel words
+
+defcode doLIT
+    mov %acc1, [%ip++]
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode EXIT
+    mov %ip, [--%rsp]
+    NEXT()
+end
+
+defcode EXECUTE
+    POPD(%acc1)
+    jmp [%acc1]
+    NEXT()
+end
+
+defcode BRANCH
+    mov %ip, [%ip]
+    NEXT()
+end
+
+defcode ?BRANCH
+    POPD(%acc1)
+    jz :nobranch
+    NEXT()
+nobranch:
+    mov %ip, [%ip]
+    NEXT()
+end
+
+// -------------------------------------------------------------------------
+// memory access
+
+defcode !       // w a --
+    POPD(%acc1)
+    POPD(%acc2)
+    mov [%acc1], %acc2
+    NEXT()
+end
+
+defcode @       // a -- w
+    POPD(%acc1)
+    mov %acc1, [%acc1]
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode C!      // c b --
+    POPD(%acc1)     // get address
+    POPD(%acc2)     // get data
+    mov.b [%acc1], [%acc2]
+    NEXT()
+end
+
+// -------------------------------------------------------------------------
+// return stack
+
+defcode RP@     // -- a
+    PUSHD(%rsp)
+    NEXT()
+end
+
+defcode RP!     // a --
+    POPD(%rsp)
+    NEXT()
+end
+
+defcode R>      // -- w
+    POPR(%acc1)
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode R@      // -- w
+    POPR(%acc1)
+    PUSHR(%acc1)
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode >R      // w --
+    POPD(%acc1)
+    PUSHR(%acc1)
+    NEXT()
+end
+
+// -------------------------------------------------------------------------
+// data stack
+
+defcode DROP
+    POPD(%acc1)
+    NEXT()
+end
+
+defcode DUP
+    POPD(%acc1)
+    PUSHD(%acc1)
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode SWAP
+    POPD(%acc1)
+    POPD(%acc2)
+    PUSHD(%acc1)
+    PUSHD(%acc2)
+    NEXT()
+end
+
+defcode OVER    // w1 w2 -- w1 w2 w1
+    POPD(%acc1)
+    POPD(%acc2)
+    PUSHD(%acc2)
+    PUSHD(%acc1)
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defword NIP     // w1 w2 -- w2
+    SWAP DROP
+    EXIT
+end
+
+defword 2DUP    // w1 w2 -- w1 w2 w1 w2
+    OVER OVER
+    EXIT
+end
+
+defcode +
+    POPD(%acc1)
+    POPD(%acc2)
+    add %acc1, %acc1, %acc2
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode -
+    POPD(%acc1)
+    POPD(%acc2)
+    sub %acc1, %acc1, %acc2
+    PUSHD(%acc1)
+    NEXT()
+end
+
+// -------------------------------------------------------------------------
+// logical words
+
+defcode 0<
+    POPD(%acc1)
+    sra %acc1, #32
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode XOR
+    // TODO: new instruction
+    NEXT()
+end
+
+defword U<
+    2DUP XOR 0<
+    ?BRANCH :ules1
+    SWAP DROP 0< EXIT
+ules1:
+    - 0<
+end
+
+defword WITHIN      // u ul uh -- t
+    OVER - >R - R> U<
+end
+
+defcode KEY
+    ifkt FKT_KEY
+    PUSHD(%acc1)
+    NEXT()
+end
+
+defcode EMIT
+    POPD(%acc1)
+    ifkt FKT_EMIT
+    NEXT()
+end
+
+defword ECHO
+    EMIT
+end
+
+defword BL
+    doLIT 32
+end
+
+// -------------------------------------------------------------------
+// system variables
+
+defsysvar #TIB
+defsysvar TIB TIBB
+
+defsysvar STATE
+defsysvar HERE :testw_end
+defsysvar LATEST
+
+// -------------------------------------------------------------------
+// Forth compiler
+
+defword TAP     // bot eot cur c -- bot eot cur
+    DUP ECHO OVER C! 1 +
+end
+
+defword EXPECT  // b u -- b u
+// accept characters to input buffer, return with actual count
+    OVER + OVER         // b b+u b
+expect1:
+    2DUP XOR
+    ?BRANCH :expect4
+    KEY DUP
+    BL - doLIT 95 U<
+    BL doLIT 127 WITHIN
+    ?BRANCH :expect2
+    TAP
+    BRANCH :expect3
+expect2:
+    TAP         // 'TAP @EXECUTE
+expect3:
+    BRANCH :expect1
+expect4:
+    DROP OVER -
+    EXIT
+end
+
+defword QUERY
+query_loop:
+    TIB 80 EXPECT
+    BRANCH :query_loop
+    EXIT
+end
+
+// -------------------------------
+// Additional words
+
+defcode DUMP
+    ifkt FKT_DUMP
+    NEXT()
+end
+
+defcode ILLEGAL
+    illegal
+    NEXT()
+end
+
+defword TESTW
+loop:
+    KEY
+    doLIT 10
+    EMIT
+    BRANCH :loop
+    DUMP
+    ILLEGAL
+    EXIT
+end
+
+defcode TESTC
+    ifkt FKT_KEY
+    ifkt FKT_KEY
+    ifkt FKT_DUMP
+    illegal
+    NEXT()
+end
