@@ -215,14 +215,14 @@ class DisassemblyEmitter:
 
     def emit_sra(self, reg, value):
         previous_pos = self.get_current_code_address()
-        self.binary_emitter.emit_sub(reg, value)
+        self.binary_emitter.emit_sra(reg, value)
         new_pos = self.get_current_code_address()
 
         self.disassembly += f"{previous_pos:08x}: "
         new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
-        self.disassembly += f"{machine_code:<18} sra {reg}, #0x{value:x}\n"
+        self.disassembly += f"{machine_code:<18} sra {reg}, #0x{value}\n"
 
     def emit_conditional_jump(self, target):
         previous_pos = self.get_current_code_address()
