@@ -1,0 +1,117 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "VM Forth Assembly",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"name": "comment.line.double-slash",
+			"match": "//.*$"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.fvs",
+					"match": "\\s*//.*"
+				}
+			]
+		},
+		"constants": {
+			"comment": "Constant declaration",
+			"match": "\\b(const)\\s+([a-zA-Z0-9_]+)\\b\\s*=\\s*(\\d+|0x[\\da-fA-F]+)\\b",
+			"captures": {
+				"1": { "name": "storage.type.fvs" },
+				"2": { "name": "constant.other.fvs" },
+				"3": { "name": "constant.numeric.decimal.fvs" }
+			}
+		},
+		"keywords": {
+			"patterns": [{
+				"comment": "Macro block",
+				"name": "meta.function.block.macro.fvs",
+				"patterns": [ {"include": "#variables"} ],
+
+				"begin": "\\b(macro)\\b\\s+\\b([a-zA-Z0-9_]+)\\b",
+				"end": "\\b(end)\\b",
+				"beginCaptures": {
+					"1": { "name": "keyword.declaration.macro.fvs storage.type.fvs" },
+					"2": { "name": "entity.name.function.fvs" }
+				},
+				"endCaptures": {
+					"1": { "name": "keyword.declaration.macro.fvs storage.type.fvs" }
+				}
+			},
+			{
+				"comment": "Codeblock definition",
+				"name": "meta.function.block.codeblock.fvs",
+				"patterns": [ {"include": "#variables"}, {"include": "#comments"} ],
+
+				"begin": "\\b(codeblock)\\b",
+				"end": "\\b(end)\\b",
+				"beginCaptures": {
+					"1": { "name": "keyword.declaration.codeblock.fvs storage.type.fvs"}
+				},
+				"endCaptures": {
+					"1": { "name": "keyword.declaration.macro.fvs storage.type.fvs" }
+				}
+			},
+			{
+				"comment": "Native code word definition",
+				"name": "meta.function.block.defcode.fvs",
+				"patterns": [ {"include": "#variables"}, {"include": "#comments"} ],
+
+				"begin": "\\b(defcode)\\b\\s+\\b([\\x21-\\x7e]+)\\b",
+				"end": "\\b(end)\\b",
+				"beginCaptures": {
+					"1": { "name": "keyword.declaration.defcode.fvs storage.type.fvs"},
+					"2": { "name": "entity.name.word.fvs" }
+				},
+				"endCaptures": {
+					"1": { "name": "keyword.declaration.macro.fvs storage.type.fvs" }
+				}
+			},
+			{
+				"comment": "Forth word definition",
+				"name": "meta.function.block.defword.fvs",
+				"patterns": [ {"include": "#variables"}, {"include": "#comments"} ],
+
+				"begin": "\\b(defword)\\b\\s+\\b([\\x21-\\x7e]+)\\b",
+				"end": "\\b(end)\\b",
+				"beginCaptures": {
+					"1": { "name": "keyword.declaration.defword.fvs storage.type.fvs"},
+					"2": { "name": "entity.name.word.fvs" }
+				},
+				"endCaptures": {
+					"1": { "name": "keyword.declaration.macro.fvs storage.type.fvs" }
+				}
+			}]
+		},
+		"variables": {
+			"patterns": [
+				{
+					"comment": "Registers",
+					"name": "variable.language.register.fvs",
+					"match": "(%ip|%wp|%rsp|%dsp|%acc1|%acc2|%pc)"
+				},
+				{
+					"comment": "Macro parameter usage",
+					"name": "variable.language.macroparameter.fvs",
+					"match": "@[a-zA-Z0-9_]+"
+				}
+			]
+		}
+	},
+	"scopeName": "source.fvs"
+}

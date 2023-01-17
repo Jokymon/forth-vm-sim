@@ -1,0 +1,25 @@
+{
+    "name": "vmforth",
+    "displayName": "VmForth",
+    "description": "Forth VM assembly",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "fvs",
+            "aliases": ["VM Forth Assembly", "fvs"],
+            "extensions": [".fvs"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "fvs",
+            "scopeName": "source.fvs",
+            "path": "./syntaxes/fvs.tmLanguage.json"
+        }]
+    }
+}

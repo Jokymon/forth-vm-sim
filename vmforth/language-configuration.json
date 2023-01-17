@@ -1,0 +1,29 @@
+{
+    "comments": {
+        "lineComment": "//",
+    },
+    "brackets": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"]
+    ],
+    "surroundingPairs": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"]
+    ],
+
+    "indentationRules": {
+        "increaseIndentPattern": "^\\s*(codeblock|macro\\s+[a-zA-Z0-9_]+\\(.*\\))\\s*$",
+        "decreaseIndentPattern": "^\\s*end\\s*$"
+    }
+}
