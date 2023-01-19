@@ -49,9 +49,7 @@ const std::map<uint8_t, std::string> register_name_mapping = {
     {Vm::Pc, "%pc"}
 };
 
-Vm::Vm() {
-    memory.fill(static_cast<uint8_t>(Opcode::ILLEGAL));
-
+Vm::Vm(Memory &memory) : memory(memory) {
     // Setup the memory layout
     // +------------+------------+--------------+----------------+-------------+
     // | Dictionary | Data Stack | Return Stack | User Variables | I/O Buffers |
@@ -60,20 +58,6 @@ Vm::Vm() {
     //   -->                  <--           <--
     state.registers[Rsp] = (16+4+4) * 1024;
     state.registers[Dsp] = (16+4) * 1024;
-}
-
-void Vm::loadImageFromFile(const std::string &image_path) {
-    std::fstream image_file;
-    image_file.open(image_path, std::ios::in | std::ios::binary | std::ios::ate);
-    auto filesize = image_file.tellg();
-    if (filesize <= sizeof(memory)) {
-        image_file.seekg(0);
-        image_file.read(reinterpret_cast<char*>(memory.data()), filesize);
-    }
-    else {
-        std::cout << "ERROR!! Couldn't loading binary with a size bigger than available memory size\n";
-    }
-    image_file.close();
 }
 
 Vm::Result Vm::singleStep() {
@@ -138,29 +122,29 @@ Vm::Result Vm::singleStep() {
             movs_di_w(param8);
             break;
         case Opcode::MOVI_ACC1:
-            param32 = get32(state.registers[Pc]);
+            param32 = memory.get32(state.registers[Pc]);
             state.registers[Pc] += 4;
             state.registers[Acc1] = param32;
             break;
         case Opcode::JMPI_IP:
-            state.registers[Pc] = get32(state.registers[Ip]);
+            state.registers[Pc] = memory.get32(state.registers[Ip]);
             break;
         case Opcode::JMPI_WP:
-            state.registers[Pc] = get32(state.registers[Wp]);
+            state.registers[Pc] = memory.get32(state.registers[Wp]);
             break;
         case Opcode::JMPI_ACC1:
-            state.registers[Pc] = get32(state.registers[Acc1]);
+            state.registers[Pc] = memory.get32(state.registers[Acc1]);
             break;
         case Opcode::JMPI_ACC2:
-            state.registers[Pc] = get32(state.registers[Acc2]);
+            state.registers[Pc] = memory.get32(state.registers[Acc2]);
             break;
         case Opcode::JMPD:
-            param32 = get32(state.registers[Pc]);
+            param32 = memory.get32(state.registers[Pc]);
             state.registers[Pc] = param32;
             break;
         case Opcode::JZ:
             if (state.registers[Acc1]==0) {
-                param32 = get32(state.registers[Pc]);
+                param32 = memory.get32(state.registers[Pc]);
                 state.registers[Pc] = param32;
             }
             else {
@@ -187,7 +171,7 @@ Vm::Result Vm::singleStep() {
                 case IfktCodes::TERMINATE:
                     return Finished;
                 case IfktCodes::DUMP:
-                    std::cout << "\nDump: " << get32(state.registers[Dsp]) << "\n";
+                    std::cout << "\nDump: " << memory.get32(state.registers[Dsp]) << "\n";
                     break;
                 default:
                     return IllegalInstruction;
@@ -216,14 +200,6 @@ Vm::State Vm::getState() const {
 
 void Vm::setState(const Vm::State &new_state) {
     state = new_state;
-}
-
-uint8_t Vm::byteAt(uint32_t address) const {
-    return memory[address];
-}
-
-uint32_t Vm::wordAt(uint32_t address) const {
-    return get32(address);
 }
 
 std::string Vm::disassembleAtPc() const {
@@ -283,7 +259,7 @@ std::string Vm::disassembleAtPc() const {
             param = memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Indirect));
         case Opcode::MOVI_ACC1:
-            param = get32(state.registers[Pc]+1);
+            param = memory.get32(state.registers[Pc]+1);
             return fmt::format("mov %acc1, {:#x}", param);
         case Opcode::JMPI_IP:
             return "jmp [%ip]";
@@ -294,13 +270,13 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::JMPI_ACC2:
             return "jmp [%acc2]";
         case Opcode::JMPD:
-            param = get32(state.registers[Pc]+1);
+            param = memory.get32(state.registers[Pc]+1);
             return fmt::format("jmp {:#x}", param);
         case Opcode::JZ:
-            param = get32(state.registers[Pc]+1);
+            param = memory.get32(state.registers[Pc]+1);
             return fmt::format("jz {:#x}", param);
         case Opcode::IFKT:
-            param = get16(state.registers[Pc]+1);
+            param = memory.get16(state.registers[Pc]+1);
             return fmt::format("ifkt {:#x}", param);
         case Opcode::ILLEGAL:
             return "illegal";
@@ -337,13 +313,13 @@ void Vm::movr_w(uint8_t param) {
     uint8_t source = param & 0x07;
 
     if ((param & 0x80) && (param & 0x08)) {
-        put32(state.registers[target], get32(state.registers[source]));
+        memory.put32(state.registers[target], memory.get32(state.registers[source]));
     }
     else if (param & 0x80) {
-        put32(state.registers[target], state.registers[source]);
+        memory.put32(state.registers[target], state.registers[source]);
     }
     else if (param & 0x08) {
-        state.registers[target] = get32(state.registers[source]);
+        state.registers[target] = memory.get32(state.registers[source]);
     }
     else {
         state.registers[target] = state.registers[source];
@@ -366,7 +342,7 @@ void Vm::movs_id_w(uint8_t param) {
         }
     }
 
-    put32(state.registers[target], state.registers[source]);
+    memory.put32(state.registers[target], state.registers[source]);
 
     if (!pre) {
         if (decrement) {
@@ -394,7 +370,7 @@ void Vm::movs_di_w(uint8_t param) {
         }
     }
 
-    state.registers[target] = get32(state.registers[source]);
+    state.registers[target] = memory.get32(state.registers[source]);
 
     if (!pre) {
         if (decrement) {
@@ -461,19 +437,4 @@ std::string Vm::disassemble_movs_parameters(uint8_t parameter, MoveTarget move_t
             pre_operation, register_name_mapping.at(source), post_operation
             );
     }
-}
-
-uint16_t Vm::get16(uint32_t address) const {
-    return (memory[address] | (memory[address+1] << 8));
-}
-
-uint32_t Vm::get32(uint32_t address) const {
-    return (memory[address] | (memory[address+1] << 8) | (memory[address+2] << 16) | (memory[address+3] << 24));
-}
-
-void Vm::put32(uint32_t address, uint32_t value) {
-    memory[address] = value & 0xff;
-    memory[address+1] = (value >> 8) & 0xff;
-    memory[address+2] = (value >> 16) & 0xff;
-    memory[address+3] = (value >> 24) & 0xff;
 }

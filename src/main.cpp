@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "vm_memory.h"
 #include "absl/strings/str_split.h"
 #include <args.hxx>
 #include <fmt/core.h>
@@ -18,9 +19,10 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    Vm vm;
+    Memory memory;
+    Vm vm{memory};
 
-    vm.loadImageFromFile(args::get(binaryInput));
+    memory.loadImageFromFile(args::get(binaryInput));
 
     if (debug) {
         std::string input;
@@ -58,7 +60,7 @@ int main(int argc, char* argv[])
                     if (i%16==0) {
                         fmt::print("{:>8x} |", start_address+line_no*16);                        
                     }
-                    fmt::print("{:>3x}", vm.byteAt(start_address+i));
+                    fmt::print("{:>3x}", memory[start_address+i]);
                     if (i%16==15) {
                         fmt::print("\n");
                         line_no++;

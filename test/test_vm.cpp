@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include "vm.h"
+#include "vm_memory.h"
 
 CATCH_REGISTER_ENUM(Vm::Result,
     Vm::Result::Success,
@@ -9,46 +10,48 @@ CATCH_REGISTER_ENUM(Vm::Result,
 )
 
 
-TEST_CASE("Memory access", "Loading VM memory through iterator") {
-    std::array<uint8_t, 3> testdata = {0x23, 0x53, 0x61};
+TEST_CASE("Loading VM memory at initialization", "[memory]") {
+    Memory uut = {0x23, 0x53, 0x61};
 
-    Vm uut;
+    REQUIRE( uut[0x0] == 0x23 );
+    REQUIRE( uut[0x1] == 0x53 );
+    REQUIRE( uut[0x2] == 0x61 );
+}
 
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+TEST_CASE("Loading VM memory through iterator", "[memory]") {
+    std::array<uint8_t, 3> test_data = {0x23, 0x53, 0x61};
+    Memory uut;
+    uut.loadImageFromIterator(test_data.begin(), test_data.end());
 
-    REQUIRE( uut.byteAt(0x0) == 0x23 );
-    REQUIRE( uut.byteAt(0x1) == 0x53 );
-    REQUIRE( uut.byteAt(0x2) == 0x61 );
+    REQUIRE( uut[0x0] == 0x23 );
+    REQUIRE( uut[0x1] == 0x53 );
+    REQUIRE( uut[0x2] == 0x61 );
 }
 
 TEST_CASE("Illegal instructions return IllegalInstruction", "[opcode]") {
-    std::array<uint8_t, 1> testdata = {
+    Memory testdata = {
         0xfd            // just take come opcode that so far has no meaning ;-)
     };
 
-    Vm uut;
-
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     REQUIRE( Vm::IllegalInstruction == uut.singleStep() );
 }
 
 TEST_CASE("Register based move bytes instructions", "[opcode]") {
-    std::array<uint8_t, 8> testdata = {
+    Memory testdata = {
         0x21, 0x14,     // mov.b %wp, %acc1
         0x21, 0xd1,     // mov.b [%acc2], %wp
         0x21, 0x4b,     // mov.b %acc1, [%dsp]
         0x21, 0xcd,     // mov.b [%acc1], [%acc2]
     };
 
-    Vm uut;
+    Vm uut{testdata};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x59;
     state.registers[Vm::Acc2] = 0xff;
     uut.setState(state);
-
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
     // Register to register transfer
     // Pre: %acc1 = 0x59; %wp = 0x0
@@ -61,7 +64,7 @@ TEST_CASE("Register based move bytes instructions", "[opcode]") {
     // Pre: %wp = 0x59; %acc2 = 0xff; mem[0xff] = 0xff
     REQUIRE( Vm::Success == uut.singleStep() );
     // Post: %wp = 0x59; %acc2 = 0xff; mem[0xff] = 0x59
-    REQUIRE( 0x59 == uut.byteAt(0xff) );
+    REQUIRE( 0x59 == testdata[0xff] );
 
     // Register indirect to register transfer
     state = uut.getState();
@@ -81,25 +84,23 @@ TEST_CASE("Register based move bytes instructions", "[opcode]") {
     // Pre: %acc1 = 0x0; %acc2 = 0x3; mem[0x0] = 0x21; mem[0x3] = 0xd1;
     REQUIRE( Vm::Success == uut.singleStep() );
     // Post: %acc1 = 0x0; %acc2 = 0x3; mem[0x0] = 0xd1; mem[0x3] = 0xd1;
-    REQUIRE( 0xd1 == uut.byteAt(0x0) );
+    REQUIRE( 0xd1 == testdata[0x0] );
 }
 
 TEST_CASE("Register based move words instructions", "[opcode]") {
-    std::array<uint8_t, 8> testdata = {
+    Memory testdata = {
         0x20, 0x14,     // mov.w %wp, %acc1
         0x20, 0xd1,     // mov.w [%acc2], %wp
         0x20, 0x4b,     // mov.w %acc1, [%dsp]
         0x20, 0xcd,     // mov.w [%acc1], [%acc2]
     };
 
-    Vm uut;
+    Vm uut{testdata};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x12ab89dc;
     state.registers[Vm::Acc2] = 0xff;
     uut.setState(state);
-
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
     // Register to register transfer
     // Pre: %acc1 = 0x59; %wp = 0x0
@@ -112,7 +113,7 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
     // Pre: %wp = 0x12ab89dc; %acc2 = 0xff; mem[0xff] = 0xff
     REQUIRE( Vm::Success == uut.singleStep() );
     // Post: %wp = 0x12ab89dc; %acc2 = 0xff; mem[0xff:0x104] = 0x12ab89dc
-    REQUIRE( 0x12ab89dc == uut.wordAt(0xff) );
+    REQUIRE( 0x12ab89dc == testdata.get32(0xff) );
 
     // Register indirect to register transfer
     state = uut.getState();
@@ -132,17 +133,17 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
     // Pre: %acc1 = 0x100; %acc2 = 0x0; mem[0x0] = 0xd1201420; mem[0x100] = 0xffffffff;
     REQUIRE( Vm::Success == uut.singleStep() );
     // Post: %acc1 = 0x100; %acc2 = 0x0; mem[0x0] = 0xd1201420; mem[0x3] = 0xd1201420;
-    REQUIRE( 0xd1201420 == uut.wordAt(0x100) );
+    REQUIRE( 0xd1201420 == testdata.get32(0x100) );
 }
 
 TEST_CASE("Stack based move operations", "[opcode]") {
-    Vm uut;
+    Memory testdata;
+    Vm uut{testdata};
 
     SECTION("Copy acc1 to wp indirect with post increment") {
-        std::array<uint8_t, 2> testdata = {
+        testdata = {
             0x22, 0xc   // mov.w [%wp++], %acc1
         };
-        uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
         Vm::State state = uut.getState();
         state.registers[Vm::Wp] = 0x10;
@@ -153,14 +154,13 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 
         state = uut.getState();
         REQUIRE( 0x14 == state.registers[Vm::Wp] );
-        REQUIRE( 0x1234 == uut.wordAt(0x10) );
+        REQUIRE( 0x1234 == testdata.get32(0x10) );
     }
 
     SECTION("Copy acc2 to ip indirect with pre decrement") {
-        std::array<uint8_t, 2> testdata = {
+        testdata = {
             0x22, 0xc5   // mov.w [--%ip], %acc2
         };
-        uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
         Vm::State state = uut.getState();
         state.registers[Vm::Ip] = 0x24;
@@ -171,16 +171,15 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 
         state = uut.getState();
         REQUIRE( 0x20 == state.registers[Vm::Ip] );
-        REQUIRE( 0xabcd == uut.wordAt(0x20) );
+        REQUIRE( 0xabcd == testdata.get32(0x20) );
     }
 
     SECTION("Copy ip indirect with post increment to wp") {
-        std::array<uint8_t, 8> testdata = {
+        testdata = {
             0x24, 0x8,      // mov.w %wp, [%ip++]
             0x0, 0x0,       // alignment filler
             0x01, 0x23, 0x5a, 0xfa
         };
-        uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
         Vm::State state = uut.getState();
         state.registers[Vm::Ip] = 0x4;
@@ -196,12 +195,11 @@ TEST_CASE("Stack based move operations", "[opcode]") {
 }
 
 TEST_CASE("Move label to acc1", "[opcode]") {
-    std::array<uint8_t, 5> testdata = {
+    Memory testdata = {
         0x26, 0x10, 0x41, 0x32, 0x22    // mov %acc1, 0x22324110
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     REQUIRE( Vm::Success == uut.singleStep() );
 
@@ -211,7 +209,7 @@ TEST_CASE("Move label to acc1", "[opcode]") {
 }
 
 TEST_CASE("Register indirect jumping", "[opcode]") {
-    std::array<uint8_t, 20> testdata = {
+    Memory testdata = {
         0x60,       // jmp [%ip]
         0x61,       // jmp [%wp]
         0x62,       // jmp [%acc1]
@@ -222,8 +220,7 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
         0x40, 0x0, 0x0, 0x0,    // pointed to by %acc2
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     Vm::State state = uut.getState();
     state.registers[Vm::Ip] = 0x4;
@@ -274,15 +271,14 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
 }
 
 TEST_CASE("Register direct jumping", "[opcode]") {
-    std::array<uint8_t, 20> testdata = {
+    Memory testdata = {
         0x64, 0x07, 0x00, 0x00, 0x00,   // jmp +7
         0x00,       // nop
         0x00,       // nop
         0x00,       // nop (jump target)
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     REQUIRE( Vm::Success == uut.singleStep());
 
@@ -291,15 +287,14 @@ TEST_CASE("Register direct jumping", "[opcode]") {
 }
 
 TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
-    std::array<uint8_t, 20> testdata = {
+    Memory testdata = {
         0x65, 0x07, 0x00, 0x00, 0x00,   // jmp +7
         0x00,       // nop
         0x00,       // nop
         0x00,       // nop (jump target)
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     SECTION("Should jump if acc1 is 0") {
         auto state = uut.getState();
@@ -325,12 +320,11 @@ TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
 }
 
 TEST_CASE("Add instruction") {
-    std::array<uint8_t, 3> testdata = {
+    Memory testdata = {
         0x30, 0x01, 0x4,    // add.w %ip, %wp, %acc1
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -346,12 +340,11 @@ TEST_CASE("Add instruction") {
 }
 
 TEST_CASE("Sub instruction") {
-    std::array<uint8_t, 3> testdata = {
+    Memory testdata = {
         0x32, 0x01, 0x4,    // sub.w %ip, %wp, %acc1
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -367,12 +360,11 @@ TEST_CASE("Sub instruction") {
 }
 
 TEST_CASE("Sra instruction with signed value") {
-    std::array<uint8_t, 2> testdata = {
+    Memory testdata = {
         0x3c, 0x65,    // sra.w %dsp, #0x5
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x80000000;
@@ -386,12 +378,11 @@ TEST_CASE("Sra instruction with signed value") {
 }
 
 TEST_CASE("Sra instruction with unsigned value") {
-    std::array<uint8_t, 2> testdata = {
+    Memory testdata = {
         0x3c, 0x64,    // sra.w %dsp, #0x4
     };
 
-    Vm uut;
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
+    Vm uut{testdata};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x60000000;
@@ -405,7 +396,7 @@ TEST_CASE("Sra instruction with unsigned value") {
 }
 
 TEST_CASE("Disassembling") {
-    std::array<uint8_t, 56> testdata = {
+    Memory testdata = {
         0x00,               // nop
         0xff,               // illegal
         0xfe, 0x34, 0x12,   // ifkt 0x1234
@@ -433,10 +424,8 @@ TEST_CASE("Disassembling") {
         0x3c, 0x65,         // sra.w %dsp, #5
     };
 
-    Vm uut;
+    Vm uut{testdata};
     auto state = uut.getState();
-
-    uut.loadImageFromIterator(std::begin(testdata), std::end(testdata));
 
     SECTION("Disassembling nop instruction") {
         state.registers[Vm::Pc] = 0;

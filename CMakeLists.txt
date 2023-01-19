@@ -16,8 +16,10 @@ target_include_directories(vm
 target_sources(vm
     PUBLIC
         src/vm.h
+        src/vm_memory.h
     PRIVATE
         src/vm.cpp
+        src/vm_memory.cpp
 )
 target_link_libraries(vm fmt)
 

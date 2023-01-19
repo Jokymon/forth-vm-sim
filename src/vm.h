@@ -2,6 +2,7 @@
 #define VM_H
 
 #include <array>
+#include "vm_memory.h"
 
 class Vm {
 public:
@@ -24,24 +25,13 @@ public:
         std::array<uint32_t, 8> registers;
     };
 
-    Vm();
-
-    void loadImageFromFile(const std::string &image_path);
-    template<typename Iterator>
-    void loadImageFromIterator(Iterator begin, Iterator end) {
-        uint32_t counter = 0;
-        for (Iterator it=begin; it!=end; ++it) {
-            memory[counter++] = *it;
-        }
-    }
+    explicit Vm(Memory &memory);
 
     Result singleStep();
     Result interpret();
 
     State getState() const;
     void setState(const State &new_state);
-    uint8_t byteAt(uint32_t address) const;
-    uint32_t wordAt(uint32_t address) const;
 
     std::string disassembleAtPc() const;
 
@@ -57,15 +47,11 @@ private:
     enum class MoveTarget { Direct, Indirect };
     std::string disassemble_movs_parameters(uint8_t parameter, MoveTarget move_target) const;
 
-    uint16_t get16(uint32_t address) const;
-    uint32_t get32(uint32_t address) const;
-    void put32(uint32_t address, uint32_t value);
-
     State state = {
         0, 0, 0, 0, 0, 0, 0, 0
     };
 
-    std::array<uint8_t, 32768> memory;
+    Memory& memory;
 };
 
 #endif

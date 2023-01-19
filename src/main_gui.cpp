@@ -6,9 +6,11 @@
 #include <ImGuiFileDialog.h>
 #include <iostream>
 #include "vm.h"
+#include "vm_memory.h"
 
 int main(int argc, char *argv[]) {
-    Vm vm;
+    Memory memory;
+    Vm vm{memory};
 
     SDL_Window *window = nullptr;
 
@@ -71,7 +73,7 @@ int main(int argc, char *argv[]) {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
                 std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                vm.loadImageFromFile(filePathName);
+                memory.loadImageFromFile(filePathName);
             }
 
             ImGuiFileDialog::Instance()->Close();
