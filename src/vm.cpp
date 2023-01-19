@@ -1,9 +1,13 @@
 #include "vm.h"
 #include "fmt/core.h"
-#include <conio.h>
 #include <iostream>
 #include <fstream>
 #include <map>
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <curses.h>
+#endif
 
 enum class Opcode {
     NOP = 0x0,

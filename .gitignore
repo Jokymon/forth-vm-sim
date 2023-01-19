@@ -5,6 +5,7 @@
 .venv/
 __pycache__/
 build/
+build-*/
 .vscode/
 
 # forth-vm-sim build artefacts

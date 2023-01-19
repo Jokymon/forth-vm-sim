@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23.1)
+cmake_minimum_required(VERSION 3.16)
 include(cmake/CPM.cmake)
 include(cmake/imgui.cmake)
 CPMAddPackage("gh:catchorg/Catch2@3.0.1")
@@ -21,7 +21,11 @@ target_sources(vm
         src/vm.cpp
         src/vm_memory.cpp
 )
-target_link_libraries(vm fmt)
+if(UNIX)
+    target_link_libraries(vm fmt ncurses)
+ELSE()
+    target_link_libraries(vm fmt)
+endif()
 
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
