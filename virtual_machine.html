@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VM Internals &mdash; Forth virtual machine  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script src="https://wavedrom.com/skins/default.js"></script>
+        <script src="https://wavedrom.com/wavedrom.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Design decisions" href="design_decisions.html" />
+    <link rel="prev" title="Forth overview" href="forth.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Forth virtual machine
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="system_overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="forth.html">Forth overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">VM Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#instruction-set">Instruction set</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#operand-types">Operand types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#encodings">Encodings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#add-add">ADD - Add</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ifkt-interface-functions">IFKT - Interface functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#illegal-illegal-instruction">ILLEGAL - Illegal instruction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jmp-jump-unconditionally">JMP - Jump unconditionally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jz-jump-if-zero">JZ - Jump if zero</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mov-move">MOV - Move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nop-no-operation">NOP - No Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sra-shift-right-arithmetically">SRA - Shift Right Arithmetically</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sub-subtract">SUB - Subtract</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="design_decisions.html">Design decisions</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Forth virtual machine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>VM Internals</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/virtual_machine.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="vm-internals">
+<h1>VM Internals<a class="headerlink" href="#vm-internals" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="instruction-set">
+<h2>Instruction set<a class="headerlink" href="#instruction-set" title="Permalink to this headline">¶</a></h2>
+<p>The virtual machine implements a simple byte-code instruction set with variable amounts of parameters. The instruction mnemonics, their encoding, possible parameters and the semantics are explained in this section.</p>
+<div class="section" id="operand-types">
+<h3>Operand types<a class="headerlink" href="#operand-types" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Abbreviation</p></th>
+<th class="head"><p>Explanation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><cite>imm5</cite></p></td>
+<td><p>5-bit immediate value</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>imm8</cite></p></td>
+<td><p>8-bit immediate value</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>imm16</cite></p></td>
+<td><p>16-bit immediate value</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>imm32</cite></p></td>
+<td><p>32-bit immediate value</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>label</cite></p></td>
+<td><p>32-bit jump target address</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>reg</cite></p></td>
+<td><p>A register</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>regi</cite></p></td>
+<td><p>Register or register indirect expression</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>regi_op</cite></p></td>
+<td><p>Register or register indirect expression with pre- or postfix operations</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="encodings">
+<h3>Encodings<a class="headerlink" href="#encodings" title="Permalink to this headline">¶</a></h3>
+<p>In most cases when registers need to be encoded in the opcodes, the following mapping is used.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 52%" />
+<col style="width: 48%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Register</p></th>
+<th class="head"><p>Encoding</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">%ip</span></code></p></td>
+<td><p>0x0</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">%wp</span></code></p></td>
+<td><p>0x1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">%rsp</span></code></p></td>
+<td><p>0x2</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">%dsp</span></code></p></td>
+<td><p>0x3</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">%acc1</span></code></p></td>
+<td><p>0x4</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">%acc2</span></code></p></td>
+<td><p>0x5</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">%pc</span></code></p></td>
+<td><p>0x7</p></td>
+</tr>
+</tbody>
+</table>
+<p>All number types comprising of more than one byte are stored in little-endian format.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Encoding</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">u16</span></code></p></td>
+<td><p>A 16-bit unsigned integer value in little-endian encoding</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">u32</span></code></p></td>
+<td><p>A 32-bit unsigned integer value in little-endian encoding</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rr</span></code></p></td>
+<td>
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{
+    "reg": [
+        { "name": "reg_src", "bits": 3 },
+        { "name": "DI_S",    "bits": 1 },
+        { "name": "reg_tgt", "bits": 3 },
+        { "name": "DI_T",    "bits": 1 }
+    ],
+    "config": {
+        "hspace": 300
+    }
+}
+
+</script>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DI_T</span></code> Flag to indicate whether the target register is used
+direct or indirect. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means indirect.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code> The target register encoded as described above.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DI_S</span></code> Flag to indicate whether the source register is used
+direct or indirect. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means indirect.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_src</span></code> The source register encoded as described above.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">3r</span></code></p></td>
+<td>
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{
+    "reg": [
+        { "name": "reg_src2", "bits": 3 },
+        {                     "bits": 5 },
+        { "name": "reg_src1", "bits": 3 },
+        {                     "bits": 1 },
+        { "name": "reg_tgt",  "bits": 3 },
+        {                     "bits": 1 }
+    ],
+    "config": {
+        "lanes": 2,
+        "hspace": 450
+    }
+}
+
+</script>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code> The target register encoded as described above</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> The first source register encoded as described above</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> The second source register encoded as described above</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rop</span></code></p></td>
+<td>
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{
+    "reg": [
+        { "name": "reg_src", "bits": 3 },
+        { "name": "reg_tgt", "bits": 3 },
+        { "name": "PP",      "bits": 1 },
+        { "name": "DI",      "bits": 1 }
+    ],
+    "config": {
+        "hspace": 300
+    }
+}
+
+</script>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DI</span></code> Flag to indicate what operation is to be performed on the
+target register. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means decrement, <code class="docutils literal notranslate"><span class="pre">0</span></code> means increment.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PP</span></code> Flag to indicate whether the operation is performed before
+before indirectly accessing memory or after. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means pre
+operation, a <code class="docutils literal notranslate"><span class="pre">0</span></code> means post operation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code> The register encoded as described above used as target
+indication.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_src</span></code> The register encoded as described above used as source
+indication.</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ri5</span></code></p></td>
+<td>
+<div style="overflow-x:auto">
+<script type="WaveDrom">
+{
+    "reg": [
+        { "name": "val5", "bits": 5 },
+        { "name": "reg",  "bits": 3 }
+    ],
+    "config": {
+        "hspace": 300
+    }
+}
+</script>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">reg</span></code> The affected register encoded as described above.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">val5</span></code> A 5-bit immediate value.</p></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="add-add">
+<h2>ADD - Add<a class="headerlink" href="#add-add" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>30 <cite>/3r</cite></p></td>
+<td><p>ADD <cite>reg_tgt</cite>, <cite>reg_src1</cite>, <cite>reg_src2</cite></p></td>
+<td><p>Add values in registers</p></td>
+</tr>
+</tbody>
+</table>
+<p>This instruction adds the registers <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> together and stores
+the result in the register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The addition is performed unsigned.</p>
+</div>
+<div class="section" id="ifkt-interface-functions">
+<h2>IFKT - Interface functions<a class="headerlink" href="#ifkt-interface-functions" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FE <cite>/u16</cite></p></td>
+<td><p>IFKT <cite>imm16</cite></p></td>
+<td><p>Calling virtual machine interface functions</p></td>
+</tr>
+</tbody>
+</table>
+<p>Allows calling certain functions special to the virtual machine.</p>
+</div>
+<div class="section" id="illegal-illegal-instruction">
+<h2>ILLEGAL - Illegal instruction<a class="headerlink" href="#illegal-illegal-instruction" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>FF</p></td>
+<td><p>ILLEGAL</p></td>
+<td><p>Illegal instruction</p></td>
+</tr>
+</tbody>
+</table>
+<p>In general any instruction not explicitly defined is considered to be an
+illegal instruction and causes the VM to abort interpretation. However for test
+purposes, the mnemonic <code class="docutils literal notranslate"><span class="pre">illegal</span></code> and the opcode <code class="docutils literal notranslate"><span class="pre">0xFF</span></code> are explicitly
+declared to be illegal instructions and shall remain so even with future
+instruction set extensions.</p>
+</div>
+<div class="section" id="jmp-jump-unconditionally">
+<h2>JMP - Jump unconditionally<a class="headerlink" href="#jmp-jump-unconditionally" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>60</p></td>
+<td><p>JMP %ip</p></td>
+<td><p>Jump to register %ip indirect</p></td>
+</tr>
+<tr class="row-odd"><td><p>61</p></td>
+<td><p>JMP %wp</p></td>
+<td><p>Jump to register %wp indirect</p></td>
+</tr>
+<tr class="row-even"><td><p>62</p></td>
+<td><p>JMP %acc1</p></td>
+<td><p>Jump to register %acc1 indirect</p></td>
+</tr>
+<tr class="row-odd"><td><p>63</p></td>
+<td><p>JMP %acc2</p></td>
+<td><p>Jump to register %acc2 indirect</p></td>
+</tr>
+<tr class="row-even"><td><p>64 <cite>/u32</cite></p></td>
+<td><p>JMP <cite>label</cite></p></td>
+<td><p>Jump to immediate address</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="jz-jump-if-zero">
+<h2>JZ - Jump if zero<a class="headerlink" href="#jz-jump-if-zero" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>65 <cite>/u32</cite></p></td>
+<td><p>JZ <cite>label</cite></p></td>
+<td><p>Jump to immediate address when %acc1 is zero</p></td>
+</tr>
+</tbody>
+</table>
+<p>With <code class="docutils literal notranslate"><span class="pre">JZ</span></code> a jump to an immediate address is performed if the value of the
+accumulator register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> has the value <code class="docutils literal notranslate"><span class="pre">0x0</span></code>.</p>
+</div>
+<div class="section" id="mov-move">
+<h2>MOV - Move<a class="headerlink" href="#mov-move" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>20 <cite>/rr</cite></p></td>
+<td><p>MOV.W <cite>regi</cite>, <cite>regi</cite></p></td>
+<td><p>Move register to register word sized</p></td>
+</tr>
+<tr class="row-odd"><td><p>21 <cite>/rr</cite></p></td>
+<td><p>MOV.B <cite>regi</cite>, <cite>regi</cite></p></td>
+<td><p>Move register to register byte sized</p></td>
+</tr>
+<tr class="row-even"><td><p>22 <cite>/rop</cite></p></td>
+<td><p>MOV.W <cite>regi_op</cite>, <cite>reg</cite></p></td>
+<td><p>Move register to register indirect memory with operation word sized</p></td>
+</tr>
+<tr class="row-odd"><td><p>24 <cite>/rop</cite></p></td>
+<td><p>MOV.W <cite>reg</cite>, <cite>regi_op</cite></p></td>
+<td><p>Move register indirect memory to register with operation word sized</p></td>
+</tr>
+<tr class="row-even"><td><p>26 <cite>/u32</cite></p></td>
+<td><p>MOV.W <cite>imm32</cite></p></td>
+<td><p>Move an immediate 32-bit value to register acc1</p></td>
+</tr>
+</tbody>
+</table>
+<p>The virtual machine support three different types of move operations.</p>
+<p>The first type of move operations supports registers and register-indexed memory
+locations. All registers and combinations of register and register-indexing are
+supported. For example in the following instruction</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MOV</span><span class="o">.</span><span class="n">W</span> <span class="p">[</span><span class="o">%</span><span class="n">acc1</span><span class="p">],</span> <span class="o">%</span><span class="n">wp</span>
+</pre></div>
+</div>
+<p>the content of register <code class="docutils literal notranslate"><span class="pre">%wp</span></code> is stored into the memory location specified by
+the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register.</p>
+<p>For this type of move operations, byte-sized and word-sized moves are supported.
+In case of byte-sized moves, only the least significant byte of the 32-bit register
+is stored in memory or read from memory.</p>
+<p>The second type of move operations only supports word-sized moves. Also they are
+either a move operation from a register to a register-indexed memory location or
+from a register-indexed memory to a register. However the register used for the
+memory access will additionally be changed by either incrementing or decrementing,
+either before or after accessing the memory. For example in the following
+instruction</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MOV</span><span class="o">.</span><span class="n">W</span> <span class="p">[</span><span class="o">%</span><span class="n">dsp</span><span class="o">++</span><span class="p">],</span> <span class="o">%</span><span class="n">acc1</span>
+</pre></div>
+</div>
+<p>the content of register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> is stored in the memory location specified by
+the <code class="docutils literal notranslate"><span class="pre">%dsp</span></code> register. After storing the value, the value of the <code class="docutils literal notranslate"><span class="pre">%dsp</span></code> register
+is incremented by <code class="docutils literal notranslate"><span class="pre">4</span></code> to point to the next word in memory. These registers are
+meant for pushing register values onto stacks and popping them again.</p>
+<p>For the third type of move operations, only the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register can be used.
+It allows for storing immediate 32-bit values into the register. For example in
+the following instruction</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MOV</span><span class="o">.</span><span class="n">W</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="c1">#0x12345678</span>
+</pre></div>
+</div>
+<p>the immediate value <code class="docutils literal notranslate"><span class="pre">0x12345678</span></code> is stored into the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register.</p>
+</div>
+<div class="section" id="nop-no-operation">
+<h2>NOP - No Operation<a class="headerlink" href="#nop-no-operation" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>00</p></td>
+<td><p>NOP</p></td>
+<td><p>No operation</p></td>
+</tr>
+</tbody>
+</table>
+<p>This instruction has no effect and can be used to fill memory.</p>
+</div>
+<div class="section" id="sra-shift-right-arithmetically">
+<h2>SRA - Shift Right Arithmetically<a class="headerlink" href="#sra-shift-right-arithmetically" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3C <cite>/ri5</cite></p></td>
+<td><p>SRA.W <cite>reg</cite>, <cite>imm5</cite></p></td>
+<td><p>Arithmetically shift the given register right by the given amount</p></td>
+</tr>
+</tbody>
+</table>
+<p>Shift the given register arithmetically right by the given 5-bit immediate value.
+It shifts the most significant bit, number 31, into the following less significant
+bits.</p>
+</div>
+<div class="section" id="sub-subtract">
+<h2>SUB - Subtract<a class="headerlink" href="#sub-subtract" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>32 <cite>/3r</cite></p></td>
+<td><p>SUB <cite>reg_tgt</cite>, <cite>reg_src1</cite>, <cite>reg_src2</cite></p></td>
+<td><p>Subtract values in registers</p></td>
+</tr>
+</tbody>
+</table>
+<p>This instruction subtracts <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> from <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
+register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The subtraction is performed unsigned.</p>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="forth.html" class="btn btn-neutral float-left" title="Forth overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="design_decisions.html" class="btn btn-neutral float-right" title="Design decisions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Silvan Wegmann.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

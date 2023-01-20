@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design decisions &mdash; Forth virtual machine  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script src="https://wavedrom.com/skins/default.js"></script>
+        <script src="https://wavedrom.com/wavedrom.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="VM Internals" href="virtual_machine.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Forth virtual machine
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="system_overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="forth.html">Forth overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="virtual_machine.html">VM Internals</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Design decisions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#handling-jump-target-and-encoding-resolution">Handling Jump target and encoding resolution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#problem">Problem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solution">Solution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#effects">Effects</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Forth virtual machine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Design decisions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/design_decisions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="design-decisions">
+<h1>Design decisions<a class="headerlink" href="#design-decisions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="handling-jump-target-and-encoding-resolution">
+<h2>Handling Jump target and encoding resolution<a class="headerlink" href="#handling-jump-target-and-encoding-resolution" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="problem">
+<h3>Problem<a class="headerlink" href="#problem" title="Permalink to this headline">¶</a></h3>
+<p>For resolving jmp and labels, we would like to get the address of a label by getting the current insertion point into the code.</p>
+<p>This would work easy, if we just added every new instruction to the code as soon as it is parsed.</p>
+<p>The problem here is, that this way all instructions are added before any of the block grammar rules are executed. So any “prefix”-code, for example for a code or word-definition would never have had a chance to do anything before the code lines are added. We need to collect the code first somewhere else temporarily, then let the blocks execute and only then add the code blocks.</p>
+</div>
+<div class="section" id="solution">
+<h3>Solution<a class="headerlink" href="#solution" title="Permalink to this headline">¶</a></h3>
+<p>When assembling a jmp-immediate instruction, we don’t include the target-address, but start with including a 4-byte target-index. This index is then resolved once all the labels have been resolved.</p>
+<div class="section" id="effects">
+<h4>Effects<a class="headerlink" href="#effects" title="Permalink to this headline">¶</a></h4>
+<p>One problem of this approach is that we need to search the generated machine code for jmp instructions (hex 0x64). But can’t just take any 0x64 as a jmp instruction, since it is also the ASCII code for a ‘d’.
+The next idea therefore is to somehow mark the jump with special sequence that will hopefully never appear elsewhere :-( I chose 0x64, 0xff, 0xaa whereas the 0xff was chosen because it represents an illegal instruction and 0xaa because it is hopefully a somewhat exotic addition to 0xff. The downside to this is, that we now can only use 65535 jumps (16-bit) in the entire code. Hopefully we will not run out of them ;-)</p>
+<ul class="simple">
+<li><p>The assembled jump instructions still have final 5-byte of total opcode length and will not disturb any other length/position calculations</p></li>
+<li><p>There is no need to change anything about the order in which grammar rules are processed; we can still stick with Lark</p></li>
+<li><p>We need a third pass to resolve jmp indices to jmp addresses (first one is simple parsing/assembling, second one is label resolution)</p></li>
+<li><p>Process for resolution is a little more complex than that for label resolution</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="virtual_machine.html" class="btn btn-neutral float-left" title="VM Internals" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Silvan Wegmann.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
