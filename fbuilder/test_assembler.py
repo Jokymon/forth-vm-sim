@@ -229,6 +229,9 @@ class TestAssemblingDefSysVarDefinitions:
 
     def test_address_of_variable_is_provided_as_label(self):
         source = """
+        macro __DEFVAR_CFA()
+            dw #0x17fcaa55
+        end
         codeblock
             nop
             dw :sp0_var
@@ -240,7 +243,7 @@ class TestAssemblingDefSysVarDefinitions:
         result = assemble(source)
         # Address must be calculated from backlink, variable name length
         # and variable name itself
-        assert result[1:5] == b"\x0d\x00\x00\x00"
+        assert result[1:5] == b"\x11\x00\x00\x00"
 
     def test_cfa_of_variable_is_filled_with_macro(self):
         source = """
@@ -256,6 +259,22 @@ class TestAssemblingDefSysVarDefinitions:
 
         result = assemble(source)
         assert result[9:13] == b"\x55\xaa\xfc\x17"
+
+    def test_cfa_of_variable_is_provided_as_label(self):
+        source = """
+        macro __DEFVAR_CFA()
+            dw #0x17fcaa55
+        end
+        codeblock
+            nop
+            dw :sp0_cfa
+        end
+
+        defsysvar SP0
+        """
+
+        result = assemble(source)
+        assert result[1:5] == b"\x0d\x00\x00\x00"
 
 
 class TestAssemblingDwInstructions:

@@ -112,6 +112,10 @@ class VmForthAssembler(Interpreter):
         self.emitter.emit_data_8(len(variable_name))
         self.emitter.emit_data_string(variable_name)
 
+        # creating a label for the word
+        self.emitter.mark_label(variable_name.lower() + "_cfa")
+        self.word_addresses[variable_name] = self.emitter.get_current_code_address()
+
         # Append CFA field
         if "__DEFVAR_CFA" in self.macros:
             self.macros["__DEFVAR_CFA"].evaluate(self)
@@ -125,6 +129,9 @@ class VmForthAssembler(Interpreter):
         if len(tree.children) > 1:
             default_value = self.visit(tree.children[1])
         self.emitter.emit_data_32(default_value)
+
+        # creating a label for address after word
+        self.emitter.mark_label(variable_name.lower() + "_end")
 
     def code_line(self, tree):
         return self.visit_children(tree)[0]
