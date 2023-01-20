@@ -1,9 +1,9 @@
 {
     "reg": [
-        { "name": "reg_source", "bits": 3 },
-        { "name": "reg_target", "bits": 3 },
-        { "name": "PP",         "bits": 1 },
-        { "name": "DI",         "bits": 1 }
+        { "name": "reg_src", "bits": 3 },
+        { "name": "reg_tgt", "bits": 3 },
+        { "name": "PP",      "bits": 1 },
+        { "name": "DI",      "bits": 1 }
     ],
     "config": {
         "hspace": 300

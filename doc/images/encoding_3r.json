@@ -1,0 +1,14 @@
+{
+    "reg": [
+        { "name": "reg_src2", "bits": 3 },
+        {                     "bits": 5 },
+        { "name": "reg_src1", "bits": 3 },
+        {                     "bits": 1 },
+        { "name": "reg_tgt",  "bits": 3 },
+        {                     "bits": 1 }
+    ],
+    "config": {
+        "lanes": 2,
+        "hspace": 450
+    }
+}
