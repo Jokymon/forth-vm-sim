@@ -55,6 +55,9 @@ html_static_path = ['_static']
 
 # -- Settings for plugins ----------------------------------------------------
 
-plantuml = os.environ["PLANTUML"]
+if "PLANTUML" in os.environ:
+    plantuml = os.environ["PLANTUML"]
+else:
+    plantuml = 'plantuml'
 
 render_using_wavedrompy = True
