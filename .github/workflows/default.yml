@@ -16,6 +16,7 @@ jobs:
     # Build the documentation using Sphinx
     - uses: ammaraskar/sphinx-action@master
       with:
+        pre-build-command: "apt-get update -y && apt-get install -y plantuml && export PLANTUML=plantuml"
         docs-folder: "doc/"
 
     # Publish built docs to gh-pages branch.
