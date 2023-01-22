@@ -2,11 +2,13 @@ import pathlib
 from lark import Lark
 from assembler import VmForthAssembler
 from emitter import MachineCodeEmitter, DisassemblyEmitter
+from debug_symbols import WordCollection
 
 
 class Assembler:
     def __init__(self, options=None):
         self.options = options
+        self.symbols = WordCollection()
 
     def assemble_file(self):
         source_code = self.options.input.read_text()
@@ -21,6 +23,9 @@ class Assembler:
         with open(self.options.output, file_mode) as output_file:
             output_file.write(output)
 
+        if self.options.symbol_table:
+            self.symbols.dump_to_file(self.options.output.with_suffix(".sym"))
+
     def assemble_source(self, source_code):
         script_dir = pathlib.Path(__file__).parent
         lark_grammar_path = script_dir / "grammar.lark"
@@ -34,7 +39,8 @@ class Assembler:
         else:
             emitter = MachineCodeEmitter()
 
-        assembler = VmForthAssembler(emitter)
+        self.symbols.clear()
+        assembler = VmForthAssembler(emitter, self.symbols)
         assembler.visit(parse_tree)
 
         if self.options.format == "disassembly":

@@ -12,6 +12,8 @@ def main():
                         help="output file for compiled data")
     parser.add_argument('-f', '--format', dest='format', choices=['bin', 'carray', 'disassembly'], default="bin",
                         help="output format for the assembled code")
+    parser.add_argument('--sym', dest='symbol_table', action='store_true', default=False,
+                        help="flag to indicate whether a symbol table should be emitted in addition to the regular output")
 
     args = parser.parse_args()
     compiler = app.Assembler(args)

@@ -21,7 +21,7 @@ class MacroDefinition:
 
 
 class VmForthAssembler(Interpreter):
-    def __init__(self, emitter):
+    def __init__(self, emitter, symbol_table):
         self.constants = {}
         self.macros = {}
         self.macro_scope = {}
@@ -30,6 +30,7 @@ class VmForthAssembler(Interpreter):
         self.previous_word_start = 0x0
 
         self.emitter = emitter
+        self.symbol_table = symbol_table
 
     def _get_cfa_from_word(self, word):
         if word in self.word_addresses:
@@ -66,6 +67,9 @@ class VmForthAssembler(Interpreter):
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
 
+        # add symbol to symbol table
+        self.symbol_table.add_word(word_name.lower(), current_position, self.emitter.get_current_code_address())
+
     def word_definition(self, tree):
         current_position = self.emitter.get_current_code_address()
         # Append back-link
@@ -89,6 +93,9 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
+
+        # add symbol to symbol table
+        self.symbol_table.add_word(word_name.lower(), current_position, self.emitter.get_current_code_address())
 
     def macro_definition(self, tree):
         macro_name = str(tree.children[0])
@@ -132,6 +139,9 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(variable_name.lower() + "_end")
+
+        # add symbol to symbol table
+        self.symbol_table.add_word(variable_name.lower(), current_position, self.emitter.get_current_code_address())
 
     def code_line(self, tree):
         return self.visit_children(tree)[0]
