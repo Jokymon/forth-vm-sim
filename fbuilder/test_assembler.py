@@ -1,5 +1,15 @@
 from assembler import *
+from app import Assembler
+from dataclasses import dataclass
 import pytest
+
+
+def assemble(source):
+    @dataclass
+    class DefaultOptions:
+        format : str = "bin"
+    asm = Assembler(DefaultOptions())
+    return asm.assemble_source(source)
 
 
 def test_alignment_function():

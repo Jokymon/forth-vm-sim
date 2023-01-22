@@ -2,7 +2,7 @@ import pathlib
 
 from operands import *
 from emitter import *
-from lark import Lark, Token, Transformer
+from lark import Token
 from lark.visitors import Interpreter
 
 
@@ -275,29 +275,3 @@ class VmForthAssembler(Interpreter):
             return int(number_text[2:], 16)
         else:
             return int(number_text)
-
-
-def assemble(input_text):
-    script_dir = pathlib.Path(__file__).parent
-    lark_grammar_path = script_dir / "grammar.lark"
-    grammar = lark_grammar_path.read_text()
-    lark_parser = Lark(grammar, parser='lalr')
-
-    parse_tree = lark_parser.parse(input_text)
-
-    assembler = VmForthAssembler(MachineCodeEmitter())
-    assembler.visit(parse_tree)
-    return assembler.emitter.binary_code
-
-
-def assemble_with_diassassembly(input_text):
-    script_dir = pathlib.Path(__file__).parent
-    lark_grammar_path = script_dir / "grammar.lark"
-    grammar = lark_grammar_path.read_text()
-    lark_parser = Lark(grammar, parser='lalr')
-
-    parse_tree = lark_parser.parse(input_text)
-
-    assembler = VmForthAssembler(DisassemblyEmitter())
-    assembler.visit(parse_tree)
-    return assembler.emitter.disassembly
