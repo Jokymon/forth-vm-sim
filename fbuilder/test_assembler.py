@@ -956,6 +956,17 @@ class TestALUInstruction:
 
         assert binary == assemble(source)
 
+    def test_xoring_two_registers(self):
+        source = """
+        codeblock
+            xor.w %ip, %wp, %acc1
+        end
+        """
+
+        binary = b"\x38\x01\x04"
+
+        assert binary == assemble(source)
+
     def test_shift_right_arithmetically(self):
         source = """
         codeblock

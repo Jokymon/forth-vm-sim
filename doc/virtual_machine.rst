@@ -293,3 +293,19 @@ SUB - Subtract
 This instruction subtracts ``reg_src2`` from ``reg_src1`` and stores the result in 
 register ``reg_tgt``. The subtraction is performed unsigned. 
 
+XOR - arithmetic exclusive or
+-----------------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+---------------------------------------+-------------------------------------------------+
+    | Opcode    | Mnemonic                              | Description                                     |
+    +===========+=======================================+=================================================+
+    | 38 `/3r`  | XOR `reg_tgt`, `reg_src1`, `reg_src2` | exclusive or arithmetically values in registers |
+    +-----------+---------------------------------------+-------------------------------------------------+
+
+This instruction xors ``reg_src2`` with ``reg_src1`` and stores the result in 
+register ``reg_tgt``. The xor is performed arithemtically and thus the bits are
+affected individually.
+

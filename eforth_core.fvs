@@ -223,7 +223,10 @@ defcode 0<
 end
 
 defcode XOR
-    // TODO: new instruction
+    POPD(%acc1)
+    POPD(%acc2)
+    xor %acc1, %acc1, %acc2
+    PUSHD(%acc1)
     NEXT()
 end
 

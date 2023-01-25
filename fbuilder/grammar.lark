@@ -77,6 +77,7 @@ OPCODE.2: "add"
     | "sra"
     | "sub"
     | "unsup"
+    | "xor"
 
 REGISTER: "%ip"
     | "%wp"

@@ -359,6 +359,26 @@ TEST_CASE("Sub instruction") {
     REQUIRE( 0x3 == state.registers[Vm::Pc] );
 }
 
+TEST_CASE("Xor instruction") {
+    Memory testdata = {
+        0x38, 0x01, 0x4,    // xor.w %ip, %wp, %acc1
+    };
+
+    Vm uut{testdata};
+
+    auto state = uut.getState();
+    state.registers[Vm::Acc1] = 0x562a;
+    state.registers[Vm::Wp] = 0x723828;
+    state.registers[Vm::Ip] = 0x0;
+    uut.setState(state);
+
+    REQUIRE( Vm::Success == uut.singleStep());
+
+    state = uut.getState();
+    REQUIRE( (0x723828 ^ 0x562a) == state.registers[Vm::Ip] );
+    REQUIRE( 0x3 == state.registers[Vm::Pc] );
+}
+
 TEST_CASE("Sra instruction with signed value") {
     Memory testdata = {
         0x3c, 0x65,    // sra.w %dsp, #0x5
@@ -421,6 +441,7 @@ TEST_CASE("Disassembling") {
         0x65, 0x07, 0x00, 0x00, 0x00,   // jz 0x7
         0x30, 0x01, 0x4,    // add.w %ip, %wp, %acc1
         0x32, 0x01, 0x4,    // sub.w %ip, %wp, %acc1
+        0x38, 0x01, 0x4,    // xor.w %ip, %wp, %acc1
         0x3c, 0x65,         // sra.w %dsp, #5
     };
 
@@ -569,14 +590,20 @@ TEST_CASE("Disassembling") {
         REQUIRE( "add.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
 
-    SECTION("Disassembling add with registers") {
+    SECTION("Disassembling sub with registers") {
         state.registers[Vm::Pc] = 51;
         uut.setState(state);
         REQUIRE( "sub.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
 
-    SECTION("Disassembling sra") {
+    SECTION("Disassembling xor with registers") {
         state.registers[Vm::Pc] = 54;
+        uut.setState(state);
+        REQUIRE( "xor.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling sra") {
+        state.registers[Vm::Pc] = 57;
         uut.setState(state);
         REQUIRE( "sra.w %dsp, 0x5" == uut.disassembleAtPc() );
     }
