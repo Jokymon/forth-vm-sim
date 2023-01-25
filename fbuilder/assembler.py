@@ -129,7 +129,6 @@ class VmForthAssembler(Interpreter):
 
         # create a label for the variable value
         self.emitter.mark_label(variable_name.lower() + "_var")
-        self.word_addresses[variable_name] = self.emitter.get_current_code_address()
 
         # Append a default value
         default_value = 0x0
