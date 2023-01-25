@@ -1,5 +1,7 @@
+#include "symbols.h"
 #include "vm.h"
 #include "vm_memory.h"
+#include "ghc/filesystem.hpp"
 #include "absl/strings/str_split.h"
 #include <args.hxx>
 #include <fmt/core.h>
@@ -19,10 +21,16 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    Symbols symbols;
     Memory memory;
     Vm vm{memory};
 
+    ghc::filesystem::path binaryInputPath(args::get(binaryInput));
     memory.loadImageFromFile(args::get(binaryInput));
+    binaryInputPath.replace_extension("sym");
+    if (ghc::filesystem::exists(binaryInputPath)) {
+        symbols.loadFromFile(binaryInputPath.string());
+    }
 
     if (debug) {
         std::string input;
@@ -42,6 +50,19 @@ int main(int argc, char* argv[])
                 state.registers[Vm::Acc1]);
             fmt::print("                 | Acc2: {:>11x}\n",
                 state.registers[Vm::Acc2]);
+            std::cout << "----------------------\n";
+            auto wp_symbols = symbols.symbolsAtAddress(state.registers[Vm::Wp]);
+            auto ip_symbols = symbols.symbolsAtAddress(state.registers[Vm::Ip]);
+            std::cout << "Wp scopes: ";
+            for (const auto &symbol: wp_symbols) {
+                std::cout << symbol << ", ";
+            }
+            std::cout << "\n";
+            std::cout << "Ip scopes: ";
+            for (const auto &symbol: ip_symbols) {
+                std::cout << symbol << ", ";
+            }
+            std::cout << "\n";
             std::cout << "----------------------\n";
             std::cout << "Next instruction: " << vm.disassembleAtPc() << std::endl;
             std::cout << ">>> ";
