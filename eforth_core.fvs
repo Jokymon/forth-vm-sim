@@ -59,7 +59,8 @@ doLIST:
     NEXT()
 
 do_var:
-    mov %acc1, $ + 0x4
+    mov %acc1, CELLSIZE
+    add %acc1, %wp, %acc1
     PUSHD(%acc1)
     NEXT()
 end
@@ -92,6 +93,8 @@ end
 defcode ?BRANCH
     POPD(%acc1)
     jz :nobranch
+    mov %acc1, CELLSIZE
+    add %ip, %ip, %acc1
     NEXT()
 nobranch:
     mov %ip, [%ip]
@@ -178,10 +181,10 @@ defcode SWAP
 end
 
 defcode OVER    // w1 w2 -- w1 w2 w1
-    POPD(%acc1)
     POPD(%acc2)
-    PUSHD(%acc2)
+    POPD(%acc1)
     PUSHD(%acc1)
+    PUSHD(%acc2)
     PUSHD(%acc1)
     NEXT()
 end
@@ -236,10 +239,12 @@ defword U<
     SWAP DROP 0< EXIT
 ules1:
     - 0<
+    EXIT
 end
 
 defword WITHIN      // u ul uh -- t
     OVER - >R - R> U<
+    EXIT
 end
 
 defcode KEY
@@ -256,10 +261,12 @@ end
 
 defword ECHO
     EMIT
+    EXIT
 end
 
 defword BL
     doLIT 32
+    EXIT
 end
 
 // -------------------------------------------------------------------
@@ -276,7 +283,8 @@ defsysvar LATEST
 // Forth compiler
 
 defword TAP     // bot eot cur c -- bot eot cur
-    DUP ECHO OVER C! 1 +
+    DUP ECHO OVER C! doLIT 1 +
+    EXIT
 end
 
 defword EXPECT  // b u -- b u
@@ -302,7 +310,7 @@ end
 
 defword QUERY
 query_loop:
-    TIB 80 EXPECT
+    TIB doLIT 80 EXPECT
     BRANCH :query_loop
     EXIT
 end
