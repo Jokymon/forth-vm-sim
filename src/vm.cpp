@@ -55,14 +55,6 @@ const std::map<uint8_t, std::string> register_name_mapping = {
 };
 
 Vm::Vm(Memory &memory) : memory(memory) {
-    // Setup the memory layout
-    // +------------+------------+--------------+----------------+-------------+
-    // | Dictionary | Data Stack | Return Stack | User Variables | I/O Buffers |
-    // +------------+------------+--------------+----------------+-------------+
-    //  16k           4k           4k             4k               4k
-    //   -->                  <--           <--
-    state.registers[Rsp] = (16+4+4) * 1024;
-    state.registers[Dsp] = (16+4) * 1024;
 }
 
 Vm::Result Vm::singleStep() {
