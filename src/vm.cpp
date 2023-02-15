@@ -42,6 +42,7 @@ enum class IfktCodes {
 
     TERMINATE = 0xf0,
     DUMP = 0xf1,
+    DUMP_M = 0xf2,
 };
 
 const std::map<uint8_t, std::string> register_name_mapping = {
@@ -62,6 +63,9 @@ Vm::Result Vm::singleStep() {
     uint8_t param8;
     uint16_t param16;
     uint32_t param32;
+
+    uint32_t start_address;
+    uint32_t end_address;
 
     Opcode op = static_cast<Opcode>(fetch_op());
     switch (op) {
@@ -182,6 +186,16 @@ Vm::Result Vm::singleStep() {
                     return Finished;
                 case IfktCodes::DUMP:
                     std::cout << "\nDump: " << memory.get32(state.registers[Dsp]) << "\n";
+                    break;
+                case IfktCodes::DUMP_M:
+                    start_address = state.registers[Acc1];
+                    end_address = state.registers[Acc2];
+                    if (start_address > end_address)
+                        std::swap(start_address, end_address);
+
+                    for (auto addr=start_address; addr<=end_address; addr+=4) {
+                        fmt::print("{:08x}\n", memory.get32(addr));
+                    }
                     break;
                 default:
                     return IllegalInstruction;

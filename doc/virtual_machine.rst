@@ -131,6 +131,30 @@ IFKT - Interface functions
 
 Allows calling certain functions special to the virtual machine.
 
+The virtual machine currently support the following interface functions.
+
+.. table::
+    :widths: 15 20 65
+
+    +------+---------------+-------------------------------------------------------+
+    | Code | Short Name    | Function description                                  |
+    +======+===============+=======================================================+
+    | 0x01 | ``INPUT``     | Read one character from the keyboard and store the    |
+    |      |               | ASCII code in the ``%acc1``` register.                |
+    +------+---------------+-------------------------------------------------------+
+    | 0x02 | ``OUTPUT``    | Using the byte value at the least significant         |
+    |      |               | position in register ``%acc1``, print one character.  |
+    +------+---------------+-------------------------------------------------------+
+    | 0xF0 | ``TERMINATE`` | Terminate the virtual machine.                        |
+    +------+---------------+-------------------------------------------------------+
+    | 0xF2 | ``DUMP_M``    | Dump all values between the addresses specified in    |
+    |      |               | the registers ``%acc1`` and ``%acc2``. The addresses  |
+    |      |               | specified in the registers are also dumped. The values|
+    |      |               | will always be dumped in the order from the smaller   |
+    |      |               | address to the larger, no matter in what register     |
+    |      |               | they are stored.                                      |
+    +------+---------------+-------------------------------------------------------+
+
 ILLEGAL - Illegal instruction
 -----------------------------
 
