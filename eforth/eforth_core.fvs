@@ -1,65 +1,11 @@
 // -----------------------------------------------------------
 
-const CELLSIZE = 4
-const FKT_KEY = 0x1
-const FKT_EMIT = 0x2
-const FKT_DUMP = 0xf1
+include "eforth/vm_core.fvs"
+include "eforth/eforth_basics.fvs"
 
 const TIBB = 0x3000
 
-// -----------------------------------------------------------
-// macros
-macro NEXT()
-    mov %wp, [%ip++]
-    jmp [%wp]
-end
-
-macro __DEFCODE_CFA()
-    dw $ + 0x4
-end
-
-macro __DEFWORD_CFA()
-    dw :doLIST
-end
-
-macro __DEFVAR_CFA()
-    dw :do_var
-end
-
-// dsp always points to the TOS
-macro PUSHD(reg)
-    mov [--%dsp], @reg
-end
-
-macro POPD(reg)
-    mov @reg, [%dsp++]
-end
-
-macro PUSHR(reg)
-    mov [%rsp++], @reg
-end
-
-macro POPR(reg)
-    mov @reg, [--%rsp]
-end
-
-// -----------------------------------------------------------
-
 codeblock
-    // Setup the memory layout
-    // +------------+------------+--------------+----------------+-------------+
-    // | Dictionary | Data Stack | Return Stack | User Variables | I/O Buffers |
-    // +------------+------------+--------------+----------------+-------------+
-    //  16k           4k           4k             4k               4k
-    //   -->                  <--           <--
-    mov %acc1, #0x6000  // (16+4+4) * 1024;
-    mov %rsp, %acc1
-    mov %acc1, #0x5000  // (16+4) * 1024;
-    mov %dsp, %acc1
-
-    mov %acc1, :start_word
-    mov %ip, %acc1
-    NEXT()
 start_word:
     dw :testw_cfa
 
@@ -231,7 +177,7 @@ end
 
 defcode 0<
     POPD(%acc1)
-    sra %acc1, #32
+    sra %acc1, #31
     PUSHD(%acc1)
     NEXT()
 end
@@ -283,12 +229,19 @@ end
 // -------------------------------------------------------------------
 // system variables
 
-defsysvar #TIB
-defsysvar TIB TIBB
+defsysvar #TIB TIBB
 
 defsysvar STATE
 defsysvar HERE :testw_end
 defsysvar LATEST
+
+// -------------------------------------------------------------------
+// Memory access
+
+defword TIB     // -- a
+    #TIB @
+    EXIT
+end
 
 // -------------------------------------------------------------------
 // Forth compiler
@@ -302,7 +255,8 @@ defword EXPECT  // b u -- b u
 // accept characters to input buffer, return with actual count
     OVER + OVER         // b b+u b
 expect1:
-    2DUP XOR
+    2DUP                // b b+u b b+u b
+    XOR
     ?BRANCH :expect4
     KEY DUP
     BL - doLIT 95 U<
@@ -341,11 +295,7 @@ end
 
 defword TESTW
 loop:
-    KEY
-    doLIT 10
-    EMIT
-    BRANCH :loop
-    DUMP
+    QUERY
     ILLEGAL
     EXIT
 end

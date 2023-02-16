@@ -1,0 +1,62 @@
+// -----------------------------------------------------------
+// macros
+macro NEXT()
+    mov %wp, [%ip++]
+    jmp [%wp]
+end
+
+macro __DEFCODE_CFA()
+    dw $ + 0x4
+end
+
+macro __DEFWORD_CFA()
+    dw :doLIST
+end
+
+macro __DEFVAR_CFA()
+    dw :do_var
+end
+
+// dsp always points to the TOS
+macro PUSHD(reg)
+    mov [--%dsp], @reg
+end
+
+macro POPD(reg)
+    mov @reg, [%dsp++]
+end
+
+macro PUSHR(reg)
+    mov [%rsp++], @reg
+end
+
+macro POPR(reg)
+    mov @reg, [--%rsp]
+end
+
+// -----------------------------------------------------------
+// constants
+
+    // Setup the memory layout
+    // +------------+------------+--------------+----------------+-------------+
+    // | Dictionary | Data Stack | Return Stack | User Variables | I/O Buffers |
+    // +------------+------------+--------------+----------------+-------------+
+    //  16k           4k           4k             4k               4k
+    //   -->                  <--           <--
+
+const RSP_BASE = 0x6000     // (16+4+4) * 1024
+const DSP_BASE = 0x5000     // (16+4) * 1024
+
+// -----------------------------------------------------------
+// startup code
+
+codeblock
+    mov %acc1, RSP_BASE
+    mov %rsp, %acc1
+    mov %acc1, DSP_BASE
+    mov %dsp, %acc1
+
+    mov %acc1, :start_word
+    mov %ip, %acc1
+    NEXT()
+end

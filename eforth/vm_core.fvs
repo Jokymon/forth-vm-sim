@@ -1,0 +1,7 @@
+const CELLSIZE = 4
+
+const FKT_KEY = 0x1
+const FKT_EMIT = 0x2
+const FKT_TERMINATE = 0xf0
+const FKT_DUMP = 0xf1
+const FKT_DUMP_M = 0xf2
