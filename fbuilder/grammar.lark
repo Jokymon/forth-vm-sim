@@ -6,6 +6,7 @@ definition: code_block
     | word_definition
     | constant_definition
     | system_variable_definition
+    | _INCLUDE
 
 code_block: "codeblock" code_line* "end"
 
@@ -18,6 +19,10 @@ word_definition: "defword" WORD_NAME word* "end"
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 
 system_variable_definition: "defsysvar" WORD_NAME (immediate_number | jump_target)? _NEWLINE
+
+// Handle 'includes' by making them one single token that the lexer can the handle
+// as a unit
+_INCLUDE: "include" /\s+/ STRING
 
 macro_parameters: [ IDENTIFIER ( "," IDENTIFIER )* ]
 
@@ -104,4 +109,5 @@ _NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )+
 
 %import common.LETTER
 %import common.WS
+%import common.ESCAPED_STRING -> STRING
 %ignore WS
