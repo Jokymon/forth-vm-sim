@@ -1,26 +1,4 @@
-// -----------------------------------------------------------
-
-include "eforth/vm_core.fvs"
-include "eforth/eforth_basics.fvs"
-
 const TIBB = 0x3000
-
-codeblock
-start_word:
-    dw :testw_cfa
-
-doLIST:
-    mov [%rsp++], %ip
-    mov %acc1, CELLSIZE
-    add %ip, %wp, %acc1
-    NEXT()
-
-do_var:
-    mov %acc1, CELLSIZE
-    add %acc1, %wp, %acc1
-    PUSHD(%acc1)
-    NEXT()
-end
 
 // -------------------------------------------------------------------------
 // kernel words

@@ -1,0 +1,23 @@
+// -----------------------------------------------------------
+
+include "eforth/vm_core.fvs"
+include "eforth/eforth_basics.fvs"
+
+codeblock
+start_word:
+    dw :testw_cfa
+
+doLIST:
+    mov [%rsp++], %ip
+    mov %acc1, CELLSIZE
+    add %ip, %wp, %acc1
+    NEXT()
+
+do_var:
+    mov %acc1, CELLSIZE
+    add %acc1, %wp, %acc1
+    PUSHD(%acc1)
+    NEXT()
+end
+
+include "eforth/eforth_core.fvs"

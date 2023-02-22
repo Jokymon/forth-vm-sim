@@ -1,0 +1,48 @@
+// -----------------------------------------------------------
+
+include "eforth/vm_core.fvs"
+include "eforth/eforth_basics.fvs"
+
+codeblock
+start_word:
+    dw :run_test_cfa
+
+doLIST:
+    mov [%rsp++], %ip
+    mov %acc1, CELLSIZE
+    add %ip, %wp, %acc1
+    NEXT()
+
+do_var:
+    mov %acc1, CELLSIZE
+    add %acc1, %wp, %acc1
+    PUSHD(%acc1)
+    NEXT()
+end
+
+include "eforth/eforth_core.fvs"
+
+// -----------------------------------------------------------
+// test environment
+
+defcode BYE
+    ifkt FKT_TERMINATE
+end
+
+defcode DUMP_STACK
+    mov %acc1, #0x5000
+    mov %acc2, %acc1
+    mov %acc1, CELLSIZE
+    sub %acc2, %acc2, %acc1
+
+    mov %acc1, %dsp
+    ifkt FKT_DUMP_M
+    NEXT()
+end
+
+defword RUN_TEST
+    %WUT%      // word under test
+
+    DUMP_STACK
+    BYE
+end
