@@ -1,5 +1,9 @@
 const TIBB = 0x3000
 
+const BKSPP = 8
+const LF = 10
+const CRR = 13
+
 // -------------------------------------------------------------------------
 // kernel words
 
@@ -147,8 +151,8 @@ defcode +
 end
 
 defcode -
-    POPD(%acc1)
     POPD(%acc2)
+    POPD(%acc1)
     sub %acc1, %acc1, %acc2
     PUSHD(%acc1)
     NEXT()
@@ -233,6 +237,19 @@ defword TAP     // bot eot cur c -- bot eot cur
     EXIT
 end
 
+defword kTAP
+    DUP doLIT 13 XOR
+    ?BRANCH :ktap2
+    doLIT 8 XOR
+    ?BRANCH :ktap1
+    BL TAP EXIT
+ktap1:
+    doLIT 8 EXIT        // TODO: This should actually perform a backspace
+ktap2:
+    DROP SWAP DROP DUP
+    EXIT
+end
+
 defword EXPECT  // b u -- b u
 // accept characters to input buffer, return with actual count
     OVER + OVER         // b b+u b
@@ -247,7 +264,7 @@ expect1:
     TAP
     BRANCH :expect3
 expect2:
-    TAP         // 'TAP @EXECUTE
+    kTAP         // 'TAP @EXECUTE
 expect3:
     BRANCH :expect1
 expect4:
