@@ -9,6 +9,10 @@ defcode doLIT
     NEXT()
 end
 
+defcode BYE
+    ifkt FKT_TERMINATE
+end
+
 defcode EXIT
     mov %ip, [--%rsp]
     NEXT()
