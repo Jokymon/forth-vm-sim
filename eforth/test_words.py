@@ -155,3 +155,15 @@ def test_expect_returns_the_address_and_the_amount_of_read_chars(me):
     assert len(stack) == 2
     assert stack[0] == 5
     assert stack[1] == 12000
+
+# ------------------------
+# QUERY
+
+@passmein
+def test_QUERY_stores_number_of_read_characters_and_resets_parser_pointer(me):
+    """QUERY #TIB @ >IN @"""
+    stack = run_vm_image(me.__doc__, "hello\n")
+
+    assert len(stack) == 2
+    assert stack[0] == 0
+    assert stack[1] == 5
