@@ -215,7 +215,16 @@ end
 // -------------------------------------------------------------------
 // system variables
 
-defsysvar #TIB TIBB
+defsysvar SP0 DSP_BASE
+defsysvar RP0 RSP_BASE
+
+defsysvar SPAN
+defsysvar >IN
+defsysvar #TIB
+defsysvar TIB_ADDR TIBB     // this only has a name to reserve space #TODO: does it actually make sense this way?
+
+defsysvar HLD
+defsysvar HANDLER
 
 defsysvar STATE
 defsysvar HERE :testw_end

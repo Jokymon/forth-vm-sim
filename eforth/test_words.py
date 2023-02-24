@@ -88,6 +88,25 @@ def test_lt_zero_returns_true_for_negative_numbers(me):
     assert stack[0] == 0xffffffff
 
 # ------------------------
+# User variables
+
+@passmein
+def test_sp0_returns_data_stack_base_address(me):
+    """SP0 @"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0x5000
+
+@passmein
+def test_rp0_returns_return_stack_base_address(me):
+    """RP0 @"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0x6000
+
+# ------------------------
 # See https://forth-standard.org/standard/core/Uless
 
 @passmein
