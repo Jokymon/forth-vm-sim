@@ -50,7 +50,7 @@ def get_stack(text_output):
 
 def run_vm_image(word_under_test, input_data=None):
     image = build_vm_image(word_under_test)
-    with subprocess.Popen(["build-mingw81/forth-vm-sim", "-i",
+    with subprocess.Popen(["build/forth-vm-sim", "-i",
                           image.name],
                           stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE) as proc:
@@ -130,9 +130,9 @@ def test_within_test1(me):
 
 @passmein
 def test_expect_returns_the_address_and_the_amount_of_read_chars(me):
-    """doLIT 1000 doLIT 80 EXPECT"""
+    """doLIT 12000 doLIT 80 EXPECT"""
     stack = run_vm_image(me.__doc__, "hello\n")
 
     assert len(stack) == 2
     assert stack[0] == 5
-    assert stack[1] == 1000
+    assert stack[1] == 12000
