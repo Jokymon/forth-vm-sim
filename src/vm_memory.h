@@ -5,6 +5,8 @@
 #include <initializer_list>
 #include <string>
 
+const static size_t MEMORY_SIZE = 32768;
+
 class Memory {
 public:
     Memory();
@@ -25,7 +27,7 @@ public:
     }
 
 private:
-    std::array<uint8_t, 32768> memory;
+    std::array<uint8_t, MEMORY_SIZE> memory;
 };
 
 #endif

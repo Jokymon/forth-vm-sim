@@ -1,6 +1,7 @@
 #include "vm_memory.h"
 #include <fstream>
 #include <iostream>
+#include <cassert>
 
 Memory::Memory() {}
 
@@ -18,14 +19,17 @@ uint8_t& Memory::operator[](size_t index) {
 }
 
 uint16_t Memory::get16(size_t address) const {
+    assert(address+1 < MEMORY_SIZE);
     return (memory[address] | (memory[address+1] << 8));
 }
 
 uint32_t Memory::get32(size_t address) const {
+    assert(address+3 < MEMORY_SIZE);
     return (memory[address] | (memory[address+1] << 8) | (memory[address+2] << 16) | (memory[address+3] << 24)); 
 }
 
 void Memory::put32(uint32_t address, uint32_t value) {
+    assert(address+3 < MEMORY_SIZE);
     memory[address] = value & 0xff;
     memory[address+1] = (value >> 8) & 0xff;
     memory[address+2] = (value >> 16) & 0xff;
