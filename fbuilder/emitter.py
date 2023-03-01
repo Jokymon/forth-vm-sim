@@ -100,7 +100,10 @@ class MachineCodeEmitter:
         self._insert_jump_marker(target.jump_target)
 
     def emit_data_8(self, data):
-        self.binary_code += struct.pack("B", data)
+        if isinstance(data, NumberOperand):
+            self.binary_code += struct.pack("B", data.number)
+        else:
+            self.binary_code += struct.pack("B", data)
 
     def emit_data_32(self, data):
         if isinstance(data, JumpOperand):

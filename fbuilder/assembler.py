@@ -164,6 +164,10 @@ class VmForthAssembler(Interpreter):
             self.emitter.emit_xor(parameters[0], parameters[1], parameters[2])
         elif mnemonic == "sra":
             self.emitter.emit_sra(parameters[0], parameters[1])
+        elif mnemonic == "db":
+            if parameters[0].number > 0xff:
+                raise ValueError(f"constant 0x{parameters[0].number:x} is too big for db on line {tree.children[0].line}")
+            self.emitter.emit_data_8(parameters[0])
         elif mnemonic == "dw":
             self.emitter.emit_data_32(parameters[0])
         elif mnemonic == "ifkt":

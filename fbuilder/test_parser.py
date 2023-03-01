@@ -237,6 +237,14 @@ class TestParsingSysVariableDefinitions:
 
 
 class TestParsingDataDefinitions:
+    def test_defining_immediate_8bit_value(self, parser):
+        source = """
+        codeblock
+            db #0x12
+        end
+        """
+        parser.parse(source)
+
     def test_defining_immediate_32bit_value(self, parser):
         source = """
         codeblock

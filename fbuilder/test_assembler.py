@@ -321,6 +321,41 @@ class TestAssemblingDwInstructions:
         assert binary == assemble(source)
 
 
+class TestAssemblingDbInstructions:
+    def test_immediate_8bit_values_are_inserted(self):
+        source = """
+        codeblock
+            db #0x12
+        end
+        """
+        binary = b"\x12"
+
+        assert binary == assemble(source)
+
+    def test_constants_are_inserted(self):
+        source = """
+        const MY_VALUE = 0x36
+        codeblock
+            db MY_VALUE
+        end
+        """
+        binary = b"\x36"
+
+        assert binary == assemble(source)
+
+    def test_db_values_outside_range_raise_exception(self):
+        source = """
+        codeblock
+            db #0x12345678
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "constant 0x12345678 is too big for db" in str(parsing_error)
+
+
 class TestCurrentAddressExpressions:
     def test_dollar_inserts_current_address(self):
         source = """

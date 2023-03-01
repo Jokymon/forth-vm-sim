@@ -72,6 +72,7 @@ current_address: "$"
 decrement_increment: UNARY_OPERATION
 
 OPCODE.2: "add"
+    | "db"
     | "dw"
     | "ifkt"
     | "illegal"
