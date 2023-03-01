@@ -17,15 +17,15 @@ void Symbols::loadFromFile(const std::string& symbol_file_path) {
 }
 
 void Symbols::addSymbol(const std::string& name, size_t start_address, size_t end_address) {
-    intervals.emplace_back(name, start_address, end_address);
+    intervals.emplace_back(Symbol{name, start_address, end_address});
 }
 
 std::vector<std::string> Symbols::symbolsAtAddress(size_t address) const {
     std::vector<std::string> symbols;
 
     for (const auto &symbol: intervals) {
-        if ((address >= std::get<1>(symbol)) && (address <= std::get<2>(symbol))) {
-            symbols.push_back(std::get<0>(symbol));
+        if ((address >= symbol.start) && (address < symbol.end)) {
+            symbols.push_back(symbol.identifier);
         }
     }
 

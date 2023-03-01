@@ -2,7 +2,6 @@
 #define SYMBOLS_H
 #include <stdint.h>
 #include <string>
-#include <tuple>
 #include <vector>
 
 class Symbols {
@@ -15,7 +14,13 @@ public:
     std::vector<std::string> symbolsAtAddress(size_t address) const;
 
 private:
-    std::vector<std::tuple<std::string, size_t, size_t>> intervals;
+    struct Symbol {
+        std::string identifier;
+        size_t start;
+        size_t end;
+    };
+
+    std::vector<Symbol> intervals;
 };
 
 #endif
