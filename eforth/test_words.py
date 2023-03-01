@@ -74,6 +74,19 @@ def test_doLIT_pushes_value_on_the_stack(me):
     assert stack[0] == 42
 
 
+# -----------------------------------------------------
+# memory fetch & store
+
+@passmein
+def test_c_at_gets_value_at_address(me):
+    """doLIT 0x12345678 doLIT 0x7000 !
+    doLIT 0x7000 C@
+    """
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 1
+    assert stack[0] == 0x78
+
+
 @passmein
 def test_subtract_is_second_minus_first_stack(me):
     """doLIT 250 doLIT 22 -"""

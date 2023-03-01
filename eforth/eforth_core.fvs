@@ -45,7 +45,7 @@ nobranch:
 end
 
 // -------------------------------------------------------------------------
-// memory access
+// memory fetch & store
 
 defcode !       // w a --
     POPD(%acc1)
@@ -65,6 +65,13 @@ defcode C!      // c b --
     POPD(%acc1)     // get address
     POPD(%acc2)     // get data
     mov.b [%acc1], [%acc2]
+    NEXT()
+end
+
+defcode C@      // b -- c
+    POPD(%acc1)     // get address
+    mov.b %acc2, [%acc1]    // fetch the character from this address
+    PUSHD(%acc2)    // push the character on the data stack
     NEXT()
 end
 
