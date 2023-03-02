@@ -28,7 +28,7 @@ public:
     explicit Vm(Memory &memory);
 
     Result singleStep();
-    Result interpret();
+    Result interpret(bool show_trace);
 
     State getState() const;
     void setState(const State &new_state);
@@ -42,6 +42,8 @@ private:
     void movr_w(uint8_t param);
     void movs_id_w(uint8_t param);
     void movs_di_w(uint8_t param);
+
+    void show_trace_at_pc() const;
 
     std::string disassemble_movr_parameters(uint8_t parameter) const;
     enum class MoveTarget { Direct, Indirect };

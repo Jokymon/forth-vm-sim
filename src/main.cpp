@@ -13,6 +13,7 @@ int main(int argc, char* argv[])
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
     args::ValueFlag<std::string> binaryInput(parser, "binary", "Binary file containing byte code", {'i'});
     args::Flag debug(parser, "debug", "Start in debugging mode", {'d'});
+    args::Flag trace(parser, "trace", "Print trace of instructions while running", {'t'});
     try {
         parser.ParseCLI(argc, argv);
     }
@@ -91,7 +92,7 @@ int main(int argc, char* argv[])
 
         } while ((input!="quit") && (input!="q"));
     } else {
-        auto res = vm.interpret();
+        auto res = vm.interpret(trace);
 
         switch (res) {
             case Vm::Error:

@@ -204,14 +204,18 @@ Vm::Result Vm::singleStep() {
         case Opcode::ILLEGAL:
             return IllegalInstruction;
         default:
+            fmt::print("Vm hit illegal instruction {:x} at address {:08x}\n", static_cast<int>(op), state.registers[Pc]-1);
             return IllegalInstruction;
     }
     return Success;
 }
 
-Vm::Result Vm::interpret() {
+Vm::Result Vm::interpret(bool show_trace) {
     Result result;
     do {
+        if (show_trace) {
+            show_trace_at_pc();
+        }
         result = singleStep();
     } while (Success == result);
 
@@ -418,6 +422,10 @@ void Vm::movs_di_w(uint8_t param) {
             state.registers[source] += 4;
         }
     }
+}
+
+void Vm::show_trace_at_pc() const {
+    fmt::print("{:08x} {:02x} {}\n", state.registers[Pc], memory[state.registers[Pc]], disassembleAtPc());
 }
 
 std::string Vm::disassemble_movr_parameters(uint8_t parameter) const {
