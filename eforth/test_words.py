@@ -26,10 +26,14 @@ def assemble(source):
     return asm.assemble_source(source)
 
 
-def build_vm_image(word_under_test):
+def build_vm_image(word_under_test, test_data):
     with open("eforth/test_word.fvs", "r") as source_file:
         source = source_file.read()
+
         source = source.replace("%WUT%", word_under_test)
+        test_data_source = "\n".join(map(lambda x: "db #"+str(hex(x)), test_data))
+        source = source.replace("%TEST_DATA%", test_data_source)
+    
         binary = assemble(source)
     tmp = tempfile.NamedTemporaryFile(suffix=".bin", delete=False)
     tmp.write(binary)
@@ -48,9 +52,9 @@ def get_stack(text_output):
     return stack
 
 
-def run_vm_image(word_under_test, input_data=None):
-    image = build_vm_image(word_under_test)
-    with subprocess.Popen(["build/forth-vm-sim", "-i",
+def run_vm_image(word_under_test, input_data=None, test_data=[]):
+    image = build_vm_image(word_under_test, test_data)
+    with subprocess.Popen(["build-debug/forth-vm-sim", "-i",
                           image.name],
                           stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE) as proc:
@@ -64,6 +68,18 @@ def run_vm_image(word_under_test, input_data=None):
         output = proc.stdout.read()
     os.remove(image.name)
     return get_stack(output)
+
+# ---------------------------------------------
+
+@passmein
+def test_infrastructure_for_test_data(me):
+    """PRE_INIT_DATA DUP C@ SWAP doLIT 1 + C@"""
+    test_data = [0x53, 0xa6]
+    stack = run_vm_image(me.__doc__, test_data=test_data)
+
+    assert len(stack) == 2
+    assert stack[0] == 0xa6
+    assert stack[1] == 0x53
 
 # ---------------------------------------------
 

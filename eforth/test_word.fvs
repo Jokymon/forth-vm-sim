@@ -36,6 +36,20 @@ defcode DUMP_STACK
     NEXT()
 end
 
+defcode PRE_INIT_DATA
+    // This is a special test word can will be filled out
+    // with pre-initialized data by the unittest. Calling
+    // this word will put the address of the test data on
+    // the data stack
+    mov %acc1, :data_block
+    PUSHD(%acc1)
+    jmp :after_pre_init_data
+data_block:
+    %TEST_DATA%
+after_pre_init_data:
+    NEXT()
+end
+
 defword RUN_TEST
     %WUT%      // word under test
 
