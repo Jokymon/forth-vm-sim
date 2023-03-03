@@ -329,3 +329,14 @@ class TestParsingLaabels:
         end
         """
         parser.parse(source)
+
+    def test_jump_if_carry_to_targets(self, parser):
+        source = """
+        codeblock
+            jc :label1
+            nop
+        label1:
+            nop
+        end
+        """
+        parser.parse(source)

@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "tools.h"
 #include "fmt/core.h"
 #include <iostream>
 #include <fstream>
@@ -31,6 +32,7 @@ enum class Opcode {
     JMPI_ACC2 = 0x63,
     JMPD = 0x64,
     JZ = 0x65,
+    JC = 0x66,
 
     IFKT = 0xFE,
     ILLEGAL = 0xFF
@@ -56,6 +58,7 @@ const std::map<uint8_t, std::string> register_name_mapping = {
 };
 
 Vm::Vm(Memory &memory) : memory(memory) {
+    std::fill(state.registers.begin(), state.registers.end(), 0x0);
 }
 
 Vm::Result Vm::singleStep() {
@@ -80,6 +83,7 @@ Vm::Result Vm::singleStep() {
                 param8 = fetch_op();
                 uint8_t source2 = param8 & 0x7;
 
+                state.carry = is_uint32_add_overflow(state.registers[source1], state.registers[source2]);
                 state.registers[target] = state.registers[source1] + state.registers[source2];
             }
 
@@ -93,6 +97,7 @@ Vm::Result Vm::singleStep() {
                 param8 = fetch_op();
                 uint8_t source2 = param8 & 0x7;
 
+                state.carry = state.registers[source2] > state.registers[source1];
                 state.registers[target] = state.registers[source1] - state.registers[source2];
             }
 
@@ -139,6 +144,15 @@ Vm::Result Vm::singleStep() {
             param32 = memory.get32(state.registers[Pc]);
             state.registers[Pc] += 4;
             state.registers[Acc1] = param32;
+            break;
+        case Opcode::JC:
+            if (state.carry) {
+                param32 = memory.get32(state.registers[Pc]);
+                state.registers[Pc] = param32;
+            }
+            else {
+                state.registers[Pc] += 4;
+            }
             break;
         case Opcode::JMPI_IP:
             state.registers[Pc] = memory.get32(state.registers[Ip]);
@@ -303,6 +317,9 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::MOVI_ACC1:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("mov %acc1, {:#x}", param);
+        case Opcode::JC:
+            param = memory.get32(state.registers[Pc]+1);
+            return fmt::format("jc {:#x}", param);
         case Opcode::JMPI_IP:
             return "jmp [%ip]";
         case Opcode::JMPI_WP:

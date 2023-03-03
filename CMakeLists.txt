@@ -18,10 +18,12 @@ target_include_directories(vm
 target_sources(vm
     PUBLIC
         src/symbols.h
+        src/tools.h
         src/vm.h
         src/vm_memory.h
     PRIVATE
         src/symbols.cpp
+        src/tools.cpp
         src/vm.cpp
         src/vm_memory.cpp
 )
@@ -48,6 +50,7 @@ target_link_libraries(${PROJECT_NAME}-gui ImGuiFileDialog imgui vm args -static-
 add_executable(test)
 target_sources(test
     PRIVATE
+        test/test_tools.cpp
         test/test_vm.cpp
 )
 target_link_libraries(test vm Catch2 Catch2WithMain)

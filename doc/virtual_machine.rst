@@ -115,7 +115,9 @@ ADD - Add
     +-----------+---------------------------------------+-------------------------+
 
 This instruction adds the registers ``reg_src1`` and ``reg_src2`` together and stores
-the result in the register ``reg_tgt``. The addition is performed unsigned. 
+the result in the register ``reg_tgt``. The addition is performed unsigned.
+
+In case of overflows, the carry flag is set. Otherwise the carry flag is cleared.
 
 IFKT - Interface functions
 --------------------------
@@ -172,6 +174,22 @@ illegal instruction and causes the VM to abort interpretation. However for test
 purposes, the mnemonic ``illegal`` and the opcode ``0xFF`` are explicitly
 declared to be illegal instructions and shall remain so even with future
 instruction set extensions.
+
+JC - Jump if carry
+------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+-----------------+--------------------------------------------------+
+    | Opcode    | Mnemonic        | Description                                      |
+    +===========+=================+==================================================+
+    | 66 `/u32` | JC `label`      | Jump to immediate address when carry flag is set |
+    +-----------+-----------------+--------------------------------------------------+
+
+The carry flag can only be set and cleared by performing an ``ADD`` or ``SUB``
+instruction. The ``JC`` instruction jumps to an immediate address when this carry
+flag is set.
 
 JMP - Jump unconditionally
 --------------------------
@@ -315,7 +333,9 @@ SUB - Subtract
     +-----------+---------------------------------------+------------------------------+
 
 This instruction subtracts ``reg_src2`` from ``reg_src1`` and stores the result in 
-register ``reg_tgt``. The subtraction is performed unsigned. 
+register ``reg_tgt``. The subtraction is performed unsigned.
+
+In case of underflows, the carry flag is set. Otherwise the carry flag is cleared.
 
 XOR - arithmetic exclusive or
 -----------------------------

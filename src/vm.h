@@ -22,6 +22,7 @@ public:
     };
 
     struct State {
+        bool carry;
         std::array<uint32_t, 8> registers;
     };
 
@@ -50,7 +51,8 @@ private:
     std::string disassemble_movs_parameters(uint8_t parameter, MoveTarget move_target) const;
 
     State state = {
-        0, 0, 0, 0, 0, 0, 0, 0
+        false,
+        {0, 0, 0, 0, 0, 0, 0, 0}
     };
 
     Memory& memory;

@@ -172,10 +172,12 @@ class VmForthAssembler(Interpreter):
             self.emitter.emit_data_32(parameters[0])
         elif mnemonic == "ifkt":
             self.emitter.emit_ifkt(parameters[0])
+        elif mnemonic == "jc":
+            self.emitter.emit_conditional_jump(JMP_COND_CARRY, parameters[0])
         elif mnemonic == "jmp":
             self.emitter.emit_jump(parameters[0])
         elif mnemonic == "jz":
-            self.emitter.emit_conditional_jump(parameters[0])
+            self.emitter.emit_conditional_jump(JMP_COND_ZERO, parameters[0])
         elif mnemonic == "mov":
             self.emitter.emit_mov(suffix, parameters[0], parameters[1])
         elif mnemonic == "nop":

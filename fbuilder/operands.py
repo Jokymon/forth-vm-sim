@@ -9,6 +9,10 @@ reg_encoding = {
 }
 
 
+JMP_COND_ZERO = 0x0
+JMP_COND_CARRY = 0x1
+
+
 class RegisterOperand:
     def __init__(self, mnemonic_node, *args):
         self.mnemonic_name = str(mnemonic_node)

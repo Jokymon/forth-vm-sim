@@ -501,6 +501,23 @@ class TestAssemblingJmpInstructions:
         assert binary == assemble(source)
 
 
+    def test_jc_absolute_to_label(self):
+        source = """
+        codeblock
+            jc :jump_target
+            nop
+            nop
+        jump_target:
+            nop
+        end
+        """
+        binary = b"\x66\x07\x00\x00\x00"
+        binary += b"\x00"
+        binary += b"\x00"
+        binary += b"\x00"
+
+        assert binary == assemble(source)
+
 
 class TestAssemblingMovInstructions:
     def test_moving_between_instructions(self):

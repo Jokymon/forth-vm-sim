@@ -288,7 +288,7 @@ TEST_CASE("Register direct jumping", "[opcode]") {
 
 TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
     Memory testdata = {
-        0x65, 0x07, 0x00, 0x00, 0x00,   // jmp +7
+        0x65, 0x07, 0x00, 0x00, 0x00,   // jz +7
         0x00,       // nop
         0x00,       // nop
         0x00,       // nop (jump target)
@@ -316,6 +316,44 @@ TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
 
         state = uut.getState();
         REQUIRE( 0x00000005 == state.registers[Vm::Pc] );
+    }
+}
+
+TEST_CASE("Register direct jumping based on carry flag", "[opcode]") {
+    Memory testdata = {
+        0x32, 0x44, 0x5,                // sub %acc1, %acc1, %acc2
+        0x66, 0x0a, 0x00, 0x00, 0x00,   // jc +7
+        0x00,       // nop
+        0x00,       // nop
+        0x00,       // nop (jump target)
+    };
+
+    Vm uut{testdata};
+
+    SECTION("Should jump if carry is set") {
+        auto state = uut.getState();
+        state.registers[Vm::Acc1] = 0x0;
+        state.registers[Vm::Acc2] = 0x10;
+        uut.setState(state);
+        
+        REQUIRE( Vm::Success == uut.singleStep());  // sub
+        REQUIRE( Vm::Success == uut.singleStep());  // jc
+
+        state = uut.getState();
+        REQUIRE( 0x0000000a == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Should not jump if carry is cleared") {
+        auto state = uut.getState();
+        state.registers[Vm::Acc1] = 0x7f;
+        state.registers[Vm::Acc2] = 0x0;
+        uut.setState(state);
+        
+        REQUIRE( Vm::Success == uut.singleStep());  // sub
+        REQUIRE( Vm::Success == uut.singleStep());  // jc
+
+        state = uut.getState();
+        REQUIRE( 0x00000008 == state.registers[Vm::Pc] );
     }
 }
 
@@ -443,6 +481,7 @@ TEST_CASE("Disassembling") {
         0x32, 0x01, 0x4,    // sub.w %ip, %wp, %acc1
         0x38, 0x01, 0x4,    // xor.w %ip, %wp, %acc1
         0x3c, 0x65,         // sra.w %dsp, #5
+        0x66, 0x15, 0x00, 0x00, 0x00,   // jc 0x15
     };
 
     Vm uut{testdata};
@@ -606,5 +645,11 @@ TEST_CASE("Disassembling") {
         state.registers[Vm::Pc] = 57;
         uut.setState(state);
         REQUIRE( "sra.w %dsp, 0x5" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jc") {
+        state.registers[Vm::Pc] = 59;
+        uut.setState(state);
+        REQUIRE( "jc 0x15" == uut.disassembleAtPc() );
     }
 }

@@ -19,6 +19,7 @@ JMPI_ACC1 = 0x62
 JMPI_ACC2 = 0x63
 JMPD = 0x64
 JZ = 0x65
+JC = 0x66
 IFTK = 0xfe
 ILLEGAL = 0xff
 
@@ -95,8 +96,8 @@ class MachineCodeEmitter:
 
         self.binary_code += struct.pack("BB", opcode, operand)
 
-    def emit_conditional_jump(self, target):
-        self.binary_code += struct.pack("B", JZ)
+    def emit_conditional_jump(self, condition, target):
+        self.binary_code += struct.pack("B", JZ + condition)
         self._insert_jump_marker(target.jump_target)
 
     def emit_data_8(self, data):
@@ -250,12 +251,15 @@ class DisassemblyEmitter:
 
         self.disassembly += f"{machine_code:<18} sra {reg}, {value}\n"
 
-    def emit_conditional_jump(self, target):
+    def emit_conditional_jump(self, condition, target):
         previous_pos = self.get_current_code_address()
-        self.binary_emitter.emit_conditional_jump(target)
+        self.binary_emitter.emit_conditional_jump(condition, target)
 
         self.disassembly += f"{previous_pos:08x}: "
-        self.disassembly += f"{JZ:2x} @@@@{target}@@@@     jz {target}\n"
+        if condition == JMP_COND_ZERO:
+            self.disassembly += f"{JZ:2x} @@@@{target}@@@@     jz {target}\n"
+        else:
+            self.disassembly += f"{JC:2x} @@@@{target}@@@@     jc {target}\n"
 
     def emit_data_8(self, data):
         previous_pos = self.get_current_code_address()
