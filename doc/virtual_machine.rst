@@ -150,8 +150,8 @@ The virtual machine currently support the following interface functions.
     | 0xF0 | ``TERMINATE`` | Terminate the virtual machine.                        |
     +------+---------------+-------------------------------------------------------+
     | 0xF2 | ``DUMP_M``    | Dump all values between the addresses specified in    |
-    |      |               | the registers ``%acc1`` and ``%acc2``. The addresses  |
-    |      |               | specified in the registers are also dumped. The values|
+    |      |               | the registers ``%acc1`` and ``%acc2``. The beginning  |
+    |      |               | address is also dumped but not the ending. The values |
     |      |               | will always be dumped in the order from the smaller   |
     |      |               | address to the larger, no matter in what register     |
     |      |               | they are stored.                                      |

@@ -207,7 +207,7 @@ Vm::Result Vm::singleStep() {
                     if (start_address > end_address)
                         std::swap(start_address, end_address);
 
-                    for (auto addr=start_address; addr<=end_address; addr+=4) {
+                    for (auto addr=start_address; addr<end_address; addr+=4) {
                         fmt::print("{:08x}\n", memory.get32(addr));
                     }
                     break;
