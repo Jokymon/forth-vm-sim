@@ -28,6 +28,21 @@ defcode EXECUTE
     NEXT()
 end
 
+defcode next
+    mov %acc1, #0x1
+    mov %acc2, %acc1
+    POPR(%acc1)
+    sub %acc1, %acc1, %acc2
+    jc :next1
+    PUSHR(%acc1)
+    mov %ip, [%ip]
+    NEXT()
+next1:
+    mov %acc1, CELLSIZE
+    add %ip, %ip, %acc1
+    NEXT()
+end
+
 defcode BRANCH
     mov %ip, [%ip]
     NEXT()
@@ -64,7 +79,7 @@ end
 defcode C!      // c b --
     POPD(%acc1)     // get address
     POPD(%acc2)     // get data
-    mov.b [%acc1], [%acc2]
+    mov.b [%acc1], %acc2
     NEXT()
 end
 
@@ -141,6 +156,11 @@ end
 
 defword NIP     // w1 w2 -- w2
     SWAP DROP
+    EXIT
+end
+
+defword 2DROP   // w w --
+    DROP DROP
     EXIT
 end
 
@@ -244,6 +264,22 @@ defword TIB     // -- a
     #TIB @
     EXIT
 end
+
+defword CMOVE   // b1 b2 u --
+    >R
+    BRANCH :cmov2
+cmov1:
+    >R DUP C@ R@ C!
+    doLIT 1 +
+    R> doLIT 1 +
+cmov2:
+    next :cmov1
+    2DROP
+    EXIT
+end
+
+// -------------------------------------------------------------------
+// Parsing
 
 // -------------------------------------------------------------------
 // Forth compiler

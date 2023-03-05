@@ -91,6 +91,46 @@ def test_doLIT_pushes_value_on_the_stack(me):
 
 
 # -----------------------------------------------------
+# kernel words
+
+@passmein
+def test_next_decrements_until_below_zero(me):
+    """doLIT 3 >R
+begin:
+    R@
+    next :begin
+    """
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 4
+    assert stack[0] == 0
+    assert stack[1] == 1
+    assert stack[2] == 2
+    assert stack[3] == 3
+
+
+@passmein
+def test_when_next_finishes_data_stack_is_empty(me):
+    """doLIT 3 >R
+begin:
+    next :begin
+    """
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 0
+
+
+@passmein
+def test_when_next_finishes_return_stack_only_contains_one_return_address(me):
+    """doLIT 3 >R
+begin:
+    next :begin
+
+    RP@ RP0 @ -
+    """
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 1
+    assert stack[0] == 4
+
+# -----------------------------------------------------
 # memory fetch & store
 
 @passmein
@@ -172,6 +212,22 @@ def test_within_test1(me):
 
     assert len(stack) == 1
     assert stack[0] == 0xffffffff
+
+# ------------------------
+# Memory access
+
+@passmein
+def test_cmove_non_overlapping(me):
+    """PRE_INIT_DATA doLIT 28500 doLIT 3 CMOVE
+    doLIT 28500 C@
+    doLIT 28501 C@
+    doLIT 28502 C@
+    """
+    stack = run_vm_image(me.__doc__, test_data=[0x34, 0x53, 0xd8])
+    assert len(stack) == 3
+    assert stack[0] == 0xd8
+    assert stack[1] == 0x53
+    assert stack[2] == 0x34
 
 # ------------------------
 # EXPECT
