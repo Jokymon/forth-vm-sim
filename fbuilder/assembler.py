@@ -70,14 +70,16 @@ class VmForthAssembler(Interpreter):
         # add symbol to symbol table
         self.symbol_table.add_word(word_name.lower(), current_position, self.emitter.get_current_code_address())
 
-    def word_definition(self, tree):
+    def general_word_definition(self, tree):
+        custom_def = tree.children[0][3:]
+
         current_position = self.emitter.get_current_code_address()
         # Append back-link
         self.emitter.emit_data_32(self.previous_word_start)
         self.previous_word_start = current_position
 
         # Append length and word text
-        word_name = str(tree.children[0])
+        word_name = str(tree.children[1])
         self.emitter.emit_data_8(len(word_name))
         self.emitter.emit_data_string(word_name)
 
@@ -86,8 +88,9 @@ class VmForthAssembler(Interpreter):
         self.word_addresses[word_name] = self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
-        if "__DEFWORD_CFA" in self.macros:
-            self.macros["__DEFWORD_CFA"].evaluate(self)
+        custom_type_macro = f"__DEF{custom_def.upper()}_CFA"
+        if custom_type_macro in self.macros:
+             self.macros[custom_type_macro].evaluate(self)
 
         self.visit_children(tree)
 

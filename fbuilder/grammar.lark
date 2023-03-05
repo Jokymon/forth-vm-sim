@@ -2,8 +2,8 @@ start: definition*
 
 definition: code_block
     | code_definition
+    | general_word_definition
     | macro_definition
-    | word_definition
     | constant_definition
     | system_variable_definition
     | _INCLUDE
@@ -12,9 +12,9 @@ code_block: "codeblock" code_line* "end"
 
 code_definition: "defcode" WORD_NAME code_line* "end"
 
-macro_definition: "macro" IDENTIFIER "(" macro_parameters ")" code_line* "end"
+general_word_definition: CUSTOM_DEF WORD_NAME word* "end"
 
-word_definition: "defword" WORD_NAME word* "end"
+macro_definition: "macro" IDENTIFIER "(" macro_parameters ")" code_line* "end"
 
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
 
@@ -70,6 +70,8 @@ macro_parameter: "@" IDENTIFIER
 current_address: "$"
 
 decrement_increment: UNARY_OPERATION
+
+CUSTOM_DEF: "def" IDENTIFIER
 
 OPCODE.2: "add"
     | "db"

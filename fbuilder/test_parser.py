@@ -236,6 +236,23 @@ class TestParsingSysVariableDefinitions:
         parser.parse(source)
 
 
+class TestParsingOtherDefinitions:
+    def test_definition_with_custom_name_works(self, parser):
+        source = """
+        defmytype MY_WORD
+        end
+        """
+        parser.parse(source)
+
+    def test_definition_with_custom_name_can_contain_words(self, parser):
+        source = """
+        defmytype MY_WORD
+            DUP + DROP
+        end
+        """
+        parser.parse(source)
+
+
 class TestParsingDataDefinitions:
     def test_defining_immediate_8bit_value(self, parser):
         source = """

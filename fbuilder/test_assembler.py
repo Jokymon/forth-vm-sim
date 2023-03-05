@@ -985,6 +985,73 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[11:15] == b"\xa9\x92\x03\x00"
 
+
+class TestCustomWordTypes:
+    def test_custom_word_type_starts_with_backlink(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defmytype WORD1
+            // backlink (4) //+ word size (1) + word name (5)
+        end
+        defmytype WORD2
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[1:5] == b"\x00\x00\x00\x00"       # backlink for WORD1 is 0
+        assert result[11:15] == b"\x01\x00\x00\x00"     # backlink for WORD2 points to WORD1
+
+    def test_custom_word_type_contains_word_name(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defmytype WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 5  # word length in characters
+        assert result[6:11] == b"WORD1"
+
+    def test_cfa_is_filled_with_macro(self):
+        source = """
+        macro __DEFMYTYPE_CFA()
+            dw #0x3829af7b
+        end
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defmytype WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x7b\xaf\x29\x38"
+
+    def test_custom_types_are_compiled_into_cfas(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        defmytype WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        defmytype WORD2
+            // backlink (4) + word size (1) + word name (5)
+            WORD1
+        end
+        """
+        result = assemble(source)
+        assert result[21:26] == b"\x0b\x00\x00\x00"
+
+
 class TestALUInstruction:
     def test_adding_two_registers(self):
         source = """
