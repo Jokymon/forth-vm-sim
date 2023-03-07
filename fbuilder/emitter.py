@@ -270,7 +270,10 @@ class DisassemblyEmitter:
         new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
-        self.disassembly += f"{machine_code:<18} db #0x{data:x}\n"
+        if isinstance(data, NumberOperand):
+            self.disassembly += f"{machine_code:<18} db #0x{data.number:x}\n"
+        else:
+            self.disassembly += f"{machine_code:<18} db #0x{data:x}\n"
 
     def emit_data_32(self, data):
         previous_pos = self.get_current_code_address()
