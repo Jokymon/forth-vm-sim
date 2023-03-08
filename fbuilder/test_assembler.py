@@ -664,12 +664,12 @@ class TestCodeDefinitions:
             nop
         end
         // code offset 0x1
-        defcode WORD1
+        def asm(code) WORD1
             // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
         end
-        defcode WORD2
+        def asm(code) WORD2
             // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
@@ -685,12 +685,12 @@ class TestCodeDefinitions:
             nop
         end
         // code offset 0x1
-        defcode WORD1
+        def asm(code) WORD1
             // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
         end
-        defcode WORD2
+        def asm(code) WORD2
             // backlink (4) + word size (1) + word name (5)
             nop
             // additional offset 1
@@ -709,7 +709,7 @@ class TestCodeDefinitions:
             nop
         end
         // code offset 0x1
-        defcode WORD1
+        def asm(code) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -722,7 +722,7 @@ class TestCodeDefinitions:
             dw :word1_cfa
         end
         // code offset 0x4
-        defcode WORD1
+        def asm(code) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -735,7 +735,7 @@ class TestCodeDefinitions:
             dw :word1_end
         end
         // code offset 0x4
-        defcode WORD1
+        def asm(code) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -750,10 +750,10 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) //+ word size (1) + word name (5)
         end
-        defword WORD2
+        def word(colon) WORD2
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -767,7 +767,7 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -777,14 +777,14 @@ class TestWordDefinitions:
 
     def test_cfa_is_filled_with_macro(self):
         source = """
-        macro __DEFWORD_CFA()
+        macro __DEFCOLON_CFA()
             dw #0x3829af7b
         end
         codeblock
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -797,10 +797,10 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
-        defword WORD2
+        def word(colon) WORD2
             // backlink (4) + word size (1) + word name (5)
             WORD1
         end
@@ -813,7 +813,7 @@ class TestWordDefinitions:
         codeblock
             nop
         end
-        defword WORD1
+        def word(colon) WORD1
             missing_word
         end
         """
@@ -827,7 +827,7 @@ class TestWordDefinitions:
         codeblock
             nop
         end
-        defword WORD1
+        def word(colon) WORD1
             missing_word:
         end
         """
@@ -840,10 +840,10 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
-        defword WORD2
+        def word(colon) WORD2
             // offset 11d
             // backlink (4) + word size (1) + word name (5)
             // offset 21d = 15h
@@ -863,7 +863,7 @@ class TestWordDefinitions:
             dw :word1_cfa
         end
         // code offset 0x4
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -876,14 +876,14 @@ class TestWordDefinitions:
             dw #0x0
         end
         // code offset 0
-        defcode A
+        def asm(code) A
             // backlink (4) + word size (1) + word name (1)
             // offset 6
             // CFA (4) --> offset 10
             illegal
         end
         // code offset 11
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
             // offset 21
             A
@@ -894,16 +894,16 @@ class TestWordDefinitions:
 
     def test_defword_addresses_are_properly_resolved_with_cfas(self):
         source = """
-        macro __DEFWORD_CFA()
+        macro __DEFCOLON_CFA()
             dw #0x0
         end
         // code offset 0
-        defword A
+        def word(colon) A
             // backlink (4) + word size (1) + word name (1) + CFA (4)
             // offset 10
         end
         // code offset 10
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5) + CFA(4)
             // offset 24
             A
@@ -914,14 +914,14 @@ class TestWordDefinitions:
 
     def test_defsysvar_addresses_are_properly_resolved_with_cfas(self):
         source = """
-        macro __DEFWORD_CFA()
+        macro __DEFCOLON_CFA()
             dw #0x0
         end
         // code offset 0
         defsysvar A
             // backlink (4) + word size (1) + word name (1) + value (4)
             // offset 10
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5) + CFA(4)
             // offset 24
             A
@@ -936,7 +936,7 @@ class TestWordDefinitions:
             dw :word1_end
         end
         // code offset 0x4
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -949,7 +949,7 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
             #0x1234
         end
@@ -963,7 +963,7 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
             0x1234
         end
@@ -977,7 +977,7 @@ class TestWordDefinitions:
             nop
         end
         // code offset 0x1
-        defword WORD1
+        def word(colon) WORD1
             // backlink (4) + word size (1) + word name (5)
             234153
         end
@@ -993,10 +993,10 @@ class TestCustomWordTypes:
             nop
         end
         // code offset 0x1
-        defmytype WORD1
+        def word(mytype) WORD1
             // backlink (4) //+ word size (1) + word name (5)
         end
-        defmytype WORD2
+        def word(mytype) WORD2
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -1010,7 +1010,7 @@ class TestCustomWordTypes:
             nop
         end
         // code offset 0x1
-        defmytype WORD1
+        def word(mytype) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -1027,7 +1027,7 @@ class TestCustomWordTypes:
             nop
         end
         // code offset 0x1
-        defmytype WORD1
+        def word(mytype) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
@@ -1040,16 +1040,65 @@ class TestCustomWordTypes:
             nop
         end
         // code offset 0x1
-        defmytype WORD1
+        def word(mytype) WORD1
             // backlink (4) + word size (1) + word name (5)
         end
-        defmytype WORD2
+        def word(mytype) WORD2
             // backlink (4) + word size (1) + word name (5)
             WORD1
         end
         """
         result = assemble(source)
         assert result[21:26] == b"\x0b\x00\x00\x00"
+
+
+class TestCustomAsmTypes:
+    def test_custom_asm_type_starts_with_backlink(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def asm(mytype) WORD1
+            // backlink (4) //+ word size (1) + word name (5)
+        end
+        def asm(mytype) WORD2
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[1:5] == b"\x00\x00\x00\x00"       # backlink for WORD1 is 0
+        assert result[11:15] == b"\x01\x00\x00\x00"     # backlink for WORD2 points to WORD1
+
+    def test_custom_asm_type_contains_word_name(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def asm(mytype) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 5  # word length in characters
+        assert result[6:11] == b"WORD1"
+
+    def test_cfa_is_filled_with_macro(self):
+        source = """
+        macro __DEFMYTYPE_CFA()
+            dw #0x3829af7b
+        end
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def asm(mytype) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x7b\xaf\x29\x38"
 
 
 class TestALUInstruction:

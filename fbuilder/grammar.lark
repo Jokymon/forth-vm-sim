@@ -1,7 +1,7 @@
 start: definition*
 
 definition: code_block
-    | code_definition
+    | assembly_definition
     | general_word_definition
     | macro_definition
     | constant_definition
@@ -10,9 +10,9 @@ definition: code_block
 
 code_block: "codeblock" code_line* "end"
 
-code_definition: "defcode" WORD_NAME code_line* "end"
+assembly_definition: "def" "asm" "(" IDENTIFIER ")" WORD_NAME code_line* "end"
 
-general_word_definition: CUSTOM_DEF WORD_NAME word* "end"
+general_word_definition: "def" "word" "(" IDENTIFIER ")" WORD_NAME word* "end"
 
 macro_definition: "macro" IDENTIFIER "(" macro_parameters ")" code_line* "end"
 
@@ -70,8 +70,6 @@ macro_parameter: "@" IDENTIFIER
 current_address: "$"
 
 decrement_increment: UNARY_OPERATION
-
-CUSTOM_DEF: "def" IDENTIFIER
 
 OPCODE.2: "add"
     | "db"

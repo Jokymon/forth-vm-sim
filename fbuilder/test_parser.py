@@ -23,14 +23,14 @@ def test_codeblock(parser):
 class TestCodeBlocks:
     def test_defcode(self, parser):
         source = """
-        defcode TEST_CODE
+        def asm(code) TEST_CODE
         end
         """
         parser.parse(source)
 
     def test_defcode_can_be_word_definitions_with_special_characters(self, parser):
         source = """
-        defcode @!#HELLO
+        def asm(code) @!#HELLO
         end
         """
         parser.parse(source)
@@ -39,14 +39,14 @@ class TestCodeBlocks:
 class TestWordBlocks:
     def test_defword(self, parser):
         source = """
-        defword TEST_WORD
+        def word(colon) TEST_WORD
         end
         """
         parser.parse(source)
 
     def test_defword_can_be_word_definitions_with_special_characters(self, parser):
         source = """
-        defword @!#HELLO
+        def word(colon) @!#HELLO
         end
         """
         parser.parse(source)
@@ -239,14 +239,14 @@ class TestParsingSysVariableDefinitions:
 class TestParsingOtherDefinitions:
     def test_definition_with_custom_name_works(self, parser):
         source = """
-        defmytype MY_WORD
+        def word(mytype) MY_WORD
         end
         """
         parser.parse(source)
 
     def test_definition_with_custom_name_can_contain_words(self, parser):
         source = """
-        defmytype MY_WORD
+        def word(mytype) MY_WORD
             DUP + DROP
         end
         """

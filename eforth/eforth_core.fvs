@@ -7,28 +7,28 @@ const CRR = 13
 // -------------------------------------------------------------------------
 // kernel words
 
-defcode doLIT
+def asm(code) doLIT
     mov %acc1, [%ip++]
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode BYE
+def asm(code) BYE
     ifkt FKT_TERMINATE
 end
 
-defcode EXIT
+def asm(code) EXIT
     mov %ip, [--%rsp]
     NEXT()
 end
 
-defcode EXECUTE
+def asm(code) EXECUTE
     POPD(%acc1)
     jmp [%acc1]
     NEXT()
 end
 
-defcode next
+def asm(code) next
     mov %acc1, #0x1
     mov %acc2, %acc1
     POPR(%acc1)
@@ -43,12 +43,12 @@ next1:
     NEXT()
 end
 
-defcode BRANCH
+def asm(code) BRANCH
     mov %ip, [%ip]
     NEXT()
 end
 
-defcode ?BRANCH
+def asm(code) ?BRANCH
     POPD(%acc1)
     jz :nobranch
     mov %acc1, CELLSIZE
@@ -62,28 +62,28 @@ end
 // -------------------------------------------------------------------------
 // memory fetch & store
 
-defcode !       // w a --
+def asm(code) !       // w a --
     POPD(%acc1)
     POPD(%acc2)
     mov [%acc1], %acc2
     NEXT()
 end
 
-defcode @       // a -- w
+def asm(code) @       // a -- w
     POPD(%acc1)
     mov %acc1, [%acc1]
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode C!      // c b --
+def asm(code) C!      // c b --
     POPD(%acc1)     // get address
     POPD(%acc2)     // get data
     mov.b [%acc1], %acc2
     NEXT()
 end
 
-defcode C@      // b -- c
+def asm(code) C@      // b -- c
     POPD(%acc1)     // get address
     mov.b %acc2, [%acc1]    // fetch the character from this address
     PUSHD(%acc2)    // push the character on the data stack
@@ -93,30 +93,30 @@ end
 // -------------------------------------------------------------------------
 // return stack
 
-defcode RP@     // -- a
+def asm(code) RP@     // -- a
     PUSHD(%rsp)
     NEXT()
 end
 
-defcode RP!     // a --
+def asm(code) RP!     // a --
     POPD(%rsp)
     NEXT()
 end
 
-defcode R>      // -- w
+def asm(code) R>      // -- w
     POPR(%acc1)
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode R@      // -- w
+def asm(code) R@      // -- w
     POPR(%acc1)
     PUSHR(%acc1)
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode >R      // w --
+def asm(code) >R      // w --
     POPD(%acc1)
     PUSHR(%acc1)
     NEXT()
@@ -125,19 +125,19 @@ end
 // -------------------------------------------------------------------------
 // data stack
 
-defcode DROP
+def asm(code) DROP
     POPD(%acc1)
     NEXT()
 end
 
-defcode DUP
+def asm(code) DUP
     POPD(%acc1)
     PUSHD(%acc1)
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode SWAP
+def asm(code) SWAP
     POPD(%acc1)
     POPD(%acc2)
     PUSHD(%acc1)
@@ -145,7 +145,7 @@ defcode SWAP
     NEXT()
 end
 
-defcode OVER    // w1 w2 -- w1 w2 w1
+def asm(code) OVER    // w1 w2 -- w1 w2 w1
     POPD(%acc2)
     POPD(%acc1)
     PUSHD(%acc1)
@@ -154,22 +154,22 @@ defcode OVER    // w1 w2 -- w1 w2 w1
     NEXT()
 end
 
-defword NIP     // w1 w2 -- w2
+def word(colon) NIP     // w1 w2 -- w2
     SWAP DROP
     EXIT
 end
 
-defword 2DROP   // w w --
+def word(colon) 2DROP   // w w --
     DROP DROP
     EXIT
 end
 
-defword 2DUP    // w1 w2 -- w1 w2 w1 w2
+def word(colon) 2DUP    // w1 w2 -- w1 w2 w1 w2
     OVER OVER
     EXIT
 end
 
-defcode +
+def asm(code) +
     POPD(%acc1)
     POPD(%acc2)
     add %acc1, %acc1, %acc2
@@ -177,7 +177,7 @@ defcode +
     NEXT()
 end
 
-defcode -
+def asm(code) -
     POPD(%acc2)
     POPD(%acc1)
     sub %acc1, %acc1, %acc2
@@ -188,14 +188,14 @@ end
 // -------------------------------------------------------------------------
 // logical words
 
-defcode 0<
+def asm(code) 0<
     POPD(%acc1)
     sra %acc1, #31
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode XOR
+def asm(code) XOR
     POPD(%acc1)
     POPD(%acc2)
     xor %acc1, %acc1, %acc2
@@ -203,7 +203,7 @@ defcode XOR
     NEXT()
 end
 
-defword U<
+def word(colon) U<
     2DUP XOR 0<
     ?BRANCH :ules1
     SWAP DROP 0< EXIT
@@ -212,12 +212,12 @@ ules1:
     EXIT
 end
 
-defword WITHIN      // u ul uh -- t
+def word(colon) WITHIN      // u ul uh -- t
     OVER - >R - R> U<
     EXIT
 end
 
-defword BL
+def word(colon) BL
     doLIT 32
     EXIT
 end
@@ -243,12 +243,12 @@ defsysvar LATEST
 // -------------------------------------------------------------------
 // Memory access
 
-defword TIB     // -- a
+def word(colon) TIB     // -- a
     #TIB @
     EXIT
 end
 
-defword CMOVE   // b1 b2 u --
+def word(colon) CMOVE   // b1 b2 u --
     >R
     BRANCH :cmov2
 cmov1:
@@ -264,24 +264,24 @@ end
 // -------------------------------------------------------------------
 // Basic I/O
 
-defcode KEY
+def asm(code) KEY
     ifkt FKT_KEY
     PUSHD(%acc1)
     NEXT()
 end
 
-defcode EMIT
+def asm(code) EMIT
     POPD(%acc1)
     ifkt FKT_EMIT
     NEXT()
 end
 
-defword ECHO
+def word(colon) ECHO
     EMIT
     EXIT
 end
 
-defword TYPE    // b u --
+def word(colon) TYPE    // b u --
     >R
     BRANCH :type2
 type1:
@@ -299,12 +299,12 @@ end
 // -------------------------------------------------------------------
 // Forth compiler
 
-defword TAP     // bot eot cur c -- bot eot cur
+def word(colon) TAP     // bot eot cur c -- bot eot cur
     DUP ECHO OVER C! doLIT 1 +
     EXIT
 end
 
-defword kTAP
+def word(colon) kTAP
     DUP doLIT 13 XOR
     ?BRANCH :ktap2
     doLIT 8 XOR
@@ -317,7 +317,7 @@ ktap2:
     EXIT
 end
 
-defword EXPECT  // b u -- b u
+def word(colon) EXPECT  // b u -- b u
 // accept characters to input buffer, return with actual count
     OVER + OVER         // b b+u b
 expect1:
@@ -339,7 +339,7 @@ expect4:
     EXIT
 end
 
-defword QUERY
+def word(colon) QUERY
 query_loop:
     TIB doLIT 80 EXPECT
     BRANCH :query_loop
@@ -349,24 +349,24 @@ end
 // -------------------------------
 // Additional words
 
-defcode DUMP
+def asm(code) DUMP
     ifkt FKT_DUMP
     NEXT()
 end
 
-defcode ILLEGAL
+def asm(code) ILLEGAL
     illegal
     NEXT()
 end
 
-defword TESTW
+def word(colon) TESTW
 loop:
     QUERY
     ILLEGAL
     EXIT
 end
 
-defcode TESTC
+def asm(code) TESTC
     ifkt FKT_KEY
     ifkt FKT_KEY
     ifkt FKT_DUMP

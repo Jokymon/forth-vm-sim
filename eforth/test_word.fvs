@@ -25,7 +25,7 @@ include "eforth/eforth_core.fvs"
 // -----------------------------------------------------------
 // test environment
 
-defcode DUMP_STACK
+def asm(code) DUMP_STACK
     mov %acc1, DSP_BASE
     mov %acc2, %acc1
 
@@ -34,7 +34,7 @@ defcode DUMP_STACK
     NEXT()
 end
 
-defcode PRE_INIT_DATA
+def asm(code) PRE_INIT_DATA
     // This is a special test word can will be filled out
     // with pre-initialized data by the unittest. Calling
     // this word will put the address of the test data on
@@ -48,7 +48,7 @@ after_pre_init_data:
     NEXT()
 end
 
-defword RUN_TEST
+def word(colon) RUN_TEST
     %WUT%      // word under test
 
     DUMP_STACK

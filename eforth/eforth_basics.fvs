@@ -9,7 +9,7 @@ macro __DEFCODE_CFA()
     dw $ + 0x4
 end
 
-macro __DEFWORD_CFA()
+macro __DEFCOLON_CFA()
     dw :doLIST
 end
 
