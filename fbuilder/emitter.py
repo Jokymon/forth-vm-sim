@@ -17,6 +17,7 @@ JMPI_R = 0x60
 JMPD = 0x70
 JZ = 0x71
 JC = 0x72
+CALL = 0x73
 IFTK = 0xfe
 ILLEGAL = 0xff
 
@@ -63,6 +64,10 @@ class MachineCodeEmitter:
         operand2 |= source2_reg.encoding
 
         self.binary_code += struct.pack("BBB", opcode, operand1, operand2)
+
+    def emit_call(self, target):
+        self.binary_code += struct.pack("B", CALL)
+        self._insert_jump_marker(target.jump_target)
 
     def emit_sub(self, target_reg, source1_reg, source2_reg):
         opcode = SUBR_W
@@ -208,6 +213,17 @@ class DisassemblyEmitter:
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
         self.disassembly += f"{machine_code:<18} add {target_reg}, {source1_reg}, {source2_reg}\n"
+
+    def emit_call(self, target):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_call(target)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} call {target}\n"
 
     def emit_sub(self, target_reg, source1_reg, source2_reg):
         previous_pos = self.get_current_code_address()

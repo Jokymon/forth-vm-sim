@@ -37,6 +37,7 @@ enum class Opcode {
     JMPD = 0x70,
     JZ = 0x71,
     JC = 0x72,
+    CALL = 0x73,
 
     IFKT = 0xFE,
     ILLEGAL = 0xFF
@@ -182,6 +183,11 @@ Vm::Result Vm::singleStep() {
             else {
                 state.registers[Pc] += 4;
             }
+            break;
+        case Opcode::CALL:
+            param32 = memory.get32(state.registers[Pc]);
+            state.registers[Ret] = state.registers[Pc]+4;
+            state.registers[Pc] = param32;
             break;
         case Opcode::IFKT:
             param16 = fetch_op();
@@ -346,6 +352,9 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::JZ:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("jz {:#x}", param);
+        case Opcode::CALL:
+            param = memory.get32(state.registers[Pc]+1);
+            return fmt::format("call {:#x}", param);
         case Opcode::IFKT:
             param = memory.get16(state.registers[Pc]+1);
             return fmt::format("ifkt {:#x}", param);

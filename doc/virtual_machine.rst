@@ -125,6 +125,20 @@ the result in the register ``reg_tgt``. The addition is performed unsigned.
 
 In case of overflows, the carry flag is set. Otherwise the carry flag is cleared.
 
+CALL - Call
+-----------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+-----------------+--------------------------------------------------+
+    | Opcode    | Mnemonic        | Description                                      |
+    +===========+=================+==================================================+
+    | 73 `/u32` | CALL `label`    | Jump to immediate address and store the          |
+    |           |                 | following address in the ``%ret`` register.      |
+    +-----------+-----------------+--------------------------------------------------+
+
+
 IFKT - Interface functions
 --------------------------
 

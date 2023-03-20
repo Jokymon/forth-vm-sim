@@ -296,6 +296,23 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
     }
 }
 
+TEST_CASE("Jumping direct via call", "[opcode]") {
+    Memory testdata = {
+        0x73, 0x07, 0x00, 0x00, 0x00,   // call +7
+        0x00,       // nop
+        0x00,       // nop
+        0x00,       // nop (jump target)
+    };
+
+    Vm uut{testdata};
+
+    REQUIRE( Vm::Success == uut.singleStep());
+
+    Vm::State state = uut.getState();
+    REQUIRE( 0x00000007 == state.registers[Vm::Pc] );
+    REQUIRE( 0x00000005 == state.registers[Vm::Ret] );
+}
+
 TEST_CASE("Register direct jumping", "[opcode]") {
     Memory testdata = {
         0x70, 0x07, 0x00, 0x00, 0x00,   // jmp +7
@@ -675,6 +692,15 @@ TEST_CASE("Disassembling") {
 
 TEST_CASE("Detailed disassembly", "[disassembly]") {
     Memory testdata;
+
+    SECTION("Call direct, call") {
+        testdata = {
+            0x73, 0x15, 0x00, 0x00, 0x00,   // call 0x15
+        };
+        Vm uut{testdata};
+
+        REQUIRE( "call 0x15" == uut.disassembleAtPc() );
+    }
 
     SECTION("Jump conditionally, jc") {
         testdata = {
