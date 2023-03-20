@@ -421,14 +421,20 @@ class TestAssemblingJmpInstructions:
         codeblock
             jmp [%ip]
             jmp [%wp]
+            jmp [%rsp]
+            jmp [%dsp]
             jmp [%acc1]
             jmp [%acc2]
+            jmp [%pc]
         end
         """
         binary = b"\x60"
         binary += b"\x61"
         binary += b"\x62"
         binary += b"\x63"
+        binary += b"\x64"
+        binary += b"\x65"
+        binary += b"\x67"
 
         assert binary == assemble(source)
 
@@ -442,7 +448,7 @@ class TestAssemblingJmpInstructions:
             nop
         end
         """
-        binary = b"\x64\x07\x00\x00\x00"
+        binary = b"\x70\x07\x00\x00\x00"
         binary += b"\x00"
         binary += b"\x00"
         binary += b"\x00"
@@ -461,9 +467,9 @@ class TestAssemblingJmpInstructions:
             nop             // offset 0xf
         end
         """
-        binary = b"\x64\x0a\x00\x00\x00"
-        binary += b"\x64\x0f\x00\x00\x00"
-        binary += b"\x64\x05\x00\x00\x00"
+        binary = b"\x70\x0a\x00\x00\x00"
+        binary += b"\x70\x0f\x00\x00\x00"
+        binary += b"\x70\x05\x00\x00\x00"
         binary += b"\x00"
 
         assert binary == assemble(source)
@@ -478,7 +484,7 @@ class TestAssemblingJmpInstructions:
             nop
         end
         """
-        binary = b"\x64\x05\x00\x00\x00"
+        binary = b"\x70\x05\x00\x00\x00"
         binary += b"\x00"
 
         assert binary == assemble(source)
@@ -493,7 +499,7 @@ class TestAssemblingJmpInstructions:
             nop
         end
         """
-        binary = b"\x65\x07\x00\x00\x00"
+        binary = b"\x71\x07\x00\x00\x00"
         binary += b"\x00"
         binary += b"\x00"
         binary += b"\x00"
@@ -511,7 +517,7 @@ class TestAssemblingJmpInstructions:
             nop
         end
         """
-        binary = b"\x66\x07\x00\x00\x00"
+        binary = b"\x72\x07\x00\x00\x00"
         binary += b"\x00"
         binary += b"\x00"
         binary += b"\x00"

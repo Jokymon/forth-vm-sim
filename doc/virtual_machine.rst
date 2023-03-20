@@ -66,6 +66,10 @@ All number types comprising of more than one byte are stored in little-endian fo
     * - ``u32``
       - A 32-bit unsigned integer value in little-endian encoding
 
+    * - ``reg``
+      - A register as encoded above; This encoding is only used as summand
+        in encodings and therefore doesn't have a specified bit length
+
     * - ``rr``
       - .. wavedrom:: images/encoding_rr.json
 
@@ -184,7 +188,7 @@ JC - Jump if carry
     +-----------+-----------------+--------------------------------------------------+
     | Opcode    | Mnemonic        | Description                                      |
     +===========+=================+==================================================+
-    | 66 `/u32` | JC `label`      | Jump to immediate address when carry flag is set |
+    | 72 `/u32` | JC `label`      | Jump to immediate address when carry flag is set |
     +-----------+-----------------+--------------------------------------------------+
 
 The carry flag can only be set and cleared by performing an ``ADD`` or ``SUB``
@@ -197,19 +201,21 @@ JMP - Jump unconditionally
 .. table::
     :widths: 15 25 70
 
-    +-----------+-------------+-------------------------------------------------+
-    | Opcode    | Mnemonic    | Description                                     |
-    +===========+=============+=================================================+
-    | 60        | JMP %ip     | Jump to register %ip indirect                   |
-    +-----------+-------------+-------------------------------------------------+
-    | 61        | JMP %wp     | Jump to register %wp indirect                   |
-    +-----------+-------------+-------------------------------------------------+
-    | 62        | JMP %acc1   | Jump to register %acc1 indirect                 |
-    +-----------+-------------+-------------------------------------------------+
-    | 63        | JMP %acc2   | Jump to register %acc2 indirect                 |
-    +-----------+-------------+-------------------------------------------------+
-    | 64 `/u32` | JMP `label` | Jump to immediate address                       |
-    +-----------+-------------+-------------------------------------------------+
+    +-------------+-------------+-------------------------------------------------+
+    | Opcode      | Mnemonic    | Description                                     |
+    +=============+=============+=================================================+
+    | 60 + `/reg` | JMP [`reg`] | Jump to register indirect                       |
+    +-------------+-------------+-------------------------------------------------+
+    | 70 `/u32`   | JMP `label` | Jump to immediate address                       |
+    +-------------+-------------+-------------------------------------------------+
+
+The register indirect jump instructions will use the register content to read a
+32-bit value from the memory. Then execution jumps to the address given by this
+32-bit value. Any one of the known registers could serve as register indirect
+source. In case of the ``%pc`` register this may not have any meaningful purpose.
+
+The immediate address jump instruction will jump directly to the 32-bit immediate
+value given as the operand of the instruction.
 
 JZ - Jump if zero
 -----------------
@@ -220,7 +226,7 @@ JZ - Jump if zero
     +-----------+-----------------+----------------------------------------------+
     | Opcode    | Mnemonic        | Description                                  |
     +===========+=================+==============================================+
-    | 65 `/u32` | JZ `label`      | Jump to immediate address when %acc1 is zero |
+    | 71 `/u32` | JZ `label`      | Jump to immediate address when %acc1 is zero |
     +-----------+-----------------+----------------------------------------------+
 
 With ``JZ`` a jump to an immediate address is performed if the value of the

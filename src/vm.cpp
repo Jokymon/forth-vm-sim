@@ -28,11 +28,13 @@ enum class Opcode {
 
     JMPI_IP = 0x60,
     JMPI_WP = 0x61,
-    JMPI_ACC1 = 0x62,
-    JMPI_ACC2 = 0x63,
-    JMPD = 0x64,
-    JZ = 0x65,
-    JC = 0x66,
+    JMPI_RSP = 0x62,
+    JMPI_DSP = 0x63,
+    JMPI_ACC1 = 0x64,
+    JMPI_ACC2 = 0x65,
+    JMPD = 0x70,
+    JZ = 0x71,
+    JC = 0x72,
 
     IFKT = 0xFE,
     ILLEGAL = 0xFF
@@ -70,7 +72,8 @@ Vm::Result Vm::singleStep() {
     uint32_t start_address;
     uint32_t end_address;
 
-    Opcode op = static_cast<Opcode>(fetch_op());
+    uint8_t opcode = fetch_op();
+    Opcode op = static_cast<Opcode>(opcode);
     switch (op) {
         case Opcode::NOP:
             break;
@@ -155,16 +158,12 @@ Vm::Result Vm::singleStep() {
             }
             break;
         case Opcode::JMPI_IP:
-            state.registers[Pc] = memory.get32(state.registers[Ip]);
-            break;
         case Opcode::JMPI_WP:
-            state.registers[Pc] = memory.get32(state.registers[Wp]);
-            break;
+        case Opcode::JMPI_RSP:
+        case Opcode::JMPI_DSP:
         case Opcode::JMPI_ACC1:
-            state.registers[Pc] = memory.get32(state.registers[Acc1]);
-            break;
         case Opcode::JMPI_ACC2:
-            state.registers[Pc] = memory.get32(state.registers[Acc2]);
+            state.registers[Pc] = memory.get32(state.registers[opcode - static_cast<int>(Opcode::JMPI_IP)]);
             break;
         case Opcode::JMPD:
             param32 = memory.get32(state.registers[Pc]);
@@ -324,6 +323,10 @@ std::string Vm::disassembleAtPc() const {
             return "jmp [%ip]";
         case Opcode::JMPI_WP:
             return "jmp [%wp]";
+        case Opcode::JMPI_RSP:
+            return "jmp [%rsp]";
+        case Opcode::JMPI_DSP:
+            return "jmp [%dsp]";
         case Opcode::JMPI_ACC1:
             return "jmp [%acc1]";
         case Opcode::JMPI_ACC2:

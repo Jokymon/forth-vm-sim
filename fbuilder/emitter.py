@@ -13,13 +13,10 @@ ADDR_W = 0x30
 SUBR_W = 0x32
 XORR_W = 0x38
 SRA_W = 0x3c
-JMPI_IP = 0x60
-JMPI_WP = 0x61
-JMPI_ACC1 = 0x62
-JMPI_ACC2 = 0x63
-JMPD = 0x64
-JZ = 0x65
-JC = 0x66
+JMPI_R = 0x60
+JMPD = 0x70
+JZ = 0x71
+JC = 0x72
 IFTK = 0xfe
 ILLEGAL = 0xff
 
@@ -175,14 +172,8 @@ class MachineCodeEmitter:
         if isinstance(target, JumpOperand):
             self.binary_code += struct.pack("B", JMPD)
             self._insert_jump_marker(target.jump_target)
-        elif target.name == "ip":
-            self.binary_code += struct.pack("B", JMPI_IP)
-        elif target.name == "wp":
-            self.binary_code += struct.pack("B", JMPI_WP)
-        elif target.name == "acc1":
-            self.binary_code += struct.pack("B", JMPI_ACC1)
-        elif target.name == "acc2":
-            self.binary_code += struct.pack("B", JMPI_ACC2)
+        elif isinstance(target, RegisterOperand):
+            self.binary_code += struct.pack("B", JMPI_R + target.encoding)
 
 
 class DisassemblyEmitter:
