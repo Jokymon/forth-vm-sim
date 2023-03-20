@@ -425,6 +425,7 @@ class TestAssemblingJmpInstructions:
             jmp [%dsp]
             jmp [%acc1]
             jmp [%acc2]
+            jmp [%ret]
             jmp [%pc]
         end
         """
@@ -434,6 +435,7 @@ class TestAssemblingJmpInstructions:
         binary += b"\x63"
         binary += b"\x64"
         binary += b"\x65"
+        binary += b"\x66"
         binary += b"\x67"
 
         assert binary == assemble(source)

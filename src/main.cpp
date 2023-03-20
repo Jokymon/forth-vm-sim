@@ -40,16 +40,16 @@ int main(int argc, char* argv[])
 
         do {
             state = vm.getState();
-            fmt::print("Pc: {:>12x} | Dsp: {:>12x}\n",
+            fmt::print("Pc: {:>12x}  | Dsp: {:>12x}\n",
                 state.registers[Vm::Pc],
                 state.registers[Vm::Dsp]);
-            fmt::print("Ip: {:>12x} | Rsp: {:>12x}\n",
+            fmt::print("Ip: {:>12x}  | Rsp: {:>12x}\n",
                 state.registers[Vm::Ip],
                 state.registers[Vm::Rsp]);
-            fmt::print("Wp: {:>12x} | Acc1: {:>11x}\n",
+            fmt::print("Wp: {:>12x}  | Acc1: {:>11x}\n",
                 state.registers[Vm::Wp],
                 state.registers[Vm::Acc1]);
-            fmt::print("                 | Acc2: {:>11x}\n",
+            fmt::print("Ret: {:>12x} | Acc2: {:>11x}\n",
                 state.registers[Vm::Acc2]);
             std::cout << "----------------------\n";
             auto wp_symbols = symbols.symbolsAtAddress(state.registers[Vm::Wp]);

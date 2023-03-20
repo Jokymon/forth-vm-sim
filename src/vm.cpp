@@ -32,6 +32,8 @@ enum class Opcode {
     JMPI_DSP = 0x63,
     JMPI_ACC1 = 0x64,
     JMPI_ACC2 = 0x65,
+    JMPI_RET = 0x66,
+    JMPI_PC = 0x67,
     JMPD = 0x70,
     JZ = 0x71,
     JC = 0x72,
@@ -56,6 +58,7 @@ const std::map<uint8_t, std::string> register_name_mapping = {
     {Vm::Dsp, "%dsp"},
     {Vm::Acc1, "%acc1"},
     {Vm::Acc2, "%acc2"},
+    {Vm::Ret, "%ret"},
     {Vm::Pc, "%pc"}
 };
 
@@ -163,6 +166,8 @@ Vm::Result Vm::singleStep() {
         case Opcode::JMPI_DSP:
         case Opcode::JMPI_ACC1:
         case Opcode::JMPI_ACC2:
+        case Opcode::JMPI_RET:
+        case Opcode::JMPI_PC:
             state.registers[Pc] = memory.get32(state.registers[opcode - static_cast<int>(Opcode::JMPI_IP)]);
             break;
         case Opcode::JMPD:
@@ -331,6 +336,10 @@ std::string Vm::disassembleAtPc() const {
             return "jmp [%acc1]";
         case Opcode::JMPI_ACC2:
             return "jmp [%acc2]";
+        case Opcode::JMPI_RET:
+            return "jmp [%ret]";
+        case Opcode::JMPI_PC:
+            return "jmp [%pc]";
         case Opcode::JMPD:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("jmp {:#x}", param);

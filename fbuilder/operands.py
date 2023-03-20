@@ -5,6 +5,7 @@ reg_encoding = {
     "dsp": 0x3,
     "acc1": 0x4,
     "acc2": 0x5,
+    "ret": 0x6,
     "pc": 0x7,
 }
 

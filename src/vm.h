@@ -17,7 +17,7 @@ public:
         Dsp = 0x3,
         Acc1 = 0x4,
         Acc2 = 0x5,
-
+        Ret = 0x6,
         Pc = 0x7,
     };
 

@@ -49,6 +49,8 @@ In most cases when registers need to be encoded in the opcodes, the following ma
 +-----------+----------+
 | ``%acc2`` | 0x5      |
 +-----------+----------+
+| ``%ret``  | 0x6      |
++-----------+----------+
 | ``%pc``   | 0x7      |
 +-----------+----------+
 

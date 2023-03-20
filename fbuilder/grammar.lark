@@ -92,6 +92,7 @@ REGISTER: "%ip"
     | "%dsp"
     | "%acc1"
     | "%acc2"
+    | "%ret"
     | "%pc"
 
 UNARY_OPERATION: "++" | "--"
