@@ -2,19 +2,19 @@
 // macros
 macro NEXT()
     mov %wp, [%ip++]
-    jmp [%wp]
+    jmp %wp
 end
 
 macro __DEFCODE_CFA()
-    dw $ + 0x4
 end
 
 macro __DEFCOLON_CFA()
-    dw :doLIST
+    call :doLIST
 end
 
 macro __DEFVAR_CFA()
-    dw :do_var
+    call :doLIST
+    dw :dovar_cfa
 end
 
 // dsp always points to the TOS

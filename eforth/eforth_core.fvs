@@ -203,6 +203,32 @@ def asm(code) XOR
     NEXT()
 end
 
+// -------------------------------------------------------------------
+// system variables
+
+def word(colon) doVAR
+    R>
+    EXIT
+end
+
+defsysvar SP0 DSP_BASE
+defsysvar RP0 RSP_BASE
+
+defsysvar SPAN
+defsysvar >IN
+defsysvar #TIB
+defsysvar TIB_ADDR TIBB     // this only has a name to reserve space #TODO: does it actually make sense this way?
+
+defsysvar HLD
+defsysvar HANDLER
+
+defsysvar STATE
+defsysvar HERE :testw_end
+defsysvar LATEST
+
+// -------------------------------------------------------------------
+// common functions
+
 def word(colon) U<
     2DUP XOR 0<
     ?BRANCH :ules1
@@ -221,24 +247,6 @@ def word(colon) BL
     doLIT 32
     EXIT
 end
-
-// -------------------------------------------------------------------
-// system variables
-
-defsysvar SP0 DSP_BASE
-defsysvar RP0 RSP_BASE
-
-defsysvar SPAN
-defsysvar >IN
-defsysvar #TIB
-defsysvar TIB_ADDR TIBB     // this only has a name to reserve space #TODO: does it actually make sense this way?
-
-defsysvar HLD
-defsysvar HANDLER
-
-defsysvar STATE
-defsysvar HERE :testw_end
-defsysvar LATEST
 
 // -------------------------------------------------------------------
 // Memory access

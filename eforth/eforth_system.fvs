@@ -8,15 +8,8 @@ start_word:
     dw :testw_cfa
 
 doLIST:
-    mov [%rsp++], %ip
-    mov %acc1, CELLSIZE
-    add %ip, %wp, %acc1
-    NEXT()
-
-do_var:
-    mov %acc1, CELLSIZE
-    add %acc1, %wp, %acc1
-    PUSHD(%acc1)
+    PUSHR(%ip)
+    mov %ip, %ret
     NEXT()
 end
 
