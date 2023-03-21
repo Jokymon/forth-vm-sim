@@ -14,6 +14,7 @@ SUBR_W = 0x32
 XORR_W = 0x38
 SRA_W = 0x3c
 JMPI_R = 0x60
+JMPD_R = 0x68
 JMPD = 0x70
 JZ = 0x71
 JC = 0x72
@@ -178,7 +179,10 @@ class MachineCodeEmitter:
             self.binary_code += struct.pack("B", JMPD)
             self._insert_jump_marker(target.jump_target)
         elif isinstance(target, RegisterOperand):
-            self.binary_code += struct.pack("B", JMPI_R + target.encoding)
+            if target.is_indirect:
+                self.binary_code += struct.pack("B", JMPI_R + target.encoding)
+            else:
+                self.binary_code += struct.pack("B", JMPD_R + target.encoding)
 
 
 class DisassemblyEmitter:

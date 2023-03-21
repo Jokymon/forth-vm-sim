@@ -440,6 +440,30 @@ class TestAssemblingJmpInstructions:
 
         assert binary == assemble(source)
 
+    def test_jmp_register_direct(self):
+        source = """
+        codeblock
+            jmp %ip
+            jmp %wp
+            jmp %rsp
+            jmp %dsp
+            jmp %acc1
+            jmp %acc2
+            jmp %ret
+            jmp %pc
+        end
+        """
+        binary = b"\x68"
+        binary += b"\x69"
+        binary += b"\x6a"
+        binary += b"\x6b"
+        binary += b"\x6c"
+        binary += b"\x6d"
+        binary += b"\x6e"
+        binary += b"\x6f"
+
+        assert binary == assemble(source)
+
     def test_jmp_absolute_to_label(self):
         source = """
         codeblock

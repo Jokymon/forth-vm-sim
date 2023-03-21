@@ -222,13 +222,19 @@ JMP - Jump unconditionally
     +=============+=============+=================================================+
     | 60 + `/reg` | JMP [`reg`] | Jump to register indirect                       |
     +-------------+-------------+-------------------------------------------------+
+    | 68 + `/reg` | JMP `reg`   | Jump to register direct                         |
+    +-------------+-------------+-------------------------------------------------+
     | 70 `/u32`   | JMP `label` | Jump to immediate address                       |
     +-------------+-------------+-------------------------------------------------+
 
 The register indirect jump instructions will use the register content to read a
 32-bit value from the memory. Then execution jumps to the address given by this
-32-bit value. Any one of the known registers could serve as register indirect
+32-bit value. Any one of the known registers can serve as register indirect
 source. In case of the ``%pc`` register this may not have any meaningful purpose.
+
+The register direct jump instruction will directly jump to the 32-bit address
+location specified in the given register. Any one of the known registers can serve
+as the register direct source.
 
 The immediate address jump instruction will jump directly to the 32-bit immediate
 value given as the operand of the instruction.

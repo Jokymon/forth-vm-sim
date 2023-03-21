@@ -34,6 +34,14 @@ enum class Opcode {
     JMPI_ACC2 = 0x65,
     JMPI_RET = 0x66,
     JMPI_PC = 0x67,
+    JMPD_IP = 0x68,
+    JMPD_WP = 0x69,
+    JMPD_RSP = 0x6A,
+    JMPD_DSP = 0x6B,
+    JMPD_ACC1 = 0x6C,
+    JMPD_ACC2 = 0x6D,
+    JMPD_RET = 0x6E,
+    JMPD_PC = 0x6F,
     JMPD = 0x70,
     JZ = 0x71,
     JC = 0x72,
@@ -170,6 +178,16 @@ Vm::Result Vm::singleStep() {
         case Opcode::JMPI_RET:
         case Opcode::JMPI_PC:
             state.registers[Pc] = memory.get32(state.registers[opcode - static_cast<int>(Opcode::JMPI_IP)]);
+            break;
+        case Opcode::JMPD_IP:
+        case Opcode::JMPD_WP:
+        case Opcode::JMPD_RSP:
+        case Opcode::JMPD_DSP:
+        case Opcode::JMPD_ACC1:
+        case Opcode::JMPD_ACC2:
+        case Opcode::JMPD_RET:
+        case Opcode::JMPD_PC:
+            state.registers[Pc] = state.registers[opcode - static_cast<int>(Opcode::JMPD_IP)];
             break;
         case Opcode::JMPD:
             param32 = memory.get32(state.registers[Pc]);
@@ -346,6 +364,22 @@ std::string Vm::disassembleAtPc() const {
             return "jmp [%ret]";
         case Opcode::JMPI_PC:
             return "jmp [%pc]";
+        case Opcode::JMPD_IP:
+            return "jmp %ip";
+        case Opcode::JMPD_WP:
+            return "jmp %wp";
+        case Opcode::JMPD_RSP:
+            return "jmp %rsp";
+        case Opcode::JMPD_DSP:
+            return "jmp %dsp";
+        case Opcode::JMPD_ACC1:
+            return "jmp %acc1";
+        case Opcode::JMPD_ACC2:
+            return "jmp %acc2";
+        case Opcode::JMPD_RET:
+            return "jmp %ret";
+        case Opcode::JMPD_PC:
+            return "jmp %pc";
         case Opcode::JMPD:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("jmp {:#x}", param);

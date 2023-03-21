@@ -296,6 +296,107 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
     }
 }
 
+TEST_CASE("Register direct jumping", "[opcode]") {
+    Memory testdata = {
+        0x68,       // jmp %ip
+        0x69,       // jmp %wp
+        0x6a,       // jmp %rsp
+        0x6b,       // jmp %dsp
+        0x6c,       // jmp %acc1
+        0x6d,       // jmp %acc2
+        0x6e,       // jmp %ret
+        0x10, 0x0, 0x0, 0x0,    // pointed to by %ip
+        0x20, 0x0, 0x0, 0x0,    // pointed to by %wp
+        0x30, 0x0, 0x0, 0x0,    // pointed to by %rsp
+        0x40, 0x0, 0x0, 0x0,    // pointed to by %dsp
+        0x50, 0x0, 0x0, 0x0,    // pointed to by %acc1
+        0x60, 0x0, 0x0, 0x0,    // pointed to by %acc2
+        0x70, 0x0, 0x0, 0x0,    // pointed to by %ret
+    };
+
+    Vm uut{testdata};
+
+    Vm::State state = uut.getState();
+    state.registers[Vm::Ip] = 7;
+    state.registers[Vm::Wp] = 11;
+    state.registers[Vm::Rsp] = 15;
+    state.registers[Vm::Dsp] = 19;
+    state.registers[Vm::Acc1] = 23;
+    state.registers[Vm::Acc2] = 27;
+    state.registers[Vm::Ret] = 31;
+    uut.setState(state);
+
+    SECTION("Jumping %ip direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x0;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 7 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %wp direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x1;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 11 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %rsp direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x2;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 15 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %dsp direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x3;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 19 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %acc1 direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x4;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 23 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %acc2 direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x5;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 27 == state.registers[Vm::Pc] );
+    }
+
+    SECTION("Jumping %ret direct") {
+        state = uut.getState();
+        state.registers[Vm::Pc] = 0x6;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+        state = uut.getState();
+        REQUIRE( 31 == state.registers[Vm::Pc] );
+    }
+}
+
 TEST_CASE("Jumping direct via call", "[opcode]") {
     Memory testdata = {
         0x73, 0x07, 0x00, 0x00, 0x00,   // call +7
@@ -313,7 +414,7 @@ TEST_CASE("Jumping direct via call", "[opcode]") {
     REQUIRE( 0x00000005 == state.registers[Vm::Ret] );
 }
 
-TEST_CASE("Register direct jumping", "[opcode]") {
+TEST_CASE("Immediate direct jumping", "[opcode]") {
     Memory testdata = {
         0x70, 0x07, 0x00, 0x00, 0x00,   // jmp +7
         0x00,       // nop
@@ -727,5 +828,14 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         Vm uut{testdata};
 
         REQUIRE( "jmp [%dsp]" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling jmp ret direct") {
+        testdata = {
+            0x6e   // jmp %ret
+        };
+        Vm uut{testdata};
+
+        REQUIRE( "jmp %ret" == uut.disassembleAtPc() );
     }
 }
