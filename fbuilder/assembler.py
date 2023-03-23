@@ -270,17 +270,31 @@ class VmForthAssembler(Interpreter):
 
     def jump_target(self, tree):
         return JumpOperand(tree.children[0])
-
-    def current_address_expression(self, tree):
-        value = self.visit(tree.children[0])
-        expression_rest = tree.children[1:]
-        for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
-            operand = self.visit(value_node)
-            if str(operator)=="+":
-                value.number += operand
+    
+    def expression(self, tree):
+        def local_visit(node):
+            """Only visit non-token nodes and just return the tokens"""
+            if isinstance(node, Token):
+                return node
             else:
-                value.number -= operand
-        return value
+                return self.visit(node)
+        elements = [local_visit(node) for node in tree.children]
+
+        if all(isinstance(element, Operand) and element.is_constant() for element in elements):
+            value = self.visit(tree.children[0])
+            expression_rest = tree.children[1:]
+            for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
+                operand = self.visit(value_node)
+                if str(operator)=="+":
+                    value.number += operand.number
+                else:
+                    value.number -= operand.number
+            return value
+        else:
+            return ExpressionOperand(elements)
+    
+    def term(self, tree):
+        return self.visit(tree.children[0])
 
     def macro_parameter(self, tree):
         parameter_name = str(tree.children[0])

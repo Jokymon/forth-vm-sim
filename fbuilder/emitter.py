@@ -28,6 +28,9 @@ class MachineCodeEmitter:
         self.binary_code = b""
 
         self.labels = {}
+        # collection of expressions that can only be evaluated once all
+        # label positions are known
+        self.expressions = {}
         self.jumps = {}
 
     def finalize(self):
@@ -36,6 +39,15 @@ class MachineCodeEmitter:
         for address, label in self.jumps.items():
             changed_code = code_buffer[:address]
             changed_code += struct.pack("<I", self.labels[label])
+            changed_code += code_buffer[address+4:]
+
+            code_buffer = changed_code
+
+        for address, expression in self.expressions.items():
+            value = expression.evaluate(self.labels)
+
+            changed_code = code_buffer[:address]
+            changed_code += struct.pack("<I", value)
             changed_code += code_buffer[address+4:]
 
             code_buffer = changed_code
@@ -50,6 +62,10 @@ class MachineCodeEmitter:
 
     def _insert_jump_marker(self, label):
         self.jumps[self.get_current_code_address()] = str(label)
+        self.binary_code += struct.pack("<I", 0x0)
+
+    def _insert_expression_marker(self, expression):
+        self.expressions[self.get_current_code_address()] = expression
         self.binary_code += struct.pack("<I", 0x0)
 
     def emit_label_target(self, label_text):
@@ -67,8 +83,12 @@ class MachineCodeEmitter:
         self.binary_code += struct.pack("BBB", opcode, operand1, operand2)
 
     def emit_call(self, target):
-        self.binary_code += struct.pack("B", CALL)
-        self._insert_jump_marker(target.jump_target)
+        if isinstance(target, ExpressionOperand):
+            self.binary_code += struct.pack("B", CALL)
+            self._insert_expression_marker(target)
+        elif isinstance(target, JumpOperand):
+            self.binary_code += struct.pack("B", CALL)
+            self._insert_jump_marker(target.jump_target)
 
     def emit_sub(self, target_reg, source1_reg, source2_reg):
         opcode = SUBR_W
@@ -101,7 +121,10 @@ class MachineCodeEmitter:
 
     def emit_conditional_jump(self, condition, target):
         self.binary_code += struct.pack("B", JZ + condition)
-        self._insert_jump_marker(target.jump_target)
+        if isinstance(target, ExpressionOperand):
+            self._insert_expression_marker(target)
+        elif isinstance(target, JumpOperand):
+            self._insert_jump_marker(target.jump_target)
 
     def emit_data_8(self, data):
         if isinstance(data, NumberOperand):
@@ -110,7 +133,9 @@ class MachineCodeEmitter:
             self.binary_code += struct.pack("B", data)
 
     def emit_data_32(self, data):
-        if isinstance(data, JumpOperand):
+        if isinstance(data, ExpressionOperand):
+            self._insert_expression_marker(data)
+        elif isinstance(data, JumpOperand):
             self._insert_jump_marker(data.jump_target)
         elif isinstance(data, NumberOperand):
             self.binary_code += struct.pack("<I", data.number)
@@ -134,6 +159,11 @@ class MachineCodeEmitter:
                 raise ValueError(f"label can only be moved to acc1 on line {target.line_no}")
             self.binary_code += struct.pack("<B", MOVI_ACC1)
             self._insert_jump_marker(source.jump_target)
+        elif isinstance(source, ExpressionOperand):
+            if target.name != "acc1":
+                raise ValueError(f"label can only be moved to acc1 on line {target.line_no}")
+            self.binary_code += struct.pack("<B", MOVI_ACC1)
+            self._insert_expression_marker(source)
         elif isinstance(source, NumberOperand):
             if target.name != "acc1":
                 raise ValueError(f"immediate value can only be moved to acc1 on line {target.line_no}")
@@ -183,6 +213,9 @@ class MachineCodeEmitter:
                 self.binary_code += struct.pack("B", JMPI_R + target.encoding)
             else:
                 self.binary_code += struct.pack("B", JMPD_R + target.encoding)
+        elif isinstance(target, ExpressionOperand):
+            self.binary_code += struct.pack("B", JMPD)
+            self._insert_expression_marker(target)
 
 
 class DisassemblyEmitter:
@@ -221,13 +254,9 @@ class DisassemblyEmitter:
     def emit_call(self, target):
         previous_pos = self.get_current_code_address()
         self.binary_emitter.emit_call(target)
-        new_pos = self.get_current_code_address()
 
         self.disassembly += f"{previous_pos:08x}: "
-        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
-        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
-
-        self.disassembly += f"{machine_code:<18} call {target}\n"
+        self.disassembly += f"{CALL:2x} @@@@{target}@@@@     call {target}\n"
 
     def emit_sub(self, target_reg, source1_reg, source2_reg):
         previous_pos = self.get_current_code_address()
@@ -292,7 +321,9 @@ class DisassemblyEmitter:
 
         self.disassembly += f"{previous_pos:08x}: "
 
-        if isinstance(data, JumpOperand):
+        if isinstance(data, ExpressionOperand):
+            self.disassembly += f"{18*' '} dw {data}\n"
+        elif isinstance(data, JumpOperand):
             self.disassembly += f"@@@@{data.jump_target}@@@@        dw {data.jump_target}\n"
         else:
             new_pos = self.get_current_code_address()
@@ -342,9 +373,12 @@ class DisassemblyEmitter:
 
         self.disassembly += f"{previous_pos:08x}: "
         new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
-        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
-        self.disassembly += f"{machine_code:<18} jmp {target}\n"
+        if isinstance(target, RegisterOperand):
+            machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+            self.disassembly += f"{machine_code:<18} jmp {target}\n"
+        else:
+            self.disassembly += f"{JMPD:2x} @@@@{target}@@@@     jmp {target}\n"
 
     def emit_label_target(self, label_text):
         previous_pos = self.get_current_code_address()

@@ -356,7 +356,7 @@ class TestAssemblingDbInstructions:
         assert "constant 0x12345678 is too big for db" in str(parsing_error)
 
 
-class TestCurrentAddressExpressions:
+class TestExpressions:
     def test_dollar_inserts_current_address(self):
         source = """
         codeblock
@@ -375,7 +375,7 @@ class TestCurrentAddressExpressions:
         codeblock
             nop // to get a little offset such that $ is not 0x0
             nop
-            dw $+4
+            dw $+#4
         end
         """
         binary = b"\x00\x00"
@@ -388,11 +388,31 @@ class TestCurrentAddressExpressions:
         codeblock
             nop // to get a little offset such that $ is not 0x0
             nop
-            dw $-2
+            dw $-#2
         end
         """
         binary = b"\x00\x00"
         binary += b"\x00\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+    def test_expressions_of_labels_are_calculated_correctly(self):
+        source = """
+        codeblock
+        start:
+            dw #0x1
+        entry2:
+            dw #0x2
+        entry3:
+            dw #0x3
+        calculation:
+            dw :entry3 - :entry2
+        end
+        """
+        binary = b"\x01\x00\x00\x00"
+        binary += b"\x02\x00\x00\x00"
+        binary += b"\x03\x00\x00\x00"
+        binary += b"\x04\x00\x00\x00"
 
         assert binary == assemble(source)
 

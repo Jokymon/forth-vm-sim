@@ -14,7 +14,12 @@ JMP_COND_ZERO = 0x0
 JMP_COND_CARRY = 0x1
 
 
-class RegisterOperand:
+class Operand:
+    def is_constant(self):
+        return True
+
+
+class RegisterOperand(Operand):
     def __init__(self, mnemonic_node, *args):
         self.mnemonic_name = str(mnemonic_node)
         self.name = self.mnemonic_name[1:]
@@ -49,20 +54,50 @@ class RegisterOperand:
         return s
 
 
-class JumpOperand:
+class JumpOperand(Operand):
     def __init__(self, jump_target):
         self.jump_target = jump_target
+
+    def evaluate(self, labels):
+        return labels[self.jump_target]
+
+    def is_constant(self):
+        return False
 
     def __str__(self):
         return self.jump_target
 
     def __repr__(self):
         return f"Jump to {self.jump_target}"
+    
+
+class ExpressionOperand(Operand):
+    def __init__(self, expression):
+        self.expression = expression
+
+    def evaluate(self, labels):
+        value = self.expression[0].evaluate(labels)
+        expression_rest = self.expression[1:]
+        for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
+            if str(operator)=="+":
+                value += value_node.evaluate(labels)
+            else:
+                value -= value_node.evaluate(labels)
+        return value
+
+    def __repr__(self):
+        return "".join(map(str, self.expression))
+
+    def is_constant(self):
+        return False
 
 
-class NumberOperand:
+class NumberOperand(Operand):
     def __init__(self, number):
         self.number = number
+
+    def evaluate(self, _):
+        return self.number
 
     def __str__(self):
         return f"#0x{self.number:x}"

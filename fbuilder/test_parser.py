@@ -125,6 +125,20 @@ class TestMacros:
         """
         parser.parse(source)
 
+    def test_macro_parameters_can_be_used_in_expressions(self, parser):
+        source = """
+        macro TEST_MACRO(label)
+            dw @label - :base_label
+        end
+
+        codeblock
+        base_label:
+        label1:
+            TEST_MACRO(:label1)
+        end
+        """
+        parser.parse(source)
+
 
 def test_constant_definition(parser):
     source = """
@@ -196,6 +210,17 @@ def test_simple_current_address_based_expression_as_parameter(parser):
     source = """
     codeblock
         dw $+4
+    end
+    """
+    parser.parse(source)
+
+
+def test_address_based_expression_as_parameter(parser):
+    source = """
+    codeblock
+    label1:
+    label2:
+        dw :label2 - :label1
     end
     """
     parser.parse(source)

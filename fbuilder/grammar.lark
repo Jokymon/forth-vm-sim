@@ -35,11 +35,8 @@ instruction: OPCODE ( "." SIZESUFFIX )? [ paramlist ]
 paramlist: param ( "," param )*
 
 param: register
-    | immediate_number
     | register_indirect
-    | jump_target
-    | current_address_expression
-    | macro_parameter
+    | expression
 
 macro_call: IDENTIFIER "(" [ paramlist ] ")"
 
@@ -63,7 +60,12 @@ register_indirect_postfix: "[" REGISTER decrement_increment "]"
 
 jump_target: ":" IDENTIFIER
 
-current_address_expression: current_address ( OPERATOR number )*
+expression: term ( OPERATOR term )*
+
+term: current_address
+    | macro_parameter
+    | immediate_number
+    | jump_target
 
 macro_parameter: "@" IDENTIFIER
 
