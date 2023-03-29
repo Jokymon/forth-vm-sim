@@ -17,6 +17,19 @@ macro __DEFVAR_CFA()
     dw :dovar_cfa
 end
 
+macro __DEFVARIABLE_CFA()
+    dw :dovar_cfa
+end
+
+macro __DEFUSERVAR_CFA()
+    dw :douser_cfa
+end
+
+macro USER_OFFSET(bla)
+    dw @bla - :uzero
+end
+
+
 // dsp always points to the TOS
 macro PUSHD(reg)
     mov [--%dsp], @reg
@@ -46,6 +59,7 @@ end
 
 const RSP_BASE = 0x6000     // (16+4+4) * 1024
 const DSP_BASE = 0x5000     // (16+4) * 1024
+const TIBB = 0x3000
 
 // -----------------------------------------------------------
 // startup code
@@ -59,4 +73,42 @@ codeblock
     mov %acc1, :start_word
     mov %ip, %acc1
     NEXT()
+
+uzero:
+u_sp0:
+    dw DSP_BASE     // SP0
+u_rp0:
+    dw RSP_BASE     // RP0
+    // DW	QRX			;'?KEY
+    // DW	TXSTO			;'EMIT
+    dw :expect_cfa  // 'EXPECT
+    dw :ktap_cfa    // 'TAP
+    // DW	KTAP			;'TAP
+    // DW	TXSTO			;'ECHO
+    // DW	DOTOK			;'PROMPT
+    // DW	BASEE			;BASE
+    // DW	0			;tmp
+u_span:
+    dw #0           // SPAN
+u_toin:
+    dw #0           // >IN
+u_htib:
+    dw #0           // #TIB
+    dw TIBB			// TIB
+    // DW	0			;CSP
+    // DW	INTER			;'EVAL
+    // DW	NUMBQ			;'NUMBER
+u_hld:
+    dw #0           // HLD
+u_handler:
+    dw #0           // HANDLER
+    // DW	0			;CONTEXT pointer
+    // DW	VOCSS DUP (0)		;vocabulary stack
+    // DW	0			;CURRENT pointer
+    // DW	0			;vocabulary link pointer
+u_ctop:
+    dw :testw_end   // CP
+    // DW	NTOP			;NP
+    // DW	LASTN			;LAST
+ulast:
 end

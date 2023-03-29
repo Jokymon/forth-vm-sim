@@ -211,20 +211,52 @@ def word(colon) doVAR
     EXIT
 end
 
-defsysvar SP0 DSP_BASE
-defsysvar RP0 RSP_BASE
+def word(colon) UP
+    doVAR :uzero
+end
 
-defsysvar SPAN
-defsysvar >IN
-defsysvar #TIB
-defsysvar TIB_ADDR TIBB     // this only has a name to reserve space #TODO: does it actually make sense this way?
+def word(colon) doUSER  // -- a
+    R> @
+    UP @ +
+    EXIT
+end
 
-defsysvar HLD
-defsysvar HANDLER
+macro __DEFUSERVAR_CFA()
+    call :doLIST
+    dw :douser_cfa
+end
 
-defsysvar STATE
-defsysvar HERE :testw_end
-defsysvar LATEST
+def asm(uservar) SP0
+    USER_OFFSET(:u_sp0)
+end
+
+def asm(uservar) RP0
+    USER_OFFSET(:u_rp0)
+end
+
+def asm(uservar) SPAN
+    USER_OFFSET(:u_span)
+end
+
+def asm(uservar) >IN
+    USER_OFFSET(:u_toin)
+end
+
+def asm(uservar) #TIB
+    USER_OFFSET(:u_htib)
+end
+
+def asm(uservar) HLD
+    USER_OFFSET(:u_hld)
+end
+
+def asm(uservar) HANDLER
+    USER_OFFSET(:u_handler)
+end
+
+def asm(uservar) CP
+    USER_OFFSET(:u_ctop)
+end
 
 // -------------------------------------------------------------------
 // common functions
@@ -250,6 +282,11 @@ end
 
 // -------------------------------------------------------------------
 // Memory access
+
+def word(colon) HERE    // -- a
+    CP @
+    EXIT
+end
 
 def word(colon) TIB     // -- a
     #TIB @
