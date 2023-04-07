@@ -154,6 +154,13 @@ def asm(code) OVER    // w1 w2 -- w1 w2 w1
     NEXT()
 end
 
+def word(colon) ?DUP    // w -- w w | 0
+    DUP ?BRANCH :qdup1
+    DUP
+qdup1:
+    EXIT
+end
+
 def word(colon) NIP     // w1 w2 -- w2
     SWAP DROP
     EXIT

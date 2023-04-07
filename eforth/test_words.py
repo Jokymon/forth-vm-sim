@@ -157,6 +157,27 @@ def test_lt_zero_returns_true_for_negative_numbers(me):
     assert stack[0] == 0xffffffff
 
 # ------------------------
+# data stack
+
+@passmein
+def test_qdup_duplicates_non_zero(me):
+    """doLIT 32 ?DUP"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 32
+    assert stack[1] == 32
+
+
+@passmein
+def test_qdup_returns_0_on_0(me):
+    """doLIT 0 ?DUP"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0
+
+# ------------------------
 # User variables
 
 @passmein
