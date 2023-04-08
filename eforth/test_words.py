@@ -234,8 +234,17 @@ def test_within_test1(me):
     assert len(stack) == 1
     assert stack[0] == 0xffffffff
 
+
 # ------------------------
 # Memory access
+@passmein
+def test_tib_returns_the_address_to_tib(me):
+    """TIB"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0x3000
+
 
 @passmein
 def test_cmove_non_overlapping(me):
@@ -251,11 +260,11 @@ def test_cmove_non_overlapping(me):
     assert stack[2] == 0x34
 
 # ------------------------
-# EXPECT
+# accept
 
 @passmein
 def test_expect_returns_the_address_and_the_amount_of_read_chars(me):
-    """doLIT 12000 doLIT 80 EXPECT"""
+    """doLIT 12000 doLIT 80 accept"""
     stack = run_vm_image(me.__doc__, "hello\n")
 
     assert len(stack) == 2

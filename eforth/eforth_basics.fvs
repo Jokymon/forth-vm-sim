@@ -81,7 +81,8 @@ u_rp0:
     dw RSP_BASE     // RP0
     // DW	QRX			;'?KEY
     // DW	TXSTO			;'EMIT
-    dw :expect_cfa  // 'EXPECT
+u_texpect:
+    dw :accept_cfa  // 'EXPECT
     dw :ktap_cfa    // 'TAP
     // DW	KTAP			;'TAP
     // DW	TXSTO			;'ECHO

@@ -24,7 +24,7 @@ end
 
 def asm(code) EXECUTE
     POPD(%acc1)
-    jmp [%acc1]
+    jmp %acc1
     NEXT()
 end
 
@@ -241,6 +241,10 @@ def asm(uservar) RP0
     USER_OFFSET(:u_rp0)
 end
 
+def asm(uservar) 'EXPECT
+    USER_OFFSET(:u_texpect)
+end
+
 def asm(uservar) SPAN
     USER_OFFSET(:u_span)
 end
@@ -266,7 +270,7 @@ def asm(uservar) CP
 end
 
 // -------------------------------------------------------------------
-// common functions
+// Comparison
 
 def word(colon) U<
     2DUP XOR 0<
@@ -279,6 +283,14 @@ end
 
 def word(colon) WITHIN      // u ul uh -- t
     OVER - >R - R> U<
+    EXIT
+end
+
+// -------------------------------------------------------------------
+// Bits & Bytes
+
+def word(colon) CELL+
+    doLIT 4 +
     EXIT
 end
 
@@ -296,7 +308,15 @@ def word(colon) HERE    // -- a
 end
 
 def word(colon) TIB     // -- a
-    #TIB @
+    #TIB CELL+ @
+    EXIT
+end
+
+def word(colon) @EXECUTE    // a --
+    @ ?DUP
+    ?BRANCH :exe1
+    EXECUTE
+exe1:
     EXIT
 end
 
@@ -369,32 +389,32 @@ ktap2:
     EXIT
 end
 
-def word(colon) EXPECT  // b u -- b u
+def word(colon) accept  // b u -- b u
 // accept characters to input buffer, return with actual count
     OVER + OVER         // b b+u b
-expect1:
+accept1:
     2DUP                // b b+u b b+u b
     XOR
-    ?BRANCH :expect4
+    ?BRANCH :accept4
     KEY DUP
     BL - doLIT 95 U<
     BL doLIT 127 WITHIN
-    ?BRANCH :expect2
+    ?BRANCH :accept2
     TAP
-    BRANCH :expect3
-expect2:
+    BRANCH :accept3
+accept2:
     kTAP         // 'TAP @EXECUTE
-expect3:
-    BRANCH :expect1
-expect4:
+accept3:
+    BRANCH :accept1
+accept4:
     DROP OVER -
     EXIT
 end
 
 def word(colon) QUERY
-query_loop:
-    TIB doLIT 80 EXPECT
-    BRANCH :query_loop
+    TIB doLIT 80 'EXPECT @EXECUTE
+    #TIB !              // Store the new number of characters in TIB
+    DROP doLIT 0 >IN !  // Reset the parsing pointer
     EXIT
 end
 
