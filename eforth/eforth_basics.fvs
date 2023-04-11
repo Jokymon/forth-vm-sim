@@ -12,11 +12,6 @@ macro __DEFCOLON_CFA()
     call :doLIST
 end
 
-macro __DEFVAR_CFA()
-    call :doLIST
-    dw :dovar_cfa
-end
-
 macro __DEFVARIABLE_CFA()
     dw :dovar_cfa
 end

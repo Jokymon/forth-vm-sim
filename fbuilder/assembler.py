@@ -114,40 +114,6 @@ class VmForthAssembler(Interpreter):
         constant_value = self.visit(tree.children[1])
         self.constants[constant_name] = constant_value
 
-    def system_variable_definition(self, tree):
-        current_position = self.emitter.get_current_code_address()
-        # Append back-link
-        self.emitter.emit_data_32(self.previous_word_start)
-        self.previous_word_start = current_position
-
-        # Append length and word text
-        variable_name = str(tree.children[0])
-        self.emitter.emit_data_8(len(variable_name))
-        self.emitter.emit_data_string(variable_name)
-
-        # creating a label for the word
-        self.emitter.mark_label(variable_name.lower() + "_cfa")
-        self.word_addresses[variable_name] = self.emitter.get_current_code_address()
-
-        # Append CFA field
-        if "__DEFVAR_CFA" in self.macros:
-            self.macros["__DEFVAR_CFA"].evaluate(self)
-
-        # create a label for the variable value
-        self.emitter.mark_label(variable_name.lower() + "_var")
-
-        # Append a default value
-        default_value = 0x0
-        if len(tree.children) > 1:
-            default_value = self.visit(tree.children[1])
-        self.emitter.emit_data_32(default_value)
-
-        # creating a label for address after word
-        self.emitter.mark_label(variable_name.lower() + "_end")
-
-        # add symbol to symbol table
-        self.symbol_table.add_word(variable_name.lower(), current_position, self.emitter.get_current_code_address())
-
     def code_line(self, tree):
         return self.visit_children(tree)[0]
 

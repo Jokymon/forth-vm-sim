@@ -5,7 +5,6 @@ definition: code_block
     | general_word_definition
     | macro_definition
     | constant_definition
-    | system_variable_definition
     | _INCLUDE
 
 code_block: "codeblock" code_line* "end"
@@ -17,8 +16,6 @@ general_word_definition: "def" "word" "(" IDENTIFIER ")" WORD_NAME word* "end"
 macro_definition: "macro" IDENTIFIER "(" macro_parameters ")" code_line* "end"
 
 constant_definition: "const" IDENTIFIER "=" number _NEWLINE
-
-system_variable_definition: "defsysvar" WORD_NAME (immediate_number | jump_target)? _NEWLINE
 
 // Handle 'includes' by making them one single token that the lexer can the handle
 // as a unit
