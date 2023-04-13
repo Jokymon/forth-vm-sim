@@ -773,7 +773,7 @@ class TestWordDefinitions:
             missing_word:
         end
         """
-        
+
         assemble(source)
 
     def test_missing_words_beginning_with_colon_are_resolved_as_label_targets(self):
@@ -908,6 +908,20 @@ class TestWordDefinitions:
         """
         result = assemble(source)
         assert result[11:15] == b"\xa9\x92\x03\x00"
+
+    def test_words_that_are_numbers_with_a_sign_are_inserted_as_plain_number(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def word(colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+            -1
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\xff\xff\xff\xff"
 
 
 class TestCustomWordTypes:

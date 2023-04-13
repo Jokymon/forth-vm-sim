@@ -218,7 +218,7 @@ class VmForthAssembler(Interpreter):
     def word(self, tree):
         word = str(tree.children[0])
         cfa = self._get_cfa_from_word(word)
-        if cfa==0:
+        if cfa == 0:
             if word.endswith(":"):
                 self.emitter.mark_label(word[:-1])
             elif word.startswith(":"):
@@ -227,6 +227,8 @@ class VmForthAssembler(Interpreter):
                 self.emitter.emit_data_32(int(word[3:], 16))
             elif word.startswith("0x"):
                 self.emitter.emit_data_32(int(word[2:], 16))
+            elif word[0] == "-" and word[1:].isnumeric():
+                self.emitter.emit_data_32(0xffffffff & int(word))
             elif word.isnumeric():
                 self.emitter.emit_data_32(int(word))
             else:
