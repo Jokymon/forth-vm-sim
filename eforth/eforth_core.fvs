@@ -176,24 +176,8 @@ def word(colon) 2DUP    // w1 w2 -- w1 w2 w1 w2
     EXIT
 end
 
-def asm(code) +
-    POPD(%acc1)
-    POPD(%acc2)
-    add %acc1, %acc1, %acc2
-    PUSHD(%acc1)
-    NEXT()
-end
-
-def asm(code) -
-    POPD(%acc2)
-    POPD(%acc1)
-    sub %acc1, %acc1, %acc2
-    PUSHD(%acc1)
-    NEXT()
-end
-
-// -------------------------------------------------------------------------
-// logical words
+// -------------------------------------------------------------------
+// Logic
 
 def asm(code) 0<
     POPD(%acc1)
@@ -206,6 +190,30 @@ def asm(code) XOR
     POPD(%acc1)
     POPD(%acc2)
     xor %acc1, %acc1, %acc2
+    PUSHD(%acc1)
+    NEXT()
+end
+
+def word(colon) NOT
+    doLIT -1 XOR
+    EXIT
+end
+
+// -------------------------------------------------------------------
+// Arithmetic
+
+def asm(code) +
+    POPD(%acc1)
+    POPD(%acc2)
+    add %acc1, %acc1, %acc2
+    PUSHD(%acc1)
+    NEXT()
+end
+
+def asm(code) -
+    POPD(%acc2)
+    POPD(%acc1)
+    sub %acc1, %acc1, %acc2
     PUSHD(%acc1)
     NEXT()
 end
