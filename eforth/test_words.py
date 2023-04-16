@@ -197,8 +197,27 @@ def test_rp0_returns_return_stack_base_address(me):
     assert stack[0] == 0x6000
 
 # ------------------------
-# See https://forth-standard.org/standard/core/Uless
+# Comparison
 
+
+@passmein
+def test_eq_returns_0_on_different_values(me):
+    """doLIT 5 doLIT 123 ="""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0
+
+@passmein
+def test_eq_returns_minus_one_on_same_values(me):
+    """doLIT 25 doLIT 25 ="""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0xffffffff
+
+
+# See https://forth-standard.org/standard/core/Uless
 @passmein
 def test_u_lt_test1(me):
     """doLIT 0 doLIT 1 U<"""
@@ -223,7 +242,6 @@ def test_u_lt_test3(me):
     assert len(stack) == 1
     assert stack[0] == 0x0
 
-# ------------------------
 # See https://forth-standard.org/standard/core/WITHIN
 
 @passmein

@@ -272,6 +272,14 @@ end
 // -------------------------------------------------------------------
 // Comparison
 
+def word(colon) =          // w w -- t
+    XOR
+    ?BRANCH :equ1
+    doLIT 0 EXIT
+equ1:
+    doLIT -1 EXIT
+end
+
 def word(colon) U<
     2DUP XOR 0<
     ?BRANCH :ules1
