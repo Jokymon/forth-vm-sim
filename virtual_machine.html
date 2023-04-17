@@ -48,8 +48,10 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#add-add">ADD - Add</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#call-call">CALL - Call</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ifkt-interface-functions">IFKT - Interface functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#illegal-illegal-instruction">ILLEGAL - Illegal instruction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jc-jump-if-carry">JC - Jump if carry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jmp-jump-unconditionally">JMP - Jump unconditionally</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jz-jump-if-zero">JZ - Jump if zero</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mov-move">MOV - Move</a></li>
@@ -163,7 +165,10 @@
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">%acc2</span></code></p></td>
 <td><p>0x5</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">%pc</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">%ret</span></code></p></td>
+<td><p>0x6</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">%pc</span></code></p></td>
 <td><p>0x7</p></td>
 </tr>
 </tbody>
@@ -186,7 +191,11 @@
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">u32</span></code></p></td>
 <td><p>A 32-bit unsigned integer value in little-endian encoding</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rr</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reg</span></code></p></td>
+<td><p>A register as encoded above; This encoding is only used as summand
+in encodings and therefore doesn’t have a specified bit length</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rr</span></code></p></td>
 <td>
 <div style="overflow-x:auto">
 <script type="WaveDrom">
@@ -214,7 +223,7 @@ direct or indirect. A <code class="docutils literal notranslate"><span class="pr
 </ul>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">3r</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">3r</span></code></p></td>
 <td>
 <div style="overflow-x:auto">
 <script type="WaveDrom">
@@ -242,7 +251,7 @@ direct or indirect. A <code class="docutils literal notranslate"><span class="pr
 </ul>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rop</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rop</span></code></p></td>
 <td>
 <div style="overflow-x:auto">
 <script type="WaveDrom">
@@ -273,7 +282,7 @@ indication.</p></li>
 </ul>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ri5</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ri5</span></code></p></td>
 <td>
 <div style="overflow-x:auto">
 <script type="WaveDrom">
@@ -321,6 +330,30 @@ indication.</p></li>
 </table>
 <p>This instruction adds the registers <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> together and stores
 the result in the register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The addition is performed unsigned.</p>
+<p>In case of overflows, the carry flag is set. Otherwise the carry flag is cleared.</p>
+</div>
+<div class="section" id="call-call">
+<h2>CALL - Call<a class="headerlink" href="#call-call" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>73 <cite>/u32</cite></p></td>
+<td><p>CALL <cite>label</cite></p></td>
+<td><p>Jump to immediate address and store the
+following address in the <code class="docutils literal notranslate"><span class="pre">%ret</span></code> register.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="ifkt-interface-functions">
 <h2>IFKT - Interface functions<a class="headerlink" href="#ifkt-interface-functions" title="Permalink to this headline">¶</a></h2>
@@ -375,8 +408,8 @@ position in register <code class="docutils literal notranslate"><span class="pre
 <tr class="row-odd"><td><p>0xF2</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">DUMP_M</span></code></p></td>
 <td><p>Dump all values between the addresses specified in
-the registers <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> and <code class="docutils literal notranslate"><span class="pre">%acc2</span></code>. The addresses
-specified in the registers are also dumped. The values
+the registers <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> and <code class="docutils literal notranslate"><span class="pre">%acc2</span></code>. The beginning
+address is also dumped but not the ending. The values
 will always be dumped in the order from the smaller
 address to the larger, no matter in what register
 they are stored.</p></td>
@@ -411,6 +444,31 @@ purposes, the mnemonic <code class="docutils literal notranslate"><span class="p
 declared to be illegal instructions and shall remain so even with future
 instruction set extensions.</p>
 </div>
+<div class="section" id="jc-jump-if-carry">
+<h2>JC - Jump if carry<a class="headerlink" href="#jc-jump-if-carry" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>72 <cite>/u32</cite></p></td>
+<td><p>JC <cite>label</cite></p></td>
+<td><p>Jump to immediate address when carry flag is set</p></td>
+</tr>
+</tbody>
+</table>
+<p>The carry flag can only be set and cleared by performing an <code class="docutils literal notranslate"><span class="pre">ADD</span></code> or <code class="docutils literal notranslate"><span class="pre">SUB</span></code>
+instruction. The <code class="docutils literal notranslate"><span class="pre">JC</span></code> instruction jumps to an immediate address when this carry
+flag is set.</p>
+</div>
 <div class="section" id="jmp-jump-unconditionally">
 <h2>JMP - Jump unconditionally<a class="headerlink" href="#jmp-jump-unconditionally" title="Permalink to this headline">¶</a></h2>
 <table class="colwidths-given docutils align-default">
@@ -426,28 +484,29 @@ instruction set extensions.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>60</p></td>
-<td><p>JMP %ip</p></td>
-<td><p>Jump to register %ip indirect</p></td>
+<tr class="row-even"><td><p>60 + <cite>/reg</cite></p></td>
+<td><p>JMP [<cite>reg</cite>]</p></td>
+<td><p>Jump to register indirect</p></td>
 </tr>
-<tr class="row-odd"><td><p>61</p></td>
-<td><p>JMP %wp</p></td>
-<td><p>Jump to register %wp indirect</p></td>
+<tr class="row-odd"><td><p>68 + <cite>/reg</cite></p></td>
+<td><p>JMP <cite>reg</cite></p></td>
+<td><p>Jump to register direct</p></td>
 </tr>
-<tr class="row-even"><td><p>62</p></td>
-<td><p>JMP %acc1</p></td>
-<td><p>Jump to register %acc1 indirect</p></td>
-</tr>
-<tr class="row-odd"><td><p>63</p></td>
-<td><p>JMP %acc2</p></td>
-<td><p>Jump to register %acc2 indirect</p></td>
-</tr>
-<tr class="row-even"><td><p>64 <cite>/u32</cite></p></td>
+<tr class="row-even"><td><p>70 <cite>/u32</cite></p></td>
 <td><p>JMP <cite>label</cite></p></td>
 <td><p>Jump to immediate address</p></td>
 </tr>
 </tbody>
 </table>
+<p>The register indirect jump instructions will use the register content to read a
+32-bit value from the memory. Then execution jumps to the address given by this
+32-bit value. Any one of the known registers can serve as register indirect
+source. In case of the <code class="docutils literal notranslate"><span class="pre">%pc</span></code> register this may not have any meaningful purpose.</p>
+<p>The register direct jump instruction will directly jump to the 32-bit address
+location specified in the given register. Any one of the known registers can serve
+as the register direct source.</p>
+<p>The immediate address jump instruction will jump directly to the 32-bit immediate
+value given as the operand of the instruction.</p>
 </div>
 <div class="section" id="jz-jump-if-zero">
 <h2>JZ - Jump if zero<a class="headerlink" href="#jz-jump-if-zero" title="Permalink to this headline">¶</a></h2>
@@ -464,7 +523,7 @@ instruction set extensions.</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>65 <cite>/u32</cite></p></td>
+<tr class="row-even"><td><p>71 <cite>/u32</cite></p></td>
 <td><p>JZ <cite>label</cite></p></td>
 <td><p>Jump to immediate address when %acc1 is zero</p></td>
 </tr>
@@ -614,6 +673,7 @@ bits.</p>
 </table>
 <p>This instruction subtracts <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> from <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
 register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The subtraction is performed unsigned.</p>
+<p>In case of underflows, the carry flag is set. Otherwise the carry flag is cleared.</p>
 </div>
 <div class="section" id="xor-arithmetic-exclusive-or">
 <h2>XOR - arithmetic exclusive or<a class="headerlink" href="#xor-arithmetic-exclusive-or" title="Permalink to this headline">¶</a></h2>
