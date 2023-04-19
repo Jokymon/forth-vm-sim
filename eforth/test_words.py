@@ -278,6 +278,56 @@ def test_cmove_non_overlapping(me):
     assert stack[2] == 0x34
 
 # ------------------------
+# parse
+# In these tests, we always put PRE_INIT_DATA at the
+# bottom of the stack to have a reference
+# Next we expect the values
+#   - b: start address of the parsed text
+#   - u: length of the parsed text
+#   - d: difference between the original start address
+#        and the location for the next parsing start address
+
+@passmein
+def test_parse_finds_one_space_delimited_word(me):
+    """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
+    parse_input = "  word "
+    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+
+    assert len(stack) == 4
+    pre_init_address = stack[3]
+    assert stack[2] == pre_init_address + 2
+    assert stack[1] == 4
+    assert stack[0] == 7
+
+
+@passmein
+def test_parse_finds_one_space_delimited_word_from_multiple(me):
+    """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
+    parse_input = "   oneword   nextword  "
+    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+
+    assert len(stack) == 4
+    pre_init_address = stack[3]
+    assert stack[2] == pre_init_address + 3
+    assert stack[1] == 7
+    assert stack[0] == 11
+
+
+@passmein
+def test_parse_finds_text_delimited_by_bracket(me):
+    # doLIT 41 == ord(')')
+    """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 doLIT 41 parse"""
+    parse_input = "  comment text)"
+    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+
+    assert len(stack) == 4
+    pre_init_address = stack[3]
+    assert stack[2] == pre_init_address
+    assert stack[1] == 14
+    assert stack[0] == 15
+
+
+# ------------------------
 # accept
 
 @passmein

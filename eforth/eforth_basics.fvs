@@ -83,7 +83,8 @@ u_texpect:
     // DW	TXSTO			;'ECHO
     // DW	DOTOK			;'PROMPT
     // DW	BASEE			;BASE
-    // DW	0			;tmp
+u_temp:
+    dw #0           // tmp
 u_span:
     dw #0           // SPAN
 u_toin:

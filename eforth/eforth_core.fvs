@@ -253,6 +253,10 @@ def asm(uservar) 'EXPECT
     USER_OFFSET(:u_texpect)
 end
 
+def asm(uservar) temp
+    USER_OFFSET(:u_temp)
+end
+
 def asm(uservar) SPAN
     USER_OFFSET(:u_span)
 end
@@ -383,6 +387,47 @@ end
 
 // -------------------------------------------------------------------
 // Parsing
+
+def word(colon) parse   // b u c - b u delta ; <string>
+    temp ! OVER >R DUP  // c in temp, b in R -- b u u
+    ?BRANCH :pars8      // jump to end if length is 0
+    doLIT 1 -           // b u-1
+    temp @ BL =
+    ?BRANCH :pars3      // goto pars3 when c!=BL
+    >R                  // b, u-1 in R as loop value
+pars1:
+    BL OVER C@          // b BL char@b
+    - 0< NOT            //
+    ?BRANCH :pars2      // is the character non-printable? 
+    doLIT 1 +           // yes, skip it; b+1
+    next :pars1
+    R> DROP             
+    doLIT 0 DUP EXIT
+pars2:
+    R>
+pars3:
+    OVER SWAP
+    >R
+pars4:
+    temp @ OVER C@ -    // scan for delimiter
+    temp @ BL =
+    ?BRANCH :pars5
+    0<
+pars5:
+    ?BRANCH :pars6
+    doLIT 1 +
+    next :pars4
+    DUP >R
+    BRANCH :pars7
+pars6:
+    R> DROP DUP
+    doLIT 1 + >R
+pars7:
+    OVER -
+    R> R> - EXIT
+pars8:
+    OVER R> - EXIT
+end
 
 // -------------------------------------------------------------------
 // Forth compiler
