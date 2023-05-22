@@ -177,6 +177,29 @@ def test_qdup_returns_0_on_0(me):
     assert len(stack) == 1
     assert stack[0] == 0
 
+
+# ------------------------
+# Arithmetic
+@passmein
+def test_umplus_pushes_one_for_carry(me):
+    """doLIT 2290649224 doLIT 2290649224 UM+"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 1
+    assert stack[1] == 286331152
+
+
+@passmein
+def test_umplus_pushes_zero_for_no_carry(me):
+    """doLIT 4 doLIT 5 UM+"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 0
+    assert stack[1] == 9
+
+
 # ------------------------
 # User variables
 

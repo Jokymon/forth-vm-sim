@@ -202,12 +202,24 @@ end
 // -------------------------------------------------------------------
 // Arithmetic
 
-def asm(code) +
+def asm(code) UM+           // u u -- u cy or u u -- ud
     POPD(%acc1)
     POPD(%acc2)
     add %acc1, %acc1, %acc2
+    jc :ump_carry
+    mov %acc2, #0
+    jmp :ump_push_all
+ump_carry:
+    mov %acc2, #1
+ump_push_all:
     PUSHD(%acc1)
+    PUSHD(%acc2)
     NEXT()
+end
+
+def word(colon) +           // u u -- u
+    UM+ DROP
+    EXIT
 end
 
 def asm(code) -
