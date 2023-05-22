@@ -305,7 +305,9 @@ MOV - Move
     +-----------+------------------------+---------------------------------------------------------------------+
     | 24 `/rop` | MOV.W `reg`, `regi_op` | Move register indirect memory to register with operation word sized |
     +-----------+------------------------+---------------------------------------------------------------------+
-    | 26 `/u32` | MOV.W `imm32`          | Move an immediate 32-bit value to register acc1                     |
+    | 26 `/u32` | MOV.W %acc1, `imm32`   | Move an immediate 32-bit value to register acc1                     |
+    +-----------+------------------------+---------------------------------------------------------------------+
+    | 27 `/u32` | MOV.W %acc2, `imm32`   | Move an immediate 32-bit value to register acc2                     |
     +-----------+------------------------+---------------------------------------------------------------------+
 
 The virtual machine support three different types of move operations.
@@ -342,9 +344,9 @@ the ``%dsp`` register. After storing the value, the value of the ``%dsp`` regist
 is incremented by ``4`` to point to the next word in memory. These registers are
 meant for pushing register values onto stacks and popping them again.
 
-For the third type of move operations, only the ``%acc1`` register can be used.
-It allows for storing immediate 32-bit values into the register. For example in
-the following instruction
+For the third type of move operations, only the ``%acc1`` and ``%acc2`` registers 
+can be used. It allows for storing immediate 32-bit values into the register. For 
+example in the following instruction
 
 .. code-block:: 
 

@@ -20,6 +20,7 @@ enum class Opcode {
     MOVS_DI_W = 0x24,
     MOVS_DI_B = 0x25,   // NOT IMPLEMENTED
     MOVI_ACC1 = 0x26,
+    MOVI_ACC2 = 0x27,
 
     ADDR_W = 0x30,
     SUBR_W = 0x32,
@@ -159,6 +160,11 @@ Vm::Result Vm::singleStep() {
             param32 = memory.get32(state.registers[Pc]);
             state.registers[Pc] += 4;
             state.registers[Acc1] = param32;
+            break;
+        case Opcode::MOVI_ACC2:
+            param32 = memory.get32(state.registers[Pc]);
+            state.registers[Pc] += 4;
+            state.registers[Acc2] = param32;
             break;
         case Opcode::JC:
             if (state.carry) {
@@ -345,6 +351,9 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::MOVI_ACC1:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("mov %acc1, {:#x}", param);
+        case Opcode::MOVI_ACC2:
+            param = memory.get32(state.registers[Pc]+1);
+            return fmt::format("mov %acc2, {:#x}", param);
         case Opcode::JC:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("jc {:#x}", param);

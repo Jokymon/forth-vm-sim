@@ -194,7 +194,7 @@ TEST_CASE("Stack based move operations", "[opcode]") {
     }
 }
 
-TEST_CASE("Move label to acc1", "[opcode]") {
+TEST_CASE("Move immediate to acc1", "[opcode]") {
     Memory testdata = {
         0x26, 0x10, 0x41, 0x32, 0x22    // mov %acc1, 0x22324110
     };
@@ -205,6 +205,20 @@ TEST_CASE("Move label to acc1", "[opcode]") {
 
     Vm::State state = uut.getState();
     REQUIRE( 0x22324110 == state.registers[Vm::Acc1] );
+    REQUIRE( 0x5 == state.registers[Vm::Pc] );
+}
+
+TEST_CASE("Move immediate to acc2", "[opcode]") {
+    Memory testdata = {
+        0x27, 0x10, 0x41, 0x32, 0x22    // mov %acc2, 0x22324110
+    };
+
+    Vm uut{testdata};
+
+    REQUIRE( Vm::Success == uut.singleStep() );
+
+    Vm::State state = uut.getState();
+    REQUIRE( 0x22324110 == state.registers[Vm::Acc2] );
     REQUIRE( 0x5 == state.registers[Vm::Pc] );
 }
 
@@ -837,5 +851,14 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         Vm uut{testdata};
 
         REQUIRE( "jmp %ret" == uut.disassembleAtPc() );
+    }
+
+    SECTION("Disassembling mov immediate to acc2") {
+        testdata = {
+            0x27, 0x10, 0x41, 0x32, 0x22,   // mov %acc2, 0x22324110
+        };
+        Vm uut{testdata};
+
+        REQUIRE( "mov %acc2, 0x22324110" == uut.disassembleAtPc() );
     }
 }

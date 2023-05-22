@@ -9,6 +9,7 @@ MOVS_ID_B = 0x23    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 MOVS_DI_W = 0x24    # direct <-- indirect move
 MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
 MOVI_ACC1 = 0x26
+MOVI_ACC2 = 0x27
 ADDR_W = 0x30
 SUBR_W = 0x32
 XORR_W = 0x38
@@ -155,19 +156,28 @@ class MachineCodeEmitter:
         operand = 0x0
 
         if isinstance(source, JumpOperand):
-            if target.name != "acc1":
-                raise ValueError(f"label can only be moved to acc1 on line {target.line_no}")
-            self.binary_code += struct.pack("<B", MOVI_ACC1)
+            if target.name == "acc1":
+                self.binary_code += struct.pack("<B", MOVI_ACC1)
+            elif target.name == "acc2":
+                self.binary_code += struct.pack("<B", MOVI_ACC2)
+            else:
+                raise ValueError(f"label can only be moved to acc1 or acc2 on line {target.line_no}")
             self._insert_jump_marker(source.jump_target)
         elif isinstance(source, ExpressionOperand):
-            if target.name != "acc1":
-                raise ValueError(f"label can only be moved to acc1 on line {target.line_no}")
-            self.binary_code += struct.pack("<B", MOVI_ACC1)
+            if target.name == "acc1":
+                self.binary_code += struct.pack("<B", MOVI_ACC1)
+            elif target.name == "acc2":
+                self.binary_code += struct.pack("<B", MOVI_ACC2)
+            else:
+                raise ValueError(f"label can only be moved to acc1 or acc2 on line {target.line_no}")
             self._insert_expression_marker(source)
         elif isinstance(source, NumberOperand):
-            if target.name != "acc1":
-                raise ValueError(f"immediate value can only be moved to acc1 on line {target.line_no}")
-            self.binary_code += struct.pack("<BI", MOVI_ACC1, source.number)
+            if target.name == "acc1":
+                self.binary_code += struct.pack("<BI", MOVI_ACC1, source.number)
+            elif target.name == "acc2":
+                self.binary_code += struct.pack("<BI", MOVI_ACC2, source.number)
+            else:
+                raise ValueError(f"immediate value can only be moved to acc1 or acc2 on line {target.line_no}")
         elif target.is_("increment") or target.is_("decrement") or \
             source.is_("increment") or source.is_("decrement"):
             if target.is_indirect:
@@ -394,7 +404,10 @@ class DisassemblyEmitter:
         self.disassembly += f"{previous_pos:08x}: "
 
         if isinstance(source, JumpOperand):
-            self.disassembly += f"{MOVI_ACC1:2x} @@@@{source.jump_target}@@@@     mov.w %acc1, {source.jump_target}\n"
+            if target.name == "acc1":
+                self.disassembly += f"{MOVI_ACC1:2x} @@@@{source.jump_target}@@@@     mov.w %acc1, {source.jump_target}\n"
+            else:
+                self.disassembly += f"{MOVI_ACC2:2x} @@@@{source.jump_target}@@@@     mov.w %acc1, {source.jump_target}\n"
         else:
             new_pos = self.get_current_code_address()
             new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]

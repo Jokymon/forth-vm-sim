@@ -561,7 +561,7 @@ class TestAssemblingMovInstructions:
 
         assert binary == assemble(source)
 
-    def test_moving_label_to_register_other_than_acc1_raises_exception(self):
+    def test_moving_from_label_to_acc2_register(self):
         source = """
         codeblock
             nop
@@ -570,10 +570,23 @@ class TestAssemblingMovInstructions:
         end
         """
 
+        binary = b"\x00\x27\x01\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+    def test_moving_label_to_register_other_than_acc1_and_acc2_raises_exception(self):
+        source = """
+        codeblock
+            nop
+        test1:
+            mov.w %dsp, :test1
+        end
+        """
+
         with pytest.raises(ValueError) as parsing_error:
             assemble(source)
         assert "on line 5" in str(parsing_error)
-        assert "label can only be moved to acc1" in str(parsing_error)
+        assert "label can only be moved to acc1 or acc2" in str(parsing_error)
 
     def test_moving_from_immediate_value_to_acc1_register(self):
         source = """
@@ -586,17 +599,28 @@ class TestAssemblingMovInstructions:
 
         assert binary == assemble(source)
 
+    def test_moving_from_immediate_value_to_acc2_register(self):
+        source = """
+        codeblock
+            mov.w %acc2, #0xab0356
+        end
+        """
+
+        binary = b"\x27\x56\x03\xab\x00"
+
+        assert binary == assemble(source)
+
     def test_moving_immediate_value_to_register_other_than_acc1_raises_exception(self):
         source = """
         codeblock
-            mov.w %acc2, #0x123532
+            mov.w %dsp, #0x123532
         end
         """
 
         with pytest.raises(ValueError) as parsing_error:
             assemble(source)
         assert "on line 3" in str(parsing_error)
-        assert "immediate value can only be moved to acc1" in str(parsing_error)
+        assert "immediate value can only be moved to acc1 or acc2" in str(parsing_error)
 
 
 class TestCodeDefinitions:
