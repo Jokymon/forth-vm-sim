@@ -575,6 +575,26 @@ TEST_CASE("Xor instruction") {
     REQUIRE( 0x3 == state.registers[Vm::Pc] );
 }
 
+TEST_CASE("Or instruction") {
+    Memory testdata = {
+        0x34, 0x01, 0x4,    // or.w %ip, %wp, %acc1
+    };
+
+    Vm uut{testdata};
+
+    auto state = uut.getState();
+    state.registers[Vm::Acc1] = 0x562a;
+    state.registers[Vm::Wp] = 0x723828;
+    state.registers[Vm::Ip] = 0x0;
+    uut.setState(state);
+
+    REQUIRE( Vm::Success == uut.singleStep());
+
+    state = uut.getState();
+    REQUIRE( (0x723828 | 0x562a) == state.registers[Vm::Ip] );
+    REQUIRE( 0x3 == state.registers[Vm::Pc] );
+}
+
 TEST_CASE("Sra instruction with signed value") {
     Memory testdata = {
         0x3c, 0x65,    // sra.w %dsp, #0x5
@@ -807,6 +827,15 @@ TEST_CASE("Disassembling") {
 
 TEST_CASE("Detailed disassembly", "[disassembly]") {
     Memory testdata;
+
+    SECTION("Or") {
+        testdata = {
+            0x34, 0x01, 0x4,    // or.w %ip, %wp, %acc1
+        };
+        Vm uut{testdata};
+
+        REQUIRE( "or.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
+    }
 
     SECTION("Call direct, call") {
         testdata = {

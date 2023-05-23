@@ -368,6 +368,22 @@ NOP - No Operation
 
 This instruction has no effect and can be used to fill memory.
 
+OR - arithmetic or
+------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+---------------------------------------+-------------------------------------------------+
+    | Opcode    | Mnemonic                              | Description                                     |
+    +===========+=======================================+=================================================+
+    | 34 `/3r`  | OR `reg_tgt`, `reg_src1`, `reg_src2`  | or arithmetically values in registers           |
+    +-----------+---------------------------------------+-------------------------------------------------+
+
+This instruction ors ``reg_src2`` with ``reg_src1`` and stores the result in 
+register ``reg_tgt``. The or is performed arithemtically and thus the bits are
+affected individually.
+
 SRA - Shift Right Arithmetically
 --------------------------------
 

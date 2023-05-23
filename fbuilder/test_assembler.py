@@ -1086,6 +1086,17 @@ class TestALUInstruction:
 
         assert binary == assemble(source)
 
+    def test_oring_two_registers(self):
+        source = """
+        codeblock
+            or.w %ip, %wp, %acc1
+        end
+        """
+
+        binary = b"\x34\x01\x04"
+
+        assert binary == assemble(source)
+
     def test_xoring_two_registers(self):
         source = """
         codeblock

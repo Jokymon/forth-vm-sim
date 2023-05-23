@@ -24,6 +24,7 @@ enum class Opcode {
 
     ADDR_W = 0x30,
     SUBR_W = 0x32,
+    ORR_W = 0x34,
     XORR_W = 0x38,
     SRA_W = 0x3C,
 
@@ -115,6 +116,19 @@ Vm::Result Vm::singleStep() {
 
                 state.carry = state.registers[source2] > state.registers[source1];
                 state.registers[target] = state.registers[source1] - state.registers[source2];
+            }
+
+            break;
+        case Opcode::ORR_W:
+            {
+                param8 = fetch_op();
+                uint8_t target = (param8 & 0x70) >> 4;
+                uint8_t source1 = param8 & 0x7;
+
+                param8 = fetch_op();
+                uint8_t source2 = param8 & 0x7;
+
+                state.registers[target] = state.registers[source1] | state.registers[source2];
             }
 
             break;
@@ -307,6 +321,20 @@ std::string Vm::disassembleAtPc() const {
                 uint8_t source1 = param1 & 0x7;
                 uint8_t source2 = param2 & 0x7;
                 return fmt::format("sub.w {}, {}, {}",
+                    register_name_mapping.at(target),
+                    register_name_mapping.at(source1),
+                    register_name_mapping.at(source2)
+                );
+            }
+        case Opcode::ORR_W:
+            {
+                uint8_t param1 = memory[state.registers[Pc]+1];
+                uint8_t param2 = memory[state.registers[Pc]+2];
+
+                uint8_t target = (param1 & 0x70) >> 4;
+                uint8_t source1 = param1 & 0x7;
+                uint8_t source2 = param2 & 0x7;
+                return fmt::format("or.w {}, {}, {}",
                     register_name_mapping.at(target),
                     register_name_mapping.at(source1),
                     register_name_mapping.at(source2)
