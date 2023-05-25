@@ -35,6 +35,13 @@ class TestCodeBlocks:
         """
         parser.parse(source)
 
+    def test_defcode_can_have_alias_definition(self, parser):
+        source = """
+        def asm(code) alias WORD_ALIAS WORD
+        end
+        """
+        parser.parse(source)
+
 
 class TestWordBlocks:
     def test_defword(self, parser):
@@ -51,6 +58,12 @@ class TestWordBlocks:
         """
         parser.parse(source)
 
+    def test_defword_can_have_alias_definition(self, parser):
+        source = """
+        def word(colon) alias WORD_ALIAS WORD
+        end
+        """
+        parser.parse(source)
 
 
 class TestMacros:

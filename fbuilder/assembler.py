@@ -52,26 +52,44 @@ class VmForthAssembler(Interpreter):
         self.previous_word_start = current_position
 
         # Append length and word text
-        word_name = str(tree.children[1])
+        alias_name = ""
+        if tree.children[1].type == "ALIAS_SEP":
+            alias_name = str(tree.children[2])
+            word_name = str(tree.children[3])
+        else:
+            word_name = str(tree.children[1])
         self.emitter.emit_data_8(len(word_name))
         self.emitter.emit_data_string(word_name)
 
-        # creating a label for the word
+        # creating a label for the word and the alias
         self.emitter.mark_label(word_name.lower() + "_cfa")
         self.word_addresses[word_name] = self.emitter.get_current_code_address()
+        if alias_name != "":
+            self.emitter.mark_label(alias_name.lower() + "_cfa")
+            self.word_addresses[alias_name] = self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
         custom_type_macro = f"__DEF{custom_def.upper()}_CFA"
         if custom_type_macro in self.macros:
-             self.macros[custom_type_macro].evaluate(self)
+            self.macros[custom_type_macro].evaluate(self)
 
         self.visit_children(tree)
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
+        if alias_name != "":
+            self.emitter.mark_label(alias_name.lower() + "_end")
 
         # add symbol to symbol table
-        self.symbol_table.add_word(word_name.lower(), current_position, self.emitter.get_current_code_address())
+        self.symbol_table.add_word(
+            word_name.lower(),
+            current_position,
+            self.emitter.get_current_code_address())
+        if alias_name != "":
+            self.symbol_table.add_word(
+                alias_name.lower(),
+                current_position,
+                self.emitter.get_current_code_address())
 
     def general_word_definition(self, tree):
         custom_def = tree.children[0]
@@ -82,13 +100,21 @@ class VmForthAssembler(Interpreter):
         self.previous_word_start = current_position
 
         # Append length and word text
-        word_name = str(tree.children[1])
+        alias_name = ""
+        if tree.children[1].type == "ALIAS_SEP":
+            alias_name = str(tree.children[2])
+            word_name = str(tree.children[3])
+        else:
+            word_name = str(tree.children[1])
         self.emitter.emit_data_8(len(word_name))
         self.emitter.emit_data_string(word_name)
 
-        # creating a label for the word
+        # creating a label for the word and the alias
         self.emitter.mark_label(word_name.lower() + "_cfa")
         self.word_addresses[word_name] = self.emitter.get_current_code_address()
+        if alias_name != "":
+            self.emitter.mark_label(alias_name.lower() + "_cfa")
+            self.word_addresses[alias_name] = self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
         custom_type_macro = f"__DEF{custom_def.upper()}_CFA"
@@ -99,6 +125,8 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
+        if alias_name != "":
+            self.emitter.mark_label(alias_name.lower() + "_end")
 
         # add symbol to symbol table
         self.symbol_table.add_word(word_name.lower(), current_position, self.emitter.get_current_code_address())
@@ -240,7 +268,7 @@ class VmForthAssembler(Interpreter):
 
     def jump_target(self, tree):
         return JumpOperand(tree.children[0])
-    
+
     def expression(self, tree):
         def local_visit(node):
             """Only visit non-token nodes and just return the tokens"""
@@ -262,7 +290,7 @@ class VmForthAssembler(Interpreter):
             return value
         else:
             return ExpressionOperand(elements)
-    
+
     def term(self, tree):
         return self.visit(tree.children[0])
 

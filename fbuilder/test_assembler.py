@@ -708,6 +708,19 @@ class TestCodeDefinitions:
         result = assemble(source)
         assert result[0:4] == b"\x0e\x00\x00\x00"
 
+    def test_if_available_uses_alias_for_address_labels(self):
+        source = """
+        codeblock
+            dw :word1_alias_cfa
+        end
+        // code offset 0x4
+        def asm(code) alias WORD1_ALIAS WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x0e\x00\x00\x00"
+
 
 class TestWordDefinitions:
     def test_word_definition_starts_with_backlink(self):
@@ -830,6 +843,19 @@ class TestWordDefinitions:
         end
         // code offset 0x4
         def word(colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x0e\x00\x00\x00"
+
+    def test_if_available_uses_alias_for_address_labels(self):
+        source = """
+        codeblock
+            dw :word1_alias_cfa
+        end
+        // code offset 0x4
+        def word(colon) alias WORD1_ALIAS WORD1
             // backlink (4) + word size (1) + word name (5)
         end
         """
