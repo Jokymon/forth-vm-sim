@@ -246,6 +246,7 @@ def test_comments(parser):
         nop // comment on opcode line
     end // comment on block end
     """
+    parser.parse(source)
 
 
 class TestParsingOtherDefinitions:
