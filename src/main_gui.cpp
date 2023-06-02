@@ -5,6 +5,7 @@
 #include <imgui_impl_sdlrenderer.h>
 #include <ImGuiFileDialog.h>
 #include <iostream>
+#include "fmt/core.h"
 #include "vm.h"
 #include "vm_memory.h"
 
@@ -12,10 +13,15 @@ int main(int argc, char *argv[]) {
     Memory memory;
     Vm vm{memory};
 
+    bool stacks_initialized = false;
+    uint32_t dsp_top = 0x0;
+    uint32_t rsp_bottom = 0x0;
+    int current_item;
+
     SDL_Window *window = nullptr;
 
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("Forth VM simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Forth VM simulation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
     ImGui::CreateContext();
@@ -37,6 +43,8 @@ int main(int argc, char *argv[]) {
             if (ev.type == SDL_QUIT)
                 isRunning = false;
         }
+
+        auto registers = vm.getState();
 
         ImGui_ImplSDLRenderer_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -64,10 +72,6 @@ int main(int argc, char *argv[]) {
             ImGui::EndMenuBar();
         }
 
-        if (ImGui::Button("Single Step")) {
-            vm.singleStep();
-        }
-
         if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
             if (ImGuiFileDialog::Instance()->IsOk())
@@ -78,6 +82,18 @@ int main(int argc, char *argv[]) {
 
             ImGuiFileDialog::Instance()->Close();
         }
+
+        if (ImGui::Button("Single Step")) {
+            vm.singleStep();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset stack")) {
+            dsp_top = registers.registers[Vm::Dsp];
+            rsp_bottom = registers.registers[Vm::Rsp];
+            stacks_initialized = true;
+        }
+
+        ImGui::Text("Next instruction: %s", vm.disassembleAtPc().c_str());
 
         {
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
@@ -92,7 +108,42 @@ int main(int argc, char *argv[]) {
         ImGui::SameLine();
 
         {
-            auto registers = vm.getState();
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+            ImGui::BeginChild("Stacks", ImVec2(ImGui::GetContentRegionAvail().x * 0.5,
+                                                ImGui::GetContentRegionAvail().y),
+                            true, ImGuiWindowFlags_MenuBar);
+
+            ImGui::Text("Data Stack");
+            if (ImGui::BeginListBox("Data stack", ImVec2(ImGui::GetContentRegionAvail().x,
+                                                         ImGui::GetContentRegionAvail().y * 0.5))) {
+                if (stacks_initialized) {
+                    for (uint32_t address=dsp_top; address>registers.registers[Vm::Dsp]; address-=4) {
+                        std::string entry_text = fmt::format("{:>8x}", memory.get32(address));
+                        ImGui::Selectable(entry_text.c_str(), false);
+                    }
+                }
+                ImGui::EndListBox();
+            };
+
+            ImGui::Text("Return Stack");
+            if (ImGui::BeginListBox("Return stack", ImVec2(ImGui::GetContentRegionAvail().x,
+                                                         ImGui::GetContentRegionAvail().y))) {
+                if (stacks_initialized) {
+                    for (uint32_t address=rsp_bottom; address<registers.registers[Vm::Rsp]; address+=4) {
+                        std::string entry_text = fmt::format("{:>8x}", memory.get32(address));
+                        ImGui::Selectable(entry_text.c_str(), false);
+                    }
+                }
+                ImGui::EndListBox();
+            };
+
+            ImGui::EndChild();
+            ImGui::PopStyleVar();
+        }
+
+        ImGui::SameLine();
+
+        {
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
             ImGui::BeginChild("Registers", ImVec2(ImGui::GetContentRegionAvail().x,
                                                   ImGui::GetContentRegionAvail().y * 0.6),
@@ -110,6 +161,7 @@ int main(int argc, char *argv[]) {
             ImGui::TableNextColumn(); ImGui::Text("Dsp"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Dsp]);
             ImGui::TableNextColumn(); ImGui::Text("Acc1"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Acc1]);
             ImGui::TableNextColumn(); ImGui::Text("Acc2"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Acc2]);
+            ImGui::TableNextColumn(); ImGui::Text("Ret"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Ret]);
             ImGui::TableNextColumn(); ImGui::Text("Pc"); ImGui::TableNextColumn(); ImGui::Text("%08x", registers.registers[Vm::Pc]);
             ImGui::EndTable();
 
