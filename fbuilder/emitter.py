@@ -49,8 +49,12 @@ class MachineCodeEmitter:
             value = expression.evaluate(self.labels)
 
             changed_code = code_buffer[:address]
-            changed_code += struct.pack("<I", value)
-            changed_code += code_buffer[address+4:]
+            if expression.operand_size == 8:
+                changed_code += struct.pack("B", value)
+                changed_code += code_buffer[address+1:]
+            else:
+                changed_code += struct.pack("<I", value)
+                changed_code += code_buffer[address+4:]
 
             code_buffer = changed_code
 
@@ -66,9 +70,13 @@ class MachineCodeEmitter:
         self.jumps[self.get_current_code_address()] = str(label)
         self.binary_code += struct.pack("<I", 0x0)
 
-    def _insert_expression_marker(self, expression):
+    def _insert_expression_marker(self, expression, operand_size=32):
+        expression.operand_size = operand_size
         self.expressions[self.get_current_code_address()] = expression
-        self.binary_code += struct.pack("<I", 0x0)
+        if operand_size == 8:
+            self.binary_code += struct.pack("B", 0x0)
+        else:
+            self.binary_code += struct.pack("<I", 0x0)
 
     def emit_label_target(self, label_text):
         self._insert_jump_marker(label_text)
@@ -140,7 +148,9 @@ class MachineCodeEmitter:
             self._insert_jump_marker(target.jump_target)
 
     def emit_data_8(self, data):
-        if isinstance(data, NumberOperand):
+        if isinstance(data, ExpressionOperand):
+            self._insert_expression_marker(data, operand_size=8)
+        elif isinstance(data, NumberOperand):
             self.binary_code += struct.pack("B", data.number)
         else:
             self.binary_code += struct.pack("B", data)
@@ -343,7 +353,9 @@ class DisassemblyEmitter:
         new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
-        if isinstance(data, NumberOperand):
+        if isinstance(data, ExpressionOperand):
+            self.disassembly += f"{18*' '} db {data}\n"
+        elif isinstance(data, NumberOperand):
             self.disassembly += f"{machine_code:<18} db #0x{data.number:x}\n"
         else:
             self.disassembly += f"{machine_code:<18} db #0x{data:x}\n"

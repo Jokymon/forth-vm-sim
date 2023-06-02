@@ -299,6 +299,26 @@ class TestExpressions:
 
         assert binary == assemble(source)
 
+    def test_expressions_of_labels_are_calculated_for_bytes(self):
+        source = """
+        codeblock
+        start:
+            dw #0x1
+        entry2:
+            dw #0x2
+        entry3:
+            dw #0x3
+        calculation:
+            db :entry3 - :entry2
+        end
+        """
+        binary = b"\x01\x00\x00\x00"
+        binary += b"\x02\x00\x00\x00"
+        binary += b"\x03\x00\x00\x00"
+        binary += b"\x04"
+
+        assert binary == assemble(source)
+
     def test_dollar_inside_macro_uses_the_address_at_insertion(self):
         source = """
         macro CURRENT_ADDRESS()

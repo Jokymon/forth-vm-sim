@@ -74,11 +74,13 @@ class JumpOperand(Operand):
 class ExpressionOperand(Operand):
     def __init__(self, expression):
         self.expression = expression
+        self.operand_size = 32
 
     def evaluate(self, labels):
         value = self.expression[0].evaluate(labels)
         expression_rest = self.expression[1:]
-        for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
+        for operator, value_node in zip(expression_rest[::2],
+                                        expression_rest[1::2]):
             if str(operator) == "+":
                 value += value_node.evaluate(labels)
             else:

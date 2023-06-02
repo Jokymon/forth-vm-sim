@@ -172,7 +172,8 @@ class VmForthAssembler(Interpreter):
             if isinstance(parameters[0], StringOperand):
                 self.emitter.emit_data_string(parameters[0].string)
             else:
-                if parameters[0].number > 0xff:
+                if isinstance(parameters[0], NumberOperand) and \
+                        parameters[0].number > 0xff:
                     raise ValueError(f"constant 0x{parameters[0].number:x} is too big for db on line {tree.children[0].line}")
                 self.emitter.emit_data_8(parameters[0])
         elif mnemonic == "dw":
