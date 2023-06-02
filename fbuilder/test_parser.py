@@ -1,7 +1,8 @@
 import pathlib
 import pytest
 from lark import Lark
-
+# I accept longer lines in tests because of hopefully better test names
+# flake8: noqa: E501
 
 @pytest.fixture
 def parser():
@@ -297,6 +298,14 @@ class TestParsingDataDefinitions:
         codeblock
         mylabel:
             dw :mylabel
+        end
+        """
+        parser.parse(source)
+
+    def test_defining_bytes_with_strings(self, parser):
+        source = """
+        codeblock
+            db "Hello"
         end
         """
         parser.parse(source)

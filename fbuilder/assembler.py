@@ -169,9 +169,12 @@ class VmForthAssembler(Interpreter):
         elif mnemonic == "sra":
             self.emitter.emit_sra(parameters[0], parameters[1])
         elif mnemonic == "db":
-            if parameters[0].number > 0xff:
-                raise ValueError(f"constant 0x{parameters[0].number:x} is too big for db on line {tree.children[0].line}")
-            self.emitter.emit_data_8(parameters[0])
+            if isinstance(parameters[0], StringOperand):
+                self.emitter.emit_data_string(parameters[0].string)
+            else:
+                if parameters[0].number > 0xff:
+                    raise ValueError(f"constant 0x{parameters[0].number:x} is too big for db on line {tree.children[0].line}")
+                self.emitter.emit_data_8(parameters[0])
         elif mnemonic == "dw":
             self.emitter.emit_data_32(parameters[0])
         elif mnemonic == "ifkt":
@@ -241,6 +244,10 @@ class VmForthAssembler(Interpreter):
             return NumberOperand(number)
         else:
             return NumberOperand(self.visit(number_node))
+
+    def string_literal(self, tree):
+        string_node = tree.children[0]
+        return StringOperand(string_node[1:-1])
 
     def label(self, tree):
         self.emitter.mark_label(str(tree.children[0]))

@@ -69,7 +69,7 @@ class JumpOperand(Operand):
 
     def __repr__(self):
         return f"Jump to {self.jump_target}"
-    
+
 
 class ExpressionOperand(Operand):
     def __init__(self, expression):
@@ -79,7 +79,7 @@ class ExpressionOperand(Operand):
         value = self.expression[0].evaluate(labels)
         expression_rest = self.expression[1:]
         for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
-            if str(operator)=="+":
+            if str(operator) == "+":
                 value += value_node.evaluate(labels)
             else:
                 value -= value_node.evaluate(labels)
@@ -101,3 +101,14 @@ class NumberOperand(Operand):
 
     def __str__(self):
         return f"#0x{self.number:x}"
+
+
+class StringOperand(Operand):
+    def __init__(self, string):
+        self.string = string
+
+    def evaluate(self, _):
+        return self.string
+
+    def __str__(self):
+        return str(self.string)

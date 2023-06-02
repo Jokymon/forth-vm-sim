@@ -205,6 +205,16 @@ class TestAssemblingDbInstructions:
 
         assert binary == assemble(source)
 
+    def test_strings_are_inserted_as_bytes(self):
+        source = """
+        codeblock
+            db "Hello"
+        end
+        """
+        binary = b"\x48\x65\x6c\x6c\x6f"
+
+        assert binary == assemble(source)
+
     def test_constants_are_inserted(self):
         source = """
         const MY_VALUE = 0x36

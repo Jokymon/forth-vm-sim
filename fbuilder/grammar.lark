@@ -43,6 +43,8 @@ word: WORD_NAME
 
 register: REGISTER
 
+string_literal: STRING
+
 immediate_number: "#" number | IDENTIFIER
 
 number: ( DEC_NUMBER | HEX_NUMBER )
@@ -63,6 +65,7 @@ term: current_address
     | macro_parameter
     | immediate_number
     | jump_target
+    | string_literal
 
 ALIAS_SEP: "alias"
 
