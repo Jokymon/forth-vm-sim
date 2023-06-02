@@ -160,6 +160,23 @@ class TestAssemblingMacros:
         assert "on line 3" in str(parsing_error)
         assert "Unknown macro argument 'value'" in str(parsing_error)
 
+    def test_support_for_macro_local_labels(self):
+        source = """
+        macro INSERT_LABEL()
+            dw :'label
+        'label:
+        end
+
+        codeblock
+            INSERT_LABEL()
+            INSERT_LABEL()
+        end
+        """
+        binary = b"\x04\x00\x00\x00\x08\x00\x00\x00"
+
+        assert binary == assemble(source)
+
+
 
 class TestAssemblingDwInstructions:
     def test_immediate_32bit_values_are_inserted_in_correct_byte_order(self):

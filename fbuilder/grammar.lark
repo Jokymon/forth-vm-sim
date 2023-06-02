@@ -106,7 +106,7 @@ UNARY_OPERATION: "++" | "--"
 OPERATOR: "+" | "-"
 
 WORD_NAME: /[\x21-\x7E]+/i
-IDENTIFIER: /[a-zA-Z0-9_]+/
+IDENTIFIER: /[a-zA-Z0-9_']+/
 SIZESUFFIX: /[bw]/i
 DEC_NUMBER: /\d+/
 HEX_NUMBER: /0x[\da-f]*/i

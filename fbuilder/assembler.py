@@ -22,6 +22,7 @@ class VmForthAssembler(Interpreter):
     def __init__(self, emitter, symbol_table):
         self.constants = {}
         self.macros = {}
+        self.macro_call_number = 0
         self.macro_scope = {}
 
         self.word_addresses = {}
@@ -204,7 +205,7 @@ class VmForthAssembler(Interpreter):
 
     def macro_call(self, tree):
         macro_name = str(tree.children[0])
-        if not macro_name in self.macros:
+        if macro_name not in self.macros:
             raise ValueError(f"Undefined Macro: '{macro_name}' on line {tree.children[0].line}")
         parameter_len = len(self.macros[macro_name].parameters)
         argument_len = 0
@@ -216,6 +217,7 @@ class VmForthAssembler(Interpreter):
         if parameter_len != argument_len:
             raise ValueError(f"Calling macro with {argument_len} parameter where {parameter_len} are expected on line {tree.children[0].line}")
         self.macros[macro_name].evaluate(self)
+        self.macro_call_number += 1
         self.macro_scope = {}
 
     def paramlist(self, tree):
@@ -260,7 +262,10 @@ class VmForthAssembler(Interpreter):
         return StringOperand(string_node[1:-1])
 
     def label(self, tree):
-        self.emitter.mark_label(str(tree.children[0]))
+        label_name = str(tree.children[0])
+        if label_name[0] == "'":
+            label_name += f"_{self.macro_call_number}"
+        self.emitter.mark_label(label_name)
 
     def word(self, tree):
         word = str(tree.children[0])
@@ -284,7 +289,10 @@ class VmForthAssembler(Interpreter):
             self.emitter.emit_data_32(cfa)
 
     def jump_target(self, tree):
-        return JumpOperand(tree.children[0])
+        label_name = tree.children[0]
+        if label_name[0] == "'":
+            label_name += f"_{self.macro_call_number}"
+        return JumpOperand(label_name)
 
     def expression(self, tree):
         def local_visit(node):
@@ -313,7 +321,7 @@ class VmForthAssembler(Interpreter):
 
     def macro_parameter(self, tree):
         parameter_name = str(tree.children[0])
-        if not parameter_name in self.macro_scope:
+        if parameter_name not in self.macro_scope:
             raise ValueError(f"Unknown macro argument '{parameter_name}' on line {tree.children[0].line}")
         return self.visit(self.macro_scope[parameter_name])
 
