@@ -7,7 +7,7 @@ import pytest
 def assemble(source):
     @dataclass
     class DefaultOptions:
-        format : str = "bin"
+        format: str = "bin"
     asm = Assembler(DefaultOptions())
     return asm.assemble_source(source)
 
@@ -31,6 +31,7 @@ class TestOpcodeHandling:
             assemble(source)
         assert "on line 3" in str(parsing_error)
         assert "Opcode 'unsup' currently not implemented" in str(parsing_error)
+
 
 def test_hexadecimal_number_is_correctly_parsed():
     source = """
@@ -454,7 +455,6 @@ class TestAssemblingJmpInstructions:
         binary += b"\x00"
 
         assert binary == assemble(source)
-
 
     def test_jc_absolute_to_label(self):
         source = """

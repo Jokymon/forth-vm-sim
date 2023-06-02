@@ -1,5 +1,3 @@
-import pathlib
-
 from operands import *
 from emitter import *
 from lark import Token
@@ -63,10 +61,12 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for the word and the alias
         self.emitter.mark_label(word_name.lower() + "_cfa")
-        self.word_addresses[word_name] = self.emitter.get_current_code_address()
+        self.word_addresses[word_name] = \
+            self.emitter.get_current_code_address()
         if alias_name != "":
             self.emitter.mark_label(alias_name.lower() + "_cfa")
-            self.word_addresses[alias_name] = self.emitter.get_current_code_address()
+            self.word_addresses[alias_name] = \
+                self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
         custom_type_macro = f"__DEF{custom_def.upper()}_CFA"
@@ -111,15 +111,17 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for the word and the alias
         self.emitter.mark_label(word_name.lower() + "_cfa")
-        self.word_addresses[word_name] = self.emitter.get_current_code_address()
+        self.word_addresses[word_name] = \
+            self.emitter.get_current_code_address()
         if alias_name != "":
             self.emitter.mark_label(alias_name.lower() + "_cfa")
-            self.word_addresses[alias_name] = self.emitter.get_current_code_address()
+            self.word_addresses[alias_name] = \
+                self.emitter.get_current_code_address()
 
         # Append CFA field which is just the current address +4 for code words
         custom_type_macro = f"__DEF{custom_def.upper()}_CFA"
         if custom_type_macro in self.macros:
-             self.macros[custom_type_macro].evaluate(self)
+            self.macros[custom_type_macro].evaluate(self)
 
         self.visit_children(tree)
 
@@ -129,11 +131,14 @@ class VmForthAssembler(Interpreter):
             self.emitter.mark_label(alias_name.lower() + "_end")
 
         # add symbol to symbol table
-        self.symbol_table.add_word(word_name.lower(), current_position, self.emitter.get_current_code_address())
+        self.symbol_table.add_word(word_name.lower(),
+                                   current_position,
+                                   self.emitter.get_current_code_address())
 
     def macro_definition(self, tree):
         macro_name = str(tree.children[0])
-        arguments = list(map(str, filter(lambda x: x is not None, tree.children[1].children)))
+        arguments = list(map(str, filter(lambda x: x is not None,
+                                         tree.children[1].children)))
         macro_code = tree.children[2:]
         self.macros[macro_name] = MacroDefinition(arguments, macro_code)
 
@@ -151,9 +156,11 @@ class VmForthAssembler(Interpreter):
         if tree.children[1] is not None:
             if isinstance(tree.children[1], Token):
                 suffix = str(tree.children[1])
-                parameters = [self.visit(child) for child in tree.children[2:]][0]
+                parameters = [self.visit(child) for child
+                              in tree.children[2:]][0]
             else:
-                parameters = [self.visit(child) for child in tree.children[1:]][0]
+                parameters = [self.visit(child) for child
+                              in tree.children[1:]][0]
         else:
             parameters = []
         if mnemonic == "add":
@@ -212,7 +219,7 @@ class VmForthAssembler(Interpreter):
         self.macro_scope = {}
 
     def paramlist(self, tree):
-        return [ self.visit(child) for child in tree.children ]
+        return [self.visit(child) for child in tree.children]
 
     def param(self, tree):
         return self.visit(tree.children[0])
@@ -230,13 +237,15 @@ class VmForthAssembler(Interpreter):
         operation = "increment"
         if self.visit(tree.children[0]) == "--":
             operation = "decrement"
-        return RegisterOperand(tree.children[1], "indirect", "prefix", operation)
+        return RegisterOperand(tree.children[1], "indirect", "prefix",
+                               operation)
 
     def register_indirect_postfix(self, tree):
         operation = "increment"
         if self.visit(tree.children[1]) == "--":
             operation = "decrement"
-        return RegisterOperand(tree.children[0], "indirect", "postfix", operation)
+        return RegisterOperand(tree.children[0], "indirect", "postfix",
+                               operation)
 
     def immediate_number(self, tree):
         number_node = tree.children[0]

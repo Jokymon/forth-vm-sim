@@ -201,7 +201,7 @@ class MachineCodeEmitter:
             else:
                 raise ValueError(f"immediate value can only be moved to acc1 or acc2 on line {target.line_no}")
         elif target.is_("increment") or target.is_("decrement") or \
-            source.is_("increment") or source.is_("decrement"):
+                source.is_("increment") or source.is_("decrement"):
             if target.is_indirect:
                 if source.is_indirect:
                     raise ValueError(f"only one argument can be register indirect for movs on line {target.line_no}")

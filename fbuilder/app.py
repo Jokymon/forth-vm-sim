@@ -76,5 +76,3 @@ class Assembler:
             return assembler.emitter.disassembly
         else:
             return assembler.emitter.binary_code
-
-
