@@ -279,6 +279,19 @@ def test_within_test1(me):
 # ------------------------
 # Memory access
 @passmein
+def test_count_turns_counted_string_to_address_and_count(me):
+    """PRE_INIT_DATA DUP
+    COUNT
+    """
+    stack = run_vm_image(me.__doc__, test_data=[0x3, 0x6f, 0x6b, 0x2e])
+
+    assert len(stack) == 3
+    pre_init_address = stack[2]
+    assert stack[0] == 3
+    assert stack[1] == pre_init_address + 1
+
+
+@passmein
 def test_tib_returns_the_address_to_tib(me):
     """TIB"""
     stack = run_vm_image(me.__doc__)
@@ -299,6 +312,18 @@ def test_cmove_non_overlapping(me):
     assert stack[0] == 0xd8
     assert stack[1] == 0x53
     assert stack[2] == 0x34
+
+
+# ------------------------
+# Basic I/O
+@passmein
+def test_stringQuoteBar_leaves_string_address_on_stack(me):
+    """STRING_ADDRESS_TEST
+    """
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 2
+    assert stack[0] == stack[1]
+
 
 # ------------------------
 # parse

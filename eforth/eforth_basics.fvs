@@ -8,6 +8,10 @@ end
 macro __DEFCODE_CFA()
 end
 
+macro __DEFASM_COLON_CFA()
+    call :doLIST
+end
+
 macro __DEFCOLON_CFA()
     call :doLIST
 end
@@ -22,6 +26,13 @@ end
 
 macro USER_OFFSET(bla)
     dw @bla - :uzero
+end
+
+macro COUNTED_WORD(s)
+    db :'string_end - :'string_start
+'string_start:
+    db @s
+'string_end:
 end
 
 

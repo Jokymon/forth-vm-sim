@@ -331,8 +331,19 @@ def word(colon) BL
     EXIT
 end
 
+def word(colon) ALIGNED // b -- a
+    // TODO: IMMEDIATE
+    // TODO
+    EXIT
+end
+
 // -------------------------------------------------------------------
 // Memory access
+
+def word(colon) COUNT   // b -- b +n
+    DUP doLIT 1 + SWAP C@
+    EXIT
+end
 
 def word(colon) HERE    // -- a
     CP @
@@ -382,6 +393,18 @@ end
 
 def word(colon) ECHO
     EMIT
+    EXIT
+end
+
+def word(colon) do$     // -- a
+    // TODO: COMPILE-ONLY
+    R> R@ R> COUNT + ALIGNED >R
+    SWAP >R
+    EXIT
+end
+
+def word(colon) alias STRQP $"| // -- a
+    do$
     EXIT
 end
 

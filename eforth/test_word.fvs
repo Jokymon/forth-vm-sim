@@ -41,6 +41,15 @@ after_pre_init_data:
     NEXT()
 end
 
+def asm(asm_colon) STRING_ADDRESS_TEST    // -- a
+    dw :strqp_cfa
+expected_string_address:
+    COUNTED_WORD("string_test")
+    dw :dolit_cfa
+    dw :expected_string_address
+    dw :exit_cfa
+end
+
 def word(colon) RUN_TEST
     %WUT%      // word under test
 
