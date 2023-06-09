@@ -376,8 +376,7 @@ def word(colon) BL
     EXIT
 end
 
-def word(colon) ALIGNED // b -- a
-    // TODO: IMMEDIATE
+def word[IMMEDIATE](colon) ALIGNED // b -- a
     // TODO
     EXIT
 end
@@ -418,6 +417,17 @@ cmov1:
 cmov2:
     next :cmov1
     2DROP
+    EXIT
+end
+
+def word(colon) PACK$   // b u a -- a
+    ALIGNED DUP >R      // strings only on cell boundary
+    OVER DUP doLIT 0
+    doLIT 4 UM/MOD DROP // count mod cell
+    - OVER +
+    doLIT 0 SWAP !      // null fill cell
+    2DUP C! doLIT 1 +   // save count
+    SWAP CMOVE R>       // move string
     EXIT
 end
 

@@ -354,6 +354,21 @@ def test_cmove_non_overlapping(me):
     assert stack[2] == 0x34
 
 
+@passmein
+def test_pack_copies_string_with_length(me):
+    """PRE_INIT_DATA doLIT 3 doLIT 28500 PACK$
+    doLIT 28500 C@
+    doLIT 28501 C@
+    doLIT 28502 C@
+    """
+    stack = run_vm_image(me.__doc__, test_data=[0x34, 0x53, 0xd8])
+    assert len(stack) == 4
+    assert stack[0] == 0x53
+    assert stack[1] == 0x34
+    assert stack[2] == 0x3      # first byte at target is length
+    assert stack[3] == 28500    # PACK$ returns the target address
+
+
 # ------------------------
 # Basic I/O
 @passmein
