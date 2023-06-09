@@ -43,7 +43,16 @@ class VmForthAssembler(Interpreter):
         self.emitter.finalize()
 
     def assembly_definition(self, tree):
-        custom_def = tree.children[0]
+        flags = 0x0
+        next_index = 0
+
+        if not isinstance(tree.children[0], Token):
+            flag_tree = self.visit(tree.children[0])
+            flags = flag_tree.evaluate(None)
+            next_index += 1
+
+        custom_def = tree.children[next_index]
+        next_index += 1
 
         current_position = self.emitter.get_current_code_address()
         # Append back-link
@@ -52,12 +61,12 @@ class VmForthAssembler(Interpreter):
 
         # Append length and word text
         alias_name = ""
-        if tree.children[1].type == "ALIAS_SEP":
-            alias_name = str(tree.children[2])
-            word_name = str(tree.children[3])
+        if tree.children[next_index].type == "ALIAS_SEP":
+            alias_name = str(tree.children[next_index + 1])
+            word_name = str(tree.children[next_index + 2])
         else:
-            word_name = str(tree.children[1])
-        self.emitter.emit_data_8(len(word_name))
+            word_name = str(tree.children[next_index])
+        self.emitter.emit_data_8(len(word_name) | flags)
         self.emitter.emit_data_string(word_name)
 
         # creating a label for the word and the alias
@@ -93,7 +102,16 @@ class VmForthAssembler(Interpreter):
                 self.emitter.get_current_code_address())
 
     def general_word_definition(self, tree):
-        custom_def = tree.children[0]
+        flags = 0x0
+        next_index = 0
+
+        if not isinstance(tree.children[0], Token):
+            flag_tree = self.visit(tree.children[0])
+            flags = flag_tree.evaluate(None)
+            next_index += 1
+
+        custom_def = tree.children[next_index]
+        next_index += 1
 
         current_position = self.emitter.get_current_code_address()
         # Append back-link
@@ -102,12 +120,12 @@ class VmForthAssembler(Interpreter):
 
         # Append length and word text
         alias_name = ""
-        if tree.children[1].type == "ALIAS_SEP":
-            alias_name = str(tree.children[2])
-            word_name = str(tree.children[3])
+        if tree.children[next_index].type == "ALIAS_SEP":
+            alias_name = str(tree.children[next_index + 1])
+            word_name = str(tree.children[next_index + 2])
         else:
-            word_name = str(tree.children[1])
-        self.emitter.emit_data_8(len(word_name))
+            word_name = str(tree.children[next_index])
+        self.emitter.emit_data_8(len(word_name) | flags)
         self.emitter.emit_data_string(word_name)
 
         # creating a label for the word and the alias
@@ -219,6 +237,9 @@ class VmForthAssembler(Interpreter):
         self.macros[macro_name].evaluate(self)
         self.macro_call_number += 1
         self.macro_scope = {}
+
+    def word_flags(self, tree):
+        return FlagList([self.visit(child) for child in tree.children])
 
     def paramlist(self, tree):
         return [self.visit(child) for child in tree.children]

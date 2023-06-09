@@ -177,7 +177,6 @@ class TestAssemblingMacros:
         assert binary == assemble(source)
 
 
-
 class TestAssemblingDwInstructions:
     def test_immediate_32bit_values_are_inserted_in_correct_byte_order(self):
         source = """
@@ -713,6 +712,47 @@ class TestCodeDefinitions:
         assert result[5] == 5  # word length in characters
         assert result[6:11] == b"WORD1"
 
+    def test_code_definition_gets_numeric_flag_in_name_length(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def asm[#0x80](code) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 0x80 | 5  # word length in characters
+
+    def test_code_definition_gets_constant_flag_in_name_length(self):
+        source = """
+        const IMMEDIATE = 0x80
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def asm[IMMEDIATE](code) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 0x80 | 5  # word length in characters
+
+    def test_code_definition_gets_flags_in_name_length(self):
+        source = """
+        const IMMEDIATE = 0x80
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def asm[IMMEDIATE, #0x40](code) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 0xc0 | 5  # word length in characters
+
     def test_cfa_is_filled_with_macro(self):
         source = """
         macro __DEFCODE_CFA()
@@ -800,6 +840,47 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[5] == 5  # word length in characters
         assert result[6:11] == b"WORD1"
+
+    def test_word_definition_gets_numeric_flag_in_name_length(self):
+        source = """
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def word[#0x80](colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 0x80 | 5  # word length in characters
+
+    def test_word_definition_gets_constant_flag_in_name_length(self):
+        source = """
+        const IMMEDIATE = 0x80
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def word[IMMEDIATE](colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 0x80 | 5  # word length in characters
+
+    def test_word_definition_gets_flags_in_name_length(self):
+        source = """
+        const IMMEDIATE = 0x80
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def word[IMMEDIATE, #0x40](colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[5] == 0xc0 | 5  # word length in characters
 
     def test_cfa_is_filled_with_macro(self):
         source = """

@@ -43,6 +43,28 @@ class TestCodeBlocks:
         """
         parser.parse(source)
 
+    def test_defcode_can_have_a_numeric_flag(self, parser):
+        source = """
+        def asm[0x80](code) AWORD
+        end
+        """
+        parser.parse(source)
+
+    def test_defcode_can_have_a_constant_flag(self, parser):
+        source = """
+        const IMMEDIATE = 0x80
+        def asm[IMMEDIATE](code) AWORD
+        end
+        """
+        parser.parse(source)
+
+    def test_defcode_can_have_multiple_flags(self, parser):
+        source = """
+        def asm[0x80, 0x40](code) AWORD
+        end
+        """
+        parser.parse(source)
+
 
 class TestWordBlocks:
     def test_defword(self, parser):
@@ -65,6 +87,29 @@ class TestWordBlocks:
         end
         """
         parser.parse(source)
+
+    def test_defword_can_have_a_numeric_flag(self, parser):
+        source = """
+        def word[0x80](colon) AWORD
+        end
+        """
+        parser.parse(source)
+
+    def test_defword_can_have_a_constant_flag(self, parser):
+        source = """
+        const IMMEDIATE = 0x80
+        def word[IMMEDIATE](colon) AWORD
+        end
+        """
+        parser.parse(source)
+
+    def test_defword_can_have_multiple_flags(self, parser):
+        source = """
+        def word[0x80, 0x40](colon) AWORD
+        end
+        """
+        parser.parse(source)
+
 
 
 class TestMacros:
@@ -334,7 +379,7 @@ class TestParsingMovsInstructions:
         parser.parse(source)
 
 
-class TestParsingLaabels:
+class TestParsingLabels:
     def test_labels_inside_codeblock(self, parser):
         source = """
         codeblock

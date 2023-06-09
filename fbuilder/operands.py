@@ -114,3 +114,14 @@ class StringOperand(Operand):
 
     def __str__(self):
         return str(self.string)
+
+
+class FlagList:
+    def __init__(self, flag_list):
+        self.flag_list = flag_list
+
+    def evaluate(self, labels):
+        return sum(map(lambda item: item.evaluate(labels), self.flag_list))
+
+    def __str__(self):
+        return str(self.flag_list)

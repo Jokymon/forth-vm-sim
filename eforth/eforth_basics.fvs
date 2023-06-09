@@ -67,6 +67,10 @@ const RSP_BASE = 0x6000     // (16+4+4) * 1024
 const DSP_BASE = 0x5000     // (16+4) * 1024
 const TIBB = 0x3000
 
+// flags
+const COMPILE_ONLY = 0x40
+const IMMEDIATE = 0x80
+
 // -----------------------------------------------------------
 // startup code
 
