@@ -200,6 +200,33 @@ def test_umplus_pushes_zero_for_no_carry(me):
     assert stack[1] == 9
 
 
+class TestNegate:
+    def test_negate_turns_positive_into_negative(self):
+        stack = run_vm_image("doLIT 23522 NEGATE")
+
+        assert len(stack) == 1
+        assert stack[0] == 2**32 - 23522
+
+    def test_negate_turns_negative_into_positive(self):
+        stack = run_vm_image("doLIT -23522 NEGATE")
+
+        assert len(stack) == 1
+        assert stack[0] == 23522
+
+    def test_negate_keep_0(self):
+        stack = run_vm_image("doLIT 0 NEGATE")
+
+        assert len(stack) == 1
+        assert stack[0] == 0
+
+    def test_dnegate_turns_double_negative_to_positiv(self):
+        stack = run_vm_image("doLIT 123456 doLIT 3 DNEGATE")
+
+        assert len(stack) == 2
+        assert stack[0] == 4294967292
+        assert stack[1] == 4294843840
+
+
 # ------------------------
 # User variables
 

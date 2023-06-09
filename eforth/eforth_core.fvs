@@ -222,6 +222,16 @@ def word(colon) +           // u u -- u
     EXIT
 end
 
+def word(colon) NEGATE      // n -- -n
+    NOT doLIT 1 +
+    EXIT
+end
+
+def word(colon) DNEGATE     // d -- -d
+    NOT >R NOT doLIT 1 UM+ R> +
+    EXIT
+end
+
 def asm(code) -
     POPD(%acc2)
     POPD(%acc1)
