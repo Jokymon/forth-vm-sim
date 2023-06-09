@@ -304,6 +304,19 @@ def test_within_test1(me):
 
 
 # ------------------------
+# Divide
+
+@passmein
+def test_ummod_calculates_correctly(me):
+    """doLIT 42 doLIT 0 doLIT 5 UM/MOD"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 8        # quotient
+    assert stack[1] == 2        # reminder
+
+
+# ------------------------
 # Memory access
 @passmein
 def test_count_turns_counted_string_to_address_and_count(me):

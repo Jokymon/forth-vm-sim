@@ -186,6 +186,14 @@ def asm(code) 0<
     NEXT()
 end
 
+def asm(code) OR
+    POPD(%acc1)
+    POPD(%acc2)
+    or %acc1, %acc1, %acc2
+    PUSHD(%acc1)
+    NEXT()
+end
+
 def asm(code) XOR
     POPD(%acc1)
     POPD(%acc2)
@@ -326,6 +334,33 @@ end
 def word(colon) WITHIN      // u ul uh -- t
     OVER - >R - R> U<
     EXIT
+end
+
+// -------------------------------------------------------------------
+// Divide
+
+def word(colon) UM/MOD  // udl udh un -- ur uq
+    2DUP U<
+    ?BRANCH :umm4
+    NEGATE doLIT 31 >R  // 31 for the amount of bits in CELL
+umm1:
+    >R DUP UM+
+    >R >R DUP UM+
+    R> + DUP
+    R> R@ SWAP >R
+    UM+ R> OR
+    ?BRANCH :umm2
+    >R DROP doLIT 1 + R>
+    BRANCH :umm3
+umm2:
+    DROP
+umm3:
+    R>
+    next :umm1
+    DROP SWAP EXIT
+umm4:
+    DROP 2DROP
+    doLIT -1 DUP EXIT
 end
 
 // -------------------------------------------------------------------
