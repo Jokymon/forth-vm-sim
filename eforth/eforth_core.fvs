@@ -5,6 +5,21 @@ const LF = 10
 const CRR = 13
 
 // -------------------------------------------------------------------------
+// Device dependent I/O
+
+def asm(code) alias QRX ?RX
+    ifkt FKT_KEY
+    PUSHD(%acc1)
+    NEXT()
+end
+
+def asm(code) alias TXSTO TX!
+    POPD(%acc1)
+    ifkt FKT_EMIT
+    NEXT()
+end
+
+// -------------------------------------------------------------------------
 // kernel words
 
 def asm(code) doLIT
@@ -279,6 +294,14 @@ def asm(uservar) RP0
     USER_OFFSET(:u_rp0)
 end
 
+def asm(uservar) '?KEY
+    USER_OFFSET(:u_qkey)
+end
+
+def asm(uservar) 'EMIT
+    USER_OFFSET(:u_temit)
+end
+
 def asm(uservar) 'EXPECT
     USER_OFFSET(:u_texpect)
 end
@@ -434,16 +457,14 @@ end
 // -------------------------------------------------------------------
 // Basic I/O
 
-def asm(code) KEY
-    ifkt FKT_KEY
-    PUSHD(%acc1)
-    NEXT()
+def word(colon) KEY
+    '?KEY @EXECUTE
+    EXIT
 end
 
-def asm(code) EMIT
-    POPD(%acc1)
-    ifkt FKT_EMIT
-    NEXT()
+def word(colon) EMIT
+    'EMIT @EXECUTE
+    EXIT
 end
 
 def word(colon) ECHO

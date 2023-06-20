@@ -89,8 +89,10 @@ u_sp0:
     dw DSP_BASE     // SP0
 u_rp0:
     dw RSP_BASE     // RP0
-    // DW	QRX			;'?KEY
-    // DW	TXSTO			;'EMIT
+u_qkey:
+    dw :qrx_cfa     // '?KEY
+u_temit:
+    dw :txsto_cfa   // 'EMIT
 u_texpect:
     dw :accept_cfa  // 'EXPECT
     dw :ktap_cfa    // 'TAP
