@@ -304,6 +304,8 @@ class VmForthAssembler(Interpreter):
                 self.emitter.emit_data_32(0xffffffff & int(word))
             elif word.isnumeric():
                 self.emitter.emit_data_32(int(word))
+            elif word in self.constants:
+                self.emitter.emit_data_32(self.constants[word])
             else:
                 raise ValueError(f"Word '{word}' not found in current dictionary on line {tree.children[0].line}")
         else:

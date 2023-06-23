@@ -915,6 +915,21 @@ class TestWordDefinitions:
         result = assemble(source)
         assert result[21:26] == b"\x0b\x00\x00\x00"
 
+    def test_constants_in_word_definitions_are_replaced(self):
+        source = """
+        const C = 0xa210
+        codeblock
+            nop
+        end
+        // code offset 0x1
+        def word(colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+            C
+        end
+        """
+        result = assemble(source)
+        assert result[11:15] == b"\x10\xa2\x00\x00"
+
     def test_missing_words_raise_an_exception(self):
         source = """
         codeblock
