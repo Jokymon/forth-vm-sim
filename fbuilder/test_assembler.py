@@ -549,6 +549,17 @@ class TestAssemblingMovInstructions:
 
         assert binary == assemble(source)
 
+    def test_moving_byte_from_acc1_to_wp_post_increment(self):
+        source = """
+        codeblock
+            mov.b [%wp++], %acc1
+        end
+        """
+
+        binary = b"\x23\x0c"
+
+        assert binary == assemble(source)
+
     def test_moving_from_acc2_to_rsp_pre_decrement(self):
         source = """
         codeblock
@@ -557,6 +568,17 @@ class TestAssemblingMovInstructions:
         """
 
         binary = b"\x22\xd5"
+
+        assert binary == assemble(source)
+
+    def test_moving_byte_from_acc2_to_rsp_pre_decrement(self):
+        source = """
+        codeblock
+            mov.b [--%rsp], %acc2
+        end
+        """
+
+        binary = b"\x23\xd5"
 
         assert binary == assemble(source)
 
@@ -571,6 +593,17 @@ class TestAssemblingMovInstructions:
 
         assert binary == assemble(source)
 
+    def test_moving_byte_from_ip_pre_decrement_to_acc1(self):
+        source = """
+        codeblock
+            mov.b %acc1, [--%ip]
+        end
+        """
+
+        binary = b"\x25\xe0"
+
+        assert binary == assemble(source)
+
     def test_moving_from_rsp_post_decrement_to_acc2(self):
         source = """
         codeblock
@@ -579,6 +612,17 @@ class TestAssemblingMovInstructions:
         """
 
         binary = b"\x24\xaa"
+
+        assert binary == assemble(source)
+
+    def test_moving_byte_from_rsp_post_decrement_to_acc2(self):
+        source = """
+        codeblock
+            mov.b %acc2, [%rsp--]
+        end
+        """
+
+        binary = b"\x25\xaa"
 
         assert binary == assemble(source)
 

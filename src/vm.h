@@ -42,7 +42,9 @@ private:
     void movr_b(uint8_t param);
     void movr_w(uint8_t param);
     void movs_id_w(uint8_t param);
+    void movs_id_b(uint8_t param);
     void movs_di_w(uint8_t param);
+    void movs_di_b(uint8_t param);
 
     void show_trace_at_pc() const;
 

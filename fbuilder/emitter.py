@@ -5,9 +5,9 @@ NOP = 0x00
 MOVR_W = 0x20
 MOVR_B = 0x21
 MOVS_ID_W = 0x22    # indirect <-- direct move
-MOVS_ID_B = 0x23    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
+MOVS_ID_B = 0x23    # indirect <-- direct move (byte)
 MOVS_DI_W = 0x24    # direct <-- indirect move
-MOVS_DI_B = 0x25    # CURRENTLY NOT SUPPORTED/IMPLEMENTED
+MOVS_DI_B = 0x25    # direct <-- indirect move (byte)
 MOVI_ACC1 = 0x26
 MOVI_ACC2 = 0x27
 ADDR_W = 0x30
@@ -205,13 +205,19 @@ class MachineCodeEmitter:
             if target.is_indirect:
                 if source.is_indirect:
                     raise ValueError(f"only one argument can be register indirect for movs on line {target.line_no}")
-                opcode = MOVS_ID_W
+                if suffix == "b":
+                    opcode = MOVS_ID_B
+                else:
+                    opcode = MOVS_ID_W
                 if target.is_("decrement"):
                     operand |= 0x80
                 if target.is_("prefix"):
                     operand |= 0x40
             else:
-                opcode = MOVS_DI_W
+                if suffix == "b":
+                    opcode = MOVS_DI_B
+                else:
+                    opcode = MOVS_DI_W
                 if source.is_("decrement"):
                     operand |= 0x80
                 if source.is_("prefix"):

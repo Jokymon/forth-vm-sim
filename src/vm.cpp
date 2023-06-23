@@ -16,9 +16,9 @@ enum class Opcode {
     MOVR_W = 0x20,
     MOVR_B = 0x21,
     MOVS_ID_W = 0x22,
-    MOVS_ID_B = 0x23,   // NOT IMPLEMENTED
+    MOVS_ID_B = 0x23,
     MOVS_DI_W = 0x24,
-    MOVS_DI_B = 0x25,   // NOT IMPLEMENTED
+    MOVS_DI_B = 0x25,
     MOVI_ACC1 = 0x26,
     MOVI_ACC2 = 0x27,
 
@@ -166,9 +166,17 @@ Vm::Result Vm::singleStep() {
             param8 = fetch_op();
             movs_id_w(param8);
             break;
+        case Opcode::MOVS_ID_B:
+            param8 = fetch_op();
+            movs_id_b(param8);
+            break;
         case Opcode::MOVS_DI_W:
             param8 = fetch_op();
             movs_di_w(param8);
+            break;
+        case Opcode::MOVS_DI_B:
+            param8 = fetch_op();
+            movs_di_b(param8);
             break;
         case Opcode::MOVI_ACC1:
             param32 = memory.get32(state.registers[Pc]);
@@ -373,9 +381,15 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::MOVS_ID_W:
             param = memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Direct));
+        case Opcode::MOVS_ID_B:
+            param = memory[state.registers[Pc]+1];
+            return fmt::format("mov.b {}", disassemble_movs_parameters(param, MoveTarget::Direct));
         case Opcode::MOVS_DI_W:
             param = memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Indirect));
+        case Opcode::MOVS_DI_B:
+            param = memory[state.registers[Pc]+1];
+            return fmt::format("mov.b {}", disassemble_movs_parameters(param, MoveTarget::Indirect));
         case Opcode::MOVI_ACC1:
             param = memory.get32(state.registers[Pc]+1);
             return fmt::format("mov %acc1, {:#x}", param);
@@ -505,6 +519,34 @@ void Vm::movs_id_w(uint8_t param) {
     }
 }
 
+void Vm::movs_id_b(uint8_t param) {
+    uint8_t target = (param & 0x38) >> 3;
+    uint8_t source = param & 0x07;
+
+    bool decrement = (param & 0x80);
+    bool pre = (param & 0x40);
+
+    if (pre) {
+        if (decrement) {
+            state.registers[target] -= 1;
+        }
+        else {
+            state.registers[target] += 1;
+        }
+    }
+
+    memory[state.registers[target]] = state.registers[source];
+
+    if (!pre) {
+        if (decrement) {
+            state.registers[target] -= 1;
+        }
+        else {
+            state.registers[target] += 1;
+        }
+    }
+}
+
 void Vm::movs_di_w(uint8_t param) {
     uint8_t target = (param & 0x38) >> 3;
     uint8_t source = param & 0x07;
@@ -529,6 +571,34 @@ void Vm::movs_di_w(uint8_t param) {
         }
         else {
             state.registers[source] += 4;
+        }
+    }
+}
+
+void Vm::movs_di_b(uint8_t param) {
+    uint8_t target = (param & 0x38) >> 3;
+    uint8_t source = param & 0x07;
+
+    bool decrement = (param & 0x80);
+    bool pre = (param & 0x40);
+
+    if (pre) {
+        if (decrement) {
+            state.registers[source] -= 1;
+        }
+        else {
+            state.registers[source] += 1;
+        }
+    }
+
+    state.registers[target] = memory[state.registers[source]];
+
+    if (!pre) {
+        if (decrement) {
+            state.registers[source] -= 1;
+        }
+        else {
+            state.registers[source] += 1;
         }
     }
 }

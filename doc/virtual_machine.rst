@@ -303,7 +303,11 @@ MOV - Move
     +-----------+------------------------+---------------------------------------------------------------------+
     | 22 `/rop` | MOV.W `regi_op`, `reg` | Move register to register indirect memory with operation word sized |
     +-----------+------------------------+---------------------------------------------------------------------+
+    | 23 `/rop` | MOV.B `reg`, `regi_op` | Move register indirect memory to register with operation byte sized |
+    +-----------+------------------------+---------------------------------------------------------------------+
     | 24 `/rop` | MOV.W `reg`, `regi_op` | Move register indirect memory to register with operation word sized |
+    +-----------+------------------------+---------------------------------------------------------------------+
+    | 25 `/rop` | MOV.B `reg`, `regi_op` | Move register indirect memory to register with operation byte sized |
     +-----------+------------------------+---------------------------------------------------------------------+
     | 26 `/u32` | MOV.W %acc1, `imm32`   | Move an immediate 32-bit value to register acc1                     |
     +-----------+------------------------+---------------------------------------------------------------------+
@@ -327,12 +331,11 @@ For this type of move operations, byte-sized and word-sized moves are supported.
 In case of byte-sized moves, only the least significant byte of the 32-bit register
 is stored in memory or read from memory.
 
-The second type of move operations only supports word-sized moves. Also they are
-either a move operation from a register to a register-indexed memory location or
-from a register-indexed memory to a register. However the register used for the
-memory access will additionally be changed by either incrementing or decrementing,
-either before or after accessing the memory. For example in the following
-instruction
+The second type of move operations are either a move operation from a register to
+a register-indexed memory location or from a register-indexed memory to a register.
+However the register used for the memory access will additionally be changed by
+either incrementing or decrementing, either before or after accessing the memory.
+For example in the following instruction
 
 .. code-block::
 

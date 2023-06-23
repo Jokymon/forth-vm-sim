@@ -157,6 +157,23 @@ TEST_CASE("Stack based move operations", "[opcode]") {
         REQUIRE( 0x1234 == testdata.get32(0x10) );
     }
 
+    SECTION("Copy acc1 byte to wp indirect with post increment") {
+        testdata = {
+            0x23, 0xc   // mov.b [%wp++], %acc1
+        };
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Wp] = 0x10;
+        state.registers[Vm::Acc1] = 0x1234;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x11 == state.registers[Vm::Wp] );
+        REQUIRE( 0x34 == testdata.get32(0x10) );
+    }
+
     SECTION("Copy acc2 to ip indirect with pre decrement") {
         testdata = {
             0x22, 0xc5   // mov.w [--%ip], %acc2
@@ -172,6 +189,23 @@ TEST_CASE("Stack based move operations", "[opcode]") {
         state = uut.getState();
         REQUIRE( 0x20 == state.registers[Vm::Ip] );
         REQUIRE( 0xabcd == testdata.get32(0x20) );
+    }
+
+    SECTION("Copy acc2 byte to ip indirect with pre decrement") {
+        testdata = {
+            0x23, 0xc5   // mov.b [--%ip], %acc2
+        };
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Ip] = 0x24;
+        state.registers[Vm::Acc2] = 0xabcd;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x23 == state.registers[Vm::Ip] );
+        REQUIRE( 0xcd == testdata[0x23] );
     }
 
     SECTION("Copy ip indirect with post increment to wp") {
@@ -191,6 +225,25 @@ TEST_CASE("Stack based move operations", "[opcode]") {
         state = uut.getState();
         REQUIRE( 0x8 == state.registers[Vm::Ip] );
         REQUIRE( 0xfa5a2301 == state.registers[Vm::Wp] );
+    }
+
+    SECTION("Copy ip byte indirect with post increment to wp") {
+        testdata = {
+            0x25, 0x8,      // mov.b %wp, [%ip++]
+            0x0, 0x0,       // alignment filler
+            0x01, 0x23, 0x5a, 0xfa
+        };
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Ip] = 0x4;
+        state.registers[Vm::Wp] = 0x0;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x5 == state.registers[Vm::Ip] );
+        REQUIRE( 0x01 == state.registers[Vm::Wp] );
     }
 }
 
