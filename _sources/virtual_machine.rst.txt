@@ -1,6 +1,40 @@
 VM Internals
 ============
 
+System
+------
+
+The virtual machine is a 32-bit, little endian, byte code interpreter. The guiding idea was to provide as few different instructions 
+as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithemtic ALU, a
+simple memory interface to access code and data memory, 8 32-bit registers and the carry flag.
+
+The following registers represent the state of processor
+
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Register | Function                                                                                                                                                                            |
++==========+=====================================================================================================================================================================================+
+| PC       | Program Counter; This register points at the currently executed assembler instruction.                                                                                              |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| IP       | Instruction Pointer;                                                                                                                                                                                 |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| WP       | Word Pointer;                                                                                                                                                                                 |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| RSP      | Return Stack Pointer;                                                                                                                                                               |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| DSP      | Data Stack Pointer;                                                                                                                                                                 |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ACC1     | Accumulator 1; This register is intended as a general purpose register for various calculations. The accumulator 1 is the only register that can be loaded from an immediate value. |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ACC2     | Accumulator 2;                                                                                                                                                                      |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| RET      | Return Pointer;                                                                                                                                                                     |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Carry    | The carry flag; This flag can only be affected by the arithmetic operations add and sub.                                                                                            |
+|          | The flag is used by the jc jump instruction to conditionally jump based on over- or underflow                                                                                       |
+|          | in the last add or sub operation.                                                                                                                                                   |
++----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
 Instruction set
 ---------------
 
@@ -269,9 +303,15 @@ MOV - Move
     +-----------+------------------------+---------------------------------------------------------------------+
     | 22 `/rop` | MOV.W `regi_op`, `reg` | Move register to register indirect memory with operation word sized |
     +-----------+------------------------+---------------------------------------------------------------------+
+    | 23 `/rop` | MOV.B `reg`, `regi_op` | Move register indirect memory to register with operation byte sized |
+    +-----------+------------------------+---------------------------------------------------------------------+
     | 24 `/rop` | MOV.W `reg`, `regi_op` | Move register indirect memory to register with operation word sized |
     +-----------+------------------------+---------------------------------------------------------------------+
-    | 26 `/u32` | MOV.W `imm32`          | Move an immediate 32-bit value to register acc1                     |
+    | 25 `/rop` | MOV.B `reg`, `regi_op` | Move register indirect memory to register with operation byte sized |
+    +-----------+------------------------+---------------------------------------------------------------------+
+    | 26 `/u32` | MOV.W %acc1, `imm32`   | Move an immediate 32-bit value to register acc1                     |
+    +-----------+------------------------+---------------------------------------------------------------------+
+    | 27 `/u32` | MOV.W %acc2, `imm32`   | Move an immediate 32-bit value to register acc2                     |
     +-----------+------------------------+---------------------------------------------------------------------+
 
 The virtual machine support three different types of move operations.
@@ -291,12 +331,11 @@ For this type of move operations, byte-sized and word-sized moves are supported.
 In case of byte-sized moves, only the least significant byte of the 32-bit register
 is stored in memory or read from memory.
 
-The second type of move operations only supports word-sized moves. Also they are
-either a move operation from a register to a register-indexed memory location or
-from a register-indexed memory to a register. However the register used for the
-memory access will additionally be changed by either incrementing or decrementing,
-either before or after accessing the memory. For example in the following
-instruction
+The second type of move operations are either a move operation from a register to
+a register-indexed memory location or from a register-indexed memory to a register.
+However the register used for the memory access will additionally be changed by
+either incrementing or decrementing, either before or after accessing the memory.
+For example in the following instruction
 
 .. code-block::
 
@@ -308,9 +347,9 @@ the ``%dsp`` register. After storing the value, the value of the ``%dsp`` regist
 is incremented by ``4`` to point to the next word in memory. These registers are
 meant for pushing register values onto stacks and popping them again.
 
-For the third type of move operations, only the ``%acc1`` register can be used.
-It allows for storing immediate 32-bit values into the register. For example in
-the following instruction
+For the third type of move operations, only the ``%acc1`` and ``%acc2`` registers 
+can be used. It allows for storing immediate 32-bit values into the register. For 
+example in the following instruction
 
 .. code-block:: 
 
@@ -331,6 +370,22 @@ NOP - No Operation
     +--------+----------+--------------+
 
 This instruction has no effect and can be used to fill memory.
+
+OR - arithmetic or
+------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+---------------------------------------+-------------------------------------------------+
+    | Opcode    | Mnemonic                              | Description                                     |
+    +===========+=======================================+=================================================+
+    | 34 `/3r`  | OR `reg_tgt`, `reg_src1`, `reg_src2`  | or arithmetically values in registers           |
+    +-----------+---------------------------------------+-------------------------------------------------+
+
+This instruction ors ``reg_src2`` with ``reg_src1`` and stores the result in 
+register ``reg_tgt``. The or is performed arithemtically and thus the bits are
+affected individually.
 
 SRA - Shift Right Arithmetically
 --------------------------------

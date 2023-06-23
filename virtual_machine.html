@@ -19,7 +19,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Design decisions" href="design_decisions.html" />
-    <link rel="prev" title="Forth overview" href="forth.html" /> 
+    <link rel="prev" title="FBuilder" href="fbuilder.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -41,7 +41,9 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="system_overview.html">System Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="forth.html">Forth overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fbuilder.html">FBuilder</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">VM Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system">System</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#instruction-set">Instruction set</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#operand-types">Operand types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#encodings">Encodings</a></li>
@@ -56,6 +58,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#jz-jump-if-zero">JZ - Jump if zero</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mov-move">MOV - Move</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nop-no-operation">NOP - No Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#or-arithmetic-or">OR - arithmetic or</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sra-shift-right-arithmetically">SRA - Shift Right Arithmetically</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sub-subtract">SUB - Subtract</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#xor-arithmetic-exclusive-or">XOR - arithmetic exclusive or</a></li>
@@ -90,6 +93,13 @@
              
   <div class="section" id="vm-internals">
 <h1>VM Internals<a class="headerlink" href="#vm-internals" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="system">
+<h2>System<a class="headerlink" href="#system" title="Permalink to this headline">¶</a></h2>
+<p>The virtual machine is a 32-bit, little endian, byte code interpreter. The guiding idea was to provide as few different instructions
+as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithemtic ALU, a
+simple memory interface to access code and data memory, 8 32-bit registers and the carry flag.</p>
+<p>The following registers represent the state of processor</p>
+</div>
 <div class="section" id="instruction-set">
 <h2>Instruction set<a class="headerlink" href="#instruction-set" title="Permalink to this headline">¶</a></h2>
 <p>The virtual machine implements a simple byte-code instruction set with variable amounts of parameters. The instruction mnemonics, their encoding, possible parameters and the semantics are explained in this section.</p>
@@ -559,13 +569,25 @@ accumulator register <code class="docutils literal notranslate"><span class="pre
 <td><p>MOV.W <cite>regi_op</cite>, <cite>reg</cite></p></td>
 <td><p>Move register to register indirect memory with operation word sized</p></td>
 </tr>
-<tr class="row-odd"><td><p>24 <cite>/rop</cite></p></td>
+<tr class="row-odd"><td><p>23 <cite>/rop</cite></p></td>
+<td><p>MOV.B <cite>reg</cite>, <cite>regi_op</cite></p></td>
+<td><p>Move register indirect memory to register with operation byte sized</p></td>
+</tr>
+<tr class="row-even"><td><p>24 <cite>/rop</cite></p></td>
 <td><p>MOV.W <cite>reg</cite>, <cite>regi_op</cite></p></td>
 <td><p>Move register indirect memory to register with operation word sized</p></td>
 </tr>
+<tr class="row-odd"><td><p>25 <cite>/rop</cite></p></td>
+<td><p>MOV.B <cite>reg</cite>, <cite>regi_op</cite></p></td>
+<td><p>Move register indirect memory to register with operation byte sized</p></td>
+</tr>
 <tr class="row-even"><td><p>26 <cite>/u32</cite></p></td>
-<td><p>MOV.W <cite>imm32</cite></p></td>
+<td><p>MOV.W %acc1, <cite>imm32</cite></p></td>
 <td><p>Move an immediate 32-bit value to register acc1</p></td>
+</tr>
+<tr class="row-odd"><td><p>27 <cite>/u32</cite></p></td>
+<td><p>MOV.W %acc2, <cite>imm32</cite></p></td>
+<td><p>Move an immediate 32-bit value to register acc2</p></td>
 </tr>
 </tbody>
 </table>
@@ -581,12 +603,11 @@ the <code class="docutils literal notranslate"><span class="pre">%acc1</span></c
 <p>For this type of move operations, byte-sized and word-sized moves are supported.
 In case of byte-sized moves, only the least significant byte of the 32-bit register
 is stored in memory or read from memory.</p>
-<p>The second type of move operations only supports word-sized moves. Also they are
-either a move operation from a register to a register-indexed memory location or
-from a register-indexed memory to a register. However the register used for the
-memory access will additionally be changed by either incrementing or decrementing,
-either before or after accessing the memory. For example in the following
-instruction</p>
+<p>The second type of move operations are either a move operation from a register to
+a register-indexed memory location or from a register-indexed memory to a register.
+However the register used for the memory access will additionally be changed by
+either incrementing or decrementing, either before or after accessing the memory.
+For example in the following instruction</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MOV</span><span class="o">.</span><span class="n">W</span> <span class="p">[</span><span class="o">%</span><span class="n">dsp</span><span class="o">++</span><span class="p">],</span> <span class="o">%</span><span class="n">acc1</span>
 </pre></div>
 </div>
@@ -594,9 +615,9 @@ instruction</p>
 the <code class="docutils literal notranslate"><span class="pre">%dsp</span></code> register. After storing the value, the value of the <code class="docutils literal notranslate"><span class="pre">%dsp</span></code> register
 is incremented by <code class="docutils literal notranslate"><span class="pre">4</span></code> to point to the next word in memory. These registers are
 meant for pushing register values onto stacks and popping them again.</p>
-<p>For the third type of move operations, only the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register can be used.
-It allows for storing immediate 32-bit values into the register. For example in
-the following instruction</p>
+<p>For the third type of move operations, only the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> and <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> registers
+can be used. It allows for storing immediate 32-bit values into the register. For
+example in the following instruction</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MOV</span><span class="o">.</span><span class="n">W</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="c1">#0x12345678</span>
 </pre></div>
 </div>
@@ -624,6 +645,31 @@ the following instruction</p>
 </tbody>
 </table>
 <p>This instruction has no effect and can be used to fill memory.</p>
+</div>
+<div class="section" id="or-arithmetic-or">
+<h2>OR - arithmetic or<a class="headerlink" href="#or-arithmetic-or" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>34 <cite>/3r</cite></p></td>
+<td><p>OR <cite>reg_tgt</cite>, <cite>reg_src1</cite>, <cite>reg_src2</cite></p></td>
+<td><p>or arithmetically values in registers</p></td>
+</tr>
+</tbody>
+</table>
+<p>This instruction ors <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
+register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The or is performed arithemtically and thus the bits are
+affected individually.</p>
 </div>
 <div class="section" id="sra-shift-right-arithmetically">
 <h2>SRA - Shift Right Arithmetically<a class="headerlink" href="#sra-shift-right-arithmetically" title="Permalink to this headline">¶</a></h2>
@@ -712,7 +758,7 @@ affected individually.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="forth.html" class="btn btn-neutral float-left" title="Forth overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fbuilder.html" class="btn btn-neutral float-left" title="FBuilder" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="design_decisions.html" class="btn btn-neutral float-right" title="Design decisions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FBuilder &mdash; Forth virtual machine  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script src="https://wavedrom.com/skins/default.js"></script>
+        <script src="https://wavedrom.com/wavedrom.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="VM Internals" href="virtual_machine.html" />
+    <link rel="prev" title="Forth overview" href="forth.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Forth virtual machine
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="system_overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="forth.html">Forth overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">FBuilder</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#an-example">An Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="virtual_machine.html">VM Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design_decisions.html">Design decisions</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Forth virtual machine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>FBuilder</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fbuilder.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="fbuilder">
+<h1>FBuilder<a class="headerlink" href="#fbuilder" title="Permalink to this headline">¶</a></h1>
+<p>FBuilder is an assembler and a language specifically designed for the implementation of Forth
+systems. The assembler is implemented in Python and converts fvs (Forth VM source) files into
+binary images that can be run by the virtual machine.</p>
+<p>The fvs- or Fbuilder- language supports a mix of assembly and Forth source code. For Forth only
+compiled words are supported, it is not possible to use any of the immediate words like <code class="docutils literal notranslate"><span class="pre">IF</span></code>,
+<code class="docutils literal notranslate"><span class="pre">BEGIN</span></code> or <code class="docutils literal notranslate"><span class="pre">REPEAT</span></code>.</p>
+<div class="section" id="an-example">
+<h2>An Example<a class="headerlink" href="#an-example" title="Permalink to this headline">¶</a></h2>
+<p>The following example only uses machine instructions from the VM and the Fbuilder language to
+implement a simple hello world programm. The meaning of individual code lines are explained below.</p>
+<div class="highlight-default notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="n">const</span> <span class="n">FKT_EMIT</span> <span class="o">=</span> <span class="mh">0x2</span>
+<span class="n">const</span> <span class="n">FKT_TERMINATE</span> <span class="o">=</span> <span class="mh">0xf0</span>
+
+<span class="n">codeblock</span>
+    <span class="n">mov</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="p">:</span><span class="n">hello</span>
+    <span class="n">mov</span> <span class="o">%</span><span class="n">acc2</span><span class="p">,</span> <span class="o">%</span><span class="n">acc1</span>
+<span class="n">next_char</span><span class="p">:</span>
+    <span class="n">mov</span><span class="o">.</span><span class="n">b</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="p">[</span><span class="o">%</span><span class="n">acc2</span><span class="o">++</span><span class="p">]</span>
+    <span class="n">ifkt</span> <span class="n">FKT_EMIT</span>
+
+    <span class="n">mov</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="p">:</span><span class="n">hello_end</span>
+    <span class="n">sub</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="o">%</span><span class="n">acc2</span>
+    <span class="n">jz</span> <span class="p">:</span><span class="n">terminate</span>
+    <span class="n">jmp</span> <span class="p">:</span><span class="n">next_char</span>
+<span class="n">terminate</span><span class="p">:</span>
+    <span class="n">ifkt</span> <span class="n">FKT_TERMINATE</span>
+
+<span class="n">hello</span><span class="p">:</span>
+    <span class="n">db</span> <span class="s2">&quot;Hello world&quot;</span>
+    <span class="n">db</span> <span class="c1">#10</span>
+    <span class="n">db</span> <span class="c1">#13</span>
+<span class="n">hello_end</span><span class="p">:</span>
+<span class="n">end</span>
+</pre></div>
+</td></tr></table></div>
+<p>The <strong>lines 1-2</strong> define the constants to use in the <code class="docutils literal notranslate"><span class="pre">ifkt</span></code> instructions for emitting a
+character on the screen and for terminating the VM.</p>
+<p>On <strong>line 4</strong> a code block for our hello world application is started. This block is
+closed again on <strong>line 23</strong>.</p>
+<p>In <strong>lines 5 and 6</strong> we copy the address of the <code class="docutils literal notranslate"><span class="pre">&quot;Hello</span> <span class="pre">world&quot;</span></code> text, defined from <strong>lines
+18 to 22</strong>,  into the <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> register. Notice that we need to move the value through the
+<code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register, because we can’t move immediate values directly into <code class="docutils literal notranslate"><span class="pre">%acc1</span></code>.</p>
+<p>In <strong>line 8</strong> we fetch one character of the text indirectly through register <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> and
+store it in register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code>. Right after the access, the <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> is incremented to
+point to the next character in the text. Using an interface function we then output this
+character from register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> in <strong>line 9</strong>.</p>
+<p>On <strong>lines 11 and 12</strong> we calculate the difference between the current character position
+stored in register <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> and the end of the text, marked with the label <code class="docutils literal notranslate"><span class="pre">hello_end</span></code>.
+This difference then ends up in register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code>.</p>
+<p>Using the calculated difference in register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> we then decide whether to jump on
+<strong>line 13</strong>. If the value in the register equals zero, we jump to the <code class="docutils literal notranslate"><span class="pre">terminate</span></code> label
+in order to finish outputing of the text. If the value is not equal to zero, execution
+simply continues on the next line.</p>
+<p>On this next, <strong>line 14</strong>, we unconditionally jump back to <strong>line 7</strong> to output the
+next character.</p>
+<p>Finally on <strong>line 16</strong> we terminate the virtual machine using another interface function.</p>
+<p>The <strong>lines 19-21</strong> define the text data that we want to output.</p>
+<p>The codeblock is compiled to memory location <code class="docutils literal notranslate"><span class="pre">0x0</span></code> in the generated binary image. This
+image can then be loaded by the virtual machine which starts running at address <code class="docutils literal notranslate"><span class="pre">0x0</span></code>.</p>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="forth.html" class="btn btn-neutral float-left" title="Forth overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="virtual_machine.html" class="btn btn-neutral float-right" title="VM Internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Silvan Wegmann.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
