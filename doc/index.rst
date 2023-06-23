@@ -33,6 +33,7 @@ The following items are explicitly not in scope of this project
 
    system_overview
    forth
+   fbuilder
    virtual_machine
    design_decisions
 
