@@ -184,6 +184,8 @@ class VmForthAssembler(Interpreter):
             parameters = []
         if mnemonic == "add":
             self.emitter.emit_add(parameters[0], parameters[1], parameters[2])
+        elif mnemonic == "and":
+            self.emitter.emit_and(parameters[0], parameters[1], parameters[2])
         elif mnemonic == "call":
             self.emitter.emit_call(parameters[0])
         elif mnemonic == "sub":

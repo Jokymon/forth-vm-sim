@@ -209,6 +209,14 @@ def asm(code) OR
     NEXT()
 end
 
+def asm(code) AND
+    POPD(%acc1)
+    POPD(%acc2)
+    and %acc1, %acc1, %acc2
+    PUSHD(%acc1)
+    NEXT()
+end
+
 def asm(code) XOR
     POPD(%acc1)
     POPD(%acc2)

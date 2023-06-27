@@ -159,6 +159,22 @@ the result in the register ``reg_tgt``. The addition is performed unsigned.
 
 In case of overflows, the carry flag is set. Otherwise the carry flag is cleared.
 
+AND - arithmetic and
+--------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+----------------------------------------+-------------------------------------------------+
+    | Opcode    | Mnemonic                               | Description                                     |
+    +===========+========================================+=================================================+
+    | 36 `/3r`  | AND `reg_tgt`, `reg_src1`, `reg_src2`  | and arithmetically values in registers          |
+    +-----------+----------------------------------------+-------------------------------------------------+
+
+This instruction ands ``reg_src2`` with ``reg_src1`` and stores the result in 
+register ``reg_tgt``. The or is performed arithemtically and thus the bits are
+affected individually.
+
 CALL - Call
 -----------
 

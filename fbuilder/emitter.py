@@ -13,6 +13,7 @@ MOVI_ACC2 = 0x27
 ADDR_W = 0x30
 SUBR_W = 0x32
 ORR_W = 0x34
+ANDR_W = 0x36
 XORR_W = 0x38
 SRA_W = 0x3c
 JMPI_R = 0x60
@@ -113,6 +114,17 @@ class MachineCodeEmitter:
 
     def emit_or(self, target_reg, source1_reg, source2_reg):
         opcode = ORR_W
+        operand1 = 0x0
+        operand2 = 0x0
+
+        operand1 |= (target_reg.encoding << 4)
+        operand1 |= source1_reg.encoding
+        operand2 |= source2_reg.encoding
+
+        self.binary_code += struct.pack("BBB", opcode, operand1, operand2)
+
+    def emit_and(self, target_reg, source1_reg, source2_reg):
+        opcode = ANDR_W
         operand1 = 0x0
         operand2 = 0x0
 
@@ -317,6 +329,17 @@ class DisassemblyEmitter:
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
         self.disassembly += f"{machine_code:<18} or {target_reg}, {source1_reg}, {source2_reg}\n"
+
+    def emit_and(self, target_reg, source1_reg, source2_reg):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_and(target_reg, source1_reg, source2_reg)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} and {target_reg}, {source1_reg}, {source2_reg}\n"
 
     def emit_xor(self, target_reg, source1_reg, source2_reg):
         previous_pos = self.get_current_code_address()
