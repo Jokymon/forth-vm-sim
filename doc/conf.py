@@ -11,8 +11,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+sys.path.insert(0, os.path.abspath("_ext"))
 
 
 # -- Project information -----------------------------------------------------
@@ -29,7 +29,8 @@ author = 'Silvan Wegmann'
 # ones.
 extensions = [
     'sphinxcontrib.plantuml',
-    'sphinxcontrib.wavedrom'
+    'sphinxcontrib.wavedrom',
+    'adr',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
