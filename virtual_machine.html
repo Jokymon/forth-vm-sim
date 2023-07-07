@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VM Internals &mdash; Forth virtual machine  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -50,6 +51,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#add-add">ADD - Add</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#and-arithmetic-and">AND - Arithmetic and</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#call-call">CALL - Call</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ifkt-interface-functions">IFKT - Interface functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#illegal-illegal-instruction">ILLEGAL - Illegal instruction</a></li>
@@ -58,10 +60,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#jz-jump-if-zero">JZ - Jump if zero</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mov-move">MOV - Move</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nop-no-operation">NOP - No Operation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#or-arithmetic-or">OR - arithmetic or</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#or-arithmetic-or">OR - Arithmetic or</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sra-shift-right-arithmetically">SRA - Shift Right Arithmetically</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sub-subtract">SUB - Subtract</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#xor-arithmetic-exclusive-or">XOR - arithmetic exclusive or</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#xor-arithmetic-exclusive-or">XOR - Arithmetic exclusive or</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="design_decisions.html">Design decisions</a></li>
@@ -99,6 +101,48 @@
 as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithemtic ALU, a
 simple memory interface to access code and data memory, 8 32-bit registers and the carry flag.</p>
 <p>The following registers represent the state of processor</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 95%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Register</p></th>
+<th class="head"><p>Function</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PC</p></td>
+<td><p>Program Counter; This register points at the currently executed assembler instruction.</p></td>
+</tr>
+<tr class="row-odd"><td><p>IP</p></td>
+<td><p>Instruction Pointer;</p></td>
+</tr>
+<tr class="row-even"><td><p>WP</p></td>
+<td><p>Word Pointer;</p></td>
+</tr>
+<tr class="row-odd"><td><p>RSP</p></td>
+<td><p>Return Stack Pointer;</p></td>
+</tr>
+<tr class="row-even"><td><p>DSP</p></td>
+<td><p>Data Stack Pointer;</p></td>
+</tr>
+<tr class="row-odd"><td><p>ACC1</p></td>
+<td><p>Accumulator 1; This register is intended as a general purpose register for various calculations. The accumulator 1 is the only register that can be loaded from an immediate value.</p></td>
+</tr>
+<tr class="row-even"><td><p>ACC2</p></td>
+<td><p>Accumulator 2;</p></td>
+</tr>
+<tr class="row-odd"><td><p>RET</p></td>
+<td><p>Return Pointer;</p></td>
+</tr>
+<tr class="row-even"><td><p>Carry</p></td>
+<td><p>The carry flag; This flag can only be affected by the arithmetic operations add and sub.
+The flag is used by the jc jump instruction to conditionally jump based on over- or underflow
+in the last add or sub operation.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="instruction-set">
 <h2>Instruction set<a class="headerlink" href="#instruction-set" title="Permalink to this headline">¶</a></h2>
@@ -341,6 +385,31 @@ indication.</p></li>
 <p>This instruction adds the registers <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> together and stores
 the result in the register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The addition is performed unsigned.</p>
 <p>In case of overflows, the carry flag is set. Otherwise the carry flag is cleared.</p>
+</div>
+<div class="section" id="and-arithmetic-and">
+<h2>AND - Arithmetic and<a class="headerlink" href="#and-arithmetic-and" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>36 <cite>/3r</cite></p></td>
+<td><p>AND <cite>reg_tgt</cite>, <cite>reg_src1</cite>, <cite>reg_src2</cite></p></td>
+<td><p>and arithmetically values in registers</p></td>
+</tr>
+</tbody>
+</table>
+<p>This instruction ands <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
+register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The or is performed arithemtically and thus the bits are
+affected individually.</p>
 </div>
 <div class="section" id="call-call">
 <h2>CALL - Call<a class="headerlink" href="#call-call" title="Permalink to this headline">¶</a></h2>
@@ -647,7 +716,7 @@ example in the following instruction</p>
 <p>This instruction has no effect and can be used to fill memory.</p>
 </div>
 <div class="section" id="or-arithmetic-or">
-<h2>OR - arithmetic or<a class="headerlink" href="#or-arithmetic-or" title="Permalink to this headline">¶</a></h2>
+<h2>OR - Arithmetic or<a class="headerlink" href="#or-arithmetic-or" title="Permalink to this headline">¶</a></h2>
 <table class="colwidths-given docutils align-default">
 <colgroup>
 <col style="width: 14%" />
@@ -722,7 +791,7 @@ register <code class="docutils literal notranslate"><span class="pre">reg_tgt</s
 <p>In case of underflows, the carry flag is set. Otherwise the carry flag is cleared.</p>
 </div>
 <div class="section" id="xor-arithmetic-exclusive-or">
-<h2>XOR - arithmetic exclusive or<a class="headerlink" href="#xor-arithmetic-exclusive-or" title="Permalink to this headline">¶</a></h2>
+<h2>XOR - Arithmetic exclusive or<a class="headerlink" href="#xor-arithmetic-exclusive-or" title="Permalink to this headline">¶</a></h2>
 <table class="colwidths-given docutils align-default">
 <colgroup>
 <col style="width: 14%" />

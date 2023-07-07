@@ -15,9 +15,9 @@ The following registers represent the state of processor
 +==========+=====================================================================================================================================================================================+
 | PC       | Program Counter; This register points at the currently executed assembler instruction.                                                                                              |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| IP       | Instruction Pointer;                                                                                                                                                                                 |
+| IP       | Instruction Pointer;                                                                                                                                                                |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| WP       | Word Pointer;                                                                                                                                                                                 |
+| WP       | Word Pointer;                                                                                                                                                                       |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | RSP      | Return Stack Pointer;                                                                                                                                                               |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -158,6 +158,22 @@ This instruction adds the registers ``reg_src1`` and ``reg_src2`` together and s
 the result in the register ``reg_tgt``. The addition is performed unsigned.
 
 In case of overflows, the carry flag is set. Otherwise the carry flag is cleared.
+
+AND - Arithmetic and
+--------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+----------------------------------------+-------------------------------------------------+
+    | Opcode    | Mnemonic                               | Description                                     |
+    +===========+========================================+=================================================+
+    | 36 `/3r`  | AND `reg_tgt`, `reg_src1`, `reg_src2`  | and arithmetically values in registers          |
+    +-----------+----------------------------------------+-------------------------------------------------+
+
+This instruction ands ``reg_src2`` with ``reg_src1`` and stores the result in 
+register ``reg_tgt``. The or is performed arithemtically and thus the bits are
+affected individually.
 
 CALL - Call
 -----------
@@ -371,7 +387,7 @@ NOP - No Operation
 
 This instruction has no effect and can be used to fill memory.
 
-OR - arithmetic or
+OR - Arithmetic or
 ------------------
 
 .. table::
@@ -420,7 +436,7 @@ register ``reg_tgt``. The subtraction is performed unsigned.
 
 In case of underflows, the carry flag is set. Otherwise the carry flag is cleared.
 
-XOR - arithmetic exclusive or
+XOR - Arithmetic exclusive or
 -----------------------------
 
 .. table::

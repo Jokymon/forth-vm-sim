@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>System Overview &mdash; Forth virtual machine  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -72,9 +73,40 @@
              
   <div class="section" id="system-overview">
 <h1>System Overview<a class="headerlink" href="#system-overview" title="Permalink to this headline">¶</a></h1>
+<p>This system consists of three components as shown in the following diagram.</p>
 <div class="figure align-default" id="id1">
 <p class="caption"><span class="caption-text">System overview</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
 </div>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 80%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Component</p></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Virtual machine</p></td>
+<td><p>A virtual machine, implemented in C++ with an instruction set specifically designed
+for the implementation of Forth systems. The machine should provide the minimum
+required for implementing a Forth but also be very close to a hardware
+implementable CPU. This is with the idea of eventually creating a converter for
+VM assembly into as many different MCU architectures as possible.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Fbuilder</p></td>
+<td><p>A compiler for turning source files into binary images that can run on the virtual
+machine. The compiler is written in Python and understands a special language that
+was design to support a mix of virtual machine assembly and Forth words.</p></td>
+</tr>
+<tr class="row-even"><td><p>eForth</p></td>
+<td><p>An implementation of a Forth system. The system is implemented in the fbuilder
+language to develop and proof the concept of this project. As basis, the eForth86
+implementation by C. H. Ting is used.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 
     <script type="text/javascript">
