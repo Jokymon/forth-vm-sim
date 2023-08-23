@@ -8,6 +8,8 @@ build/
 build-*/
 .vscode/
 
+imgui.ini
+
 # forth-vm-sim build artefacts
 *.S
 *.bin
