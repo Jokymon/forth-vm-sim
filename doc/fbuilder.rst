@@ -13,7 +13,7 @@ An Example
 ----------
 
 The following example only uses machine instructions from the VM and the Fbuilder language to
-implement a simple hello world programm. The meaning of individual code lines are explained below.
+implement a simple hello world programm. The meaning of individual code lines is explained below.
 
 .. code-block::
     :linenos:
@@ -50,7 +50,7 @@ closed again on **line 23**.
 
 In **lines 5 and 6** we copy the address of the ``"Hello world"`` text, defined from **lines
 18 to 22**,  into the ``%acc2`` register. Notice that we need to move the value through the
-``%acc1`` register, because we can't move immediate values directly into ``%acc1``.
+``%acc1`` register, because we can't move immediate values directly into ``%acc2``.
 
 In **line 8** we fetch one character of the text indirectly through register ``%acc2`` and
 store it in register ``%acc1``. Right after the access, the ``%acc2`` is incremented to

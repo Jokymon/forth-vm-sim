@@ -5,40 +5,43 @@ System
 ------
 
 The virtual machine is a 32-bit, little endian, byte code interpreter. The guiding idea was to provide as few different instructions 
-as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithemtic ALU, a
+as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithmetic ALU, a
 simple memory interface to access code and data memory, 8 32-bit registers and the carry flag.
 
-The following registers represent the state of processor
+TODO: concept of different possibilites for stack strategies
+
+The following registers represent the state of the processor
 
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Register | Function                                                                                                                                                                            |
 +==========+=====================================================================================================================================================================================+
-| PC       | Program Counter; This register points at the currently executed assembler instruction.                                                                                              |
+| PC       | Program Counter; This register points at the currently executed machine code.                                                                                                       |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | IP       | Instruction Pointer;                                                                                                                                                                |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | WP       | Word Pointer;                                                                                                                                                                       |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| RSP      | Return Stack Pointer;                                                                                                                                                               |
+| RSP      | Return Stack Pointer; This register implements the Forth return stack.                                                                                                              |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| DSP      | Data Stack Pointer;                                                                                                                                                                 |
+| DSP      | Data Stack Pointer; This register implements the Forth data stack.                                                                                                                  |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | ACC1     | Accumulator 1; This register is intended as a general purpose register for various calculations. The accumulator 1 is the only register that can be loaded from an immediate value. |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | ACC2     | Accumulator 2;                                                                                                                                                                      |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| RET      | Return Pointer;                                                                                                                                                                     |
+| RET      | Return Pointer; This register is used to store the address immediately following a call instruction.                                                                                |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Carry    | The carry flag; This flag can only be affected by the arithmetic operations add and sub.                                                                                            |
-|          | The flag is used by the jc jump instruction to conditionally jump based on over- or underflow                                                                                       |
-|          | in the last add or sub operation.                                                                                                                                                   |
+| Carry    | The carry flag; This flag can only be affected by the arithmetic operations ``add`` and ``sub``.                                                                                    |
+|          | The flag is used by the ``jc`` jump instruction to conditionally jump based on over- or underflow                                                                                   |
+|          | in the last ``add`` or ``sub`` operation.                                                                                                                                           |
 +----------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
 Instruction set
 ---------------
 
-The virtual machine implements a simple byte-code instruction set with variable amounts of parameters. The instruction mnemonics, their encoding, possible parameters and the semantics are explained in this section.
+The virtual machine implements a simple byte-code instruction set with variable amounts of parameters. The
+instruction mnemonics, their encoding, possible parameters and the semantics are explained in this section.
 
 Operand types
 ^^^^^^^^^^^^^
@@ -103,7 +106,7 @@ All number types comprising of more than one byte are stored in little-endian fo
       - A 32-bit unsigned integer value in little-endian encoding
 
     * - ``reg``
-      - A register as encoded above; This encoding is only used as summand
+      - A register as encoded above; This encoding is only used as part
         in encodings and therefore doesn't have a specified bit length
 
     * - ``rr``
@@ -126,14 +129,19 @@ All number types comprising of more than one byte are stored in little-endian fo
     * - ``rop``
       - .. wavedrom:: images/encoding_rop.json
 
+        This encoding describes an instruction where either the source or
+        the target register is used in an indirect mode and is additionally
+        affected by an increment- or decrement operation. Which register is
+        used this way, depends on the actual machine instruction.
+
         - ``DI`` Flag to indicate what operation is to be performed on the
-          target register. A ``1`` means decrement, ``0`` means increment.
+          affected register. A ``1`` means decrement, ``0`` means increment.
         - ``PP`` Flag to indicate whether the operation is performed before
-          before indirectly accessing memory or after. A ``1`` means pre
-          operation, a ``0`` means post operation.
-        - ``reg_tgt`` The register encoded as described above used as target
+          indirectly accessing memory or after. A ``1`` means pre operation,
+          a ``0`` means post operation.
+        - ``reg_tgt`` The register encoded as described above, used as target
           indication.
-        - ``reg_src`` The register encoded as described above used as source
+        - ``reg_src`` The register encoded as described above, used as source
           indication.
 
     * - ``ri5``
@@ -171,8 +179,8 @@ AND - Arithmetic and
     | 36 `/3r`  | AND `reg_tgt`, `reg_src1`, `reg_src2`  | and arithmetically values in registers          |
     +-----------+----------------------------------------+-------------------------------------------------+
 
-This instruction ands ``reg_src2`` with ``reg_src1`` and stores the result in 
-register ``reg_tgt``. The or is performed arithemtically and thus the bits are
+This instruction ands ``reg_src1`` with ``reg_src2`` and stores the result in 
+register ``reg_tgt``. The and is performed arithmetically and thus the bits are
 affected individually.
 
 CALL - Call
@@ -203,7 +211,7 @@ IFKT - Interface functions
 
 Allows calling certain functions special to the virtual machine.
 
-The virtual machine currently support the following interface functions.
+The virtual machine currently supports the following interface functions.
 
 .. table::
     :widths: 15 20 65
@@ -257,8 +265,8 @@ JC - Jump if carry
     | 72 `/u32` | JC `label`      | Jump to immediate address when carry flag is set |
     +-----------+-----------------+--------------------------------------------------+
 
-The carry flag can only be set and cleared by performing an ``ADD`` or ``SUB``
-instruction. The ``JC`` instruction jumps to an immediate address when this carry
+The carry flag can only be set and cleared by performing an ``add`` or ``sub``
+instruction. The ``jc`` instruction jumps to an immediate address when this carry
 flag is set.
 
 JMP - Jump unconditionally
@@ -295,13 +303,13 @@ JZ - Jump if zero
 .. table::
     :widths: 15 25 70
 
-    +-----------+-----------------+----------------------------------------------+
-    | Opcode    | Mnemonic        | Description                                  |
-    +===========+=================+==============================================+
-    | 71 `/u32` | JZ `label`      | Jump to immediate address when %acc1 is zero |
-    +-----------+-----------------+----------------------------------------------+
+    +-----------+-----------------+--------------------------------------------------+
+    | Opcode    | Mnemonic        | Description                                      |
+    +===========+=================+==================================================+
+    | 71 `/u32` | JZ `label`      | Jump to immediate address when ``%acc1`` is zero |
+    +-----------+-----------------+--------------------------------------------------+
 
-With ``JZ`` a jump to an immediate address is performed if the value of the
+With ``jz`` a jump to an immediate address is performed if the value of the
 accumulator register ``%acc1`` has the value ``0x0``.
 
 MOV - Move
@@ -319,7 +327,7 @@ MOV - Move
     +-----------+------------------------+---------------------------------------------------------------------+
     | 22 `/rop` | MOV.W `regi_op`, `reg` | Move register to register indirect memory with operation word sized |
     +-----------+------------------------+---------------------------------------------------------------------+
-    | 23 `/rop` | MOV.B `reg`, `regi_op` | Move register indirect memory to register with operation byte sized |
+    | 23 `/rop` | MOV.B `regi_op`, `reg` | Move register to register indirect memory with operation byte sized |
     +-----------+------------------------+---------------------------------------------------------------------+
     | 24 `/rop` | MOV.W `reg`, `regi_op` | Move register indirect memory to register with operation word sized |
     +-----------+------------------------+---------------------------------------------------------------------+
@@ -330,7 +338,7 @@ MOV - Move
     | 27 `/u32` | MOV.W %acc2, `imm32`   | Move an immediate 32-bit value to register acc2                     |
     +-----------+------------------------+---------------------------------------------------------------------+
 
-The virtual machine support three different types of move operations.
+The virtual machine supports three different types of move operations.
 
 The first type of move operations supports registers and register-indexed memory
 locations. All registers and combinations of register and register-indexing are
@@ -361,10 +369,12 @@ For example in the following instruction
 the content of register ``%acc1`` is stored in the memory location specified by
 the ``%dsp`` register. After storing the value, the value of the ``%dsp`` register
 is incremented by ``4`` to point to the next word in memory. These registers are
-meant for pushing register values onto stacks and popping them again.
+meant for pushing register values onto stacks and popping them again. When Using
+the byte sized variant of these instructions, the registers for accessing the
+memory are only incremented or decremented by 1.
 
 For the third type of move operations, only the ``%acc1`` and ``%acc2`` registers 
-can be used. It allows for storing immediate 32-bit values into the register. For 
+can be used. It allows for loading immediate 32-bit values into the registers. For 
 example in the following instruction
 
 .. code-block:: 
@@ -399,8 +409,8 @@ OR - Arithmetic or
     | 34 `/3r`  | OR `reg_tgt`, `reg_src1`, `reg_src2`  | or arithmetically values in registers           |
     +-----------+---------------------------------------+-------------------------------------------------+
 
-This instruction ors ``reg_src2`` with ``reg_src1`` and stores the result in 
-register ``reg_tgt``. The or is performed arithemtically and thus the bits are
+This instruction ors ``reg_src1`` with ``reg_src2`` and stores the result in 
+register ``reg_tgt``. The or is performed arithmetically and thus the bits are
 affected individually.
 
 SRA - Shift Right Arithmetically
@@ -448,7 +458,6 @@ XOR - Arithmetic exclusive or
     | 38 `/3r`  | XOR `reg_tgt`, `reg_src1`, `reg_src2` | exclusive or arithmetically values in registers |
     +-----------+---------------------------------------+-------------------------------------------------+
 
-This instruction xors ``reg_src2`` with ``reg_src1`` and stores the result in 
-register ``reg_tgt``. The xor is performed arithemtically and thus the bits are
+This instruction xors ``reg_src1`` with ``reg_src2`` and stores the result in 
+register ``reg_tgt``. The xor is performed arithmetically and thus the bits are
 affected individually.
-

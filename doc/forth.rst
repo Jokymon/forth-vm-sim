@@ -12,11 +12,12 @@ differ. The following diagram shows the fields and the arrangement used in this 
 
 The fields in detail are
 
-    * ``link`` - A 32-bit address to the ``link``-field of the previous word in the dictionary.
-    * ``flags&len`` - A 8-bit field containing flags for this word (currently only the ``IMMEDIATE``
-      flag in bit 7 is used) and a 5-bit value with the length of the word name.
-    * ``name`` - Varying length field containing the name of the word. The amount of bytes is stored
-      in ``len``.
+    * ``link`` - A 32-bit address to the ``link``-field of the previous word in the dictionary. For
+      the first word, this address is the null pointer.
+    * ``flags&len`` - A 8-bit field containing flags for this word (the meaning of the flags can be
+      defined by the implementation) and a 5-bit value with the length of the word name.
+    * ``name`` - Varying length field containing the name of the word. The length in bytes is stored
+      in the ``len`` field.
     * ``CFA`` - Code Field Address of this word. This is a 32-bit address pointing to the assembly
       code, implementing this word.
     * ``PFA`` - Parameter Field Adress. This field contains parameters relevant to this word and can
@@ -24,12 +25,13 @@ The fields in detail are
 
 Depending on the type of word and the type of Forth implementation, the exact content of a word's
 definition may vary. In the following sections the descriptions assume an indirect threaded code (ITC)
-model of Forth implementation.
+model of a Forth implementation.
 
 Native word
 ^^^^^^^^^^^
 
-Native words are implement purely in the assembly language of the target architecture.
+Native words are implement purely in the assembly language of the target architecture. In this project
+the target architecture is the Forth VM and the FBuilder language.
 
 .. image:: images/code_word.svg
 
@@ -47,5 +49,5 @@ Colon words are usually created through the Forth compiling word ``:``.
 The ``CFA`` field points to a special piece of code, usually called ``DOCOL``. The ``PFA``
 field contains a list of ``CFA``-addresses making up the words of this definition. The
 function of ``DOCOL`` is to iterate through the addresses in the ``PFA`` field and execute
-them one after the other. The last word in the word list must be an ``EXIT``. This acts
-as a form of return statement for this colon word.
+them one by one. The last word in the word list must be the CFA of the ``EXIT`` word. This
+acts as a form of return statement for this colon word.
