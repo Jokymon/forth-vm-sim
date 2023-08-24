@@ -160,6 +160,37 @@ def test_lt_zero_returns_true_for_negative_numbers(me):
 # data stack
 
 @passmein
+def test_sp_at_returns_current_stack_pointer(me):
+    """SP@"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0x5000   # as initialized in eforth_basic
+
+
+@passmein
+def test_sp_store_writes_new_sp_value_from_stack(me):
+    """doLIT DSP_BASE doLIT 52 + SP!"""
+    stack = run_vm_image(me.__doc__)
+
+    # Use indirect observation of changes in the SP:
+    # we store DSP_BASE+13*4 in SP and expect the stack size to
+    # be 13 4 byte words now
+    assert len(stack) == 13
+
+
+@passmein
+def test_rot_rotates_third_element_to_tos(me):
+    """doLIT 123 doLIT 4352 doLIT 6234 ROT"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 3
+    assert stack[0] == 123
+    assert stack[1] == 6234
+    assert stack[2] == 4352
+
+
+@passmein
 def test_qdup_duplicates_non_zero(me):
     """doLIT 32 ?DUP"""
     stack = run_vm_image(me.__doc__)

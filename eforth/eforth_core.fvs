@@ -113,12 +113,12 @@ def asm(code) RP@     // -- a
     NEXT()
 end
 
-def asm(code) RP!     // a --
+def asm[COMPILE_ONLY](code) RP!     // a --
     POPD(%rsp)
     NEXT()
 end
 
-def asm(code) R>      // -- w
+def asm[COMPILE_ONLY](code) R>      // -- w
     POPR(%acc1)
     PUSHD(%acc1)
     NEXT()
@@ -131,7 +131,7 @@ def asm(code) R@      // -- w
     NEXT()
 end
 
-def asm(code) >R      // w --
+def asm[COMPILE_ONLY](code) >R      // w --
     POPD(%acc1)
     PUSHR(%acc1)
     NEXT()
@@ -140,19 +140,31 @@ end
 // -------------------------------------------------------------------------
 // data stack
 
-def asm(code) DROP
+def asm(code) SP@       // -- a
+    mov %acc1, %dsp
+    PUSHD(%acc1)
+    NEXT()
+end
+
+def asm(code) SP!       // a --
+    POPD(%acc1)
+    mov %dsp, %acc1
+    NEXT()
+end
+
+def asm(code) DROP      // w --
     POPD(%acc1)
     NEXT()
 end
 
-def asm(code) DUP
+def asm(code) DUP       // w -- w w
     POPD(%acc1)
     PUSHD(%acc1)
     PUSHD(%acc1)
     NEXT()
 end
 
-def asm(code) SWAP
+def asm(code) SWAP      // w1 w2 -- w2 w1
     POPD(%acc1)
     POPD(%acc2)
     PUSHD(%acc1)
@@ -178,6 +190,11 @@ end
 
 def word(colon) NIP     // w1 w2 -- w2
     SWAP DROP
+    EXIT
+end
+
+def word(colon) ROT     // w1 w2 w3 -- w2 w3 w1
+    >R SWAP R> SWAP
     EXIT
 end
 
