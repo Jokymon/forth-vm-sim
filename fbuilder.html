@@ -85,7 +85,7 @@ compiled words are supported, it is not possible to use any of the immediate wor
 <div class="section" id="an-example">
 <h2>An Example<a class="headerlink" href="#an-example" title="Permalink to this headline">¶</a></h2>
 <p>The following example only uses machine instructions from the VM and the Fbuilder language to
-implement a simple hello world programm. The meaning of individual code lines are explained below.</p>
+implement a simple hello world programm. The meaning of individual code lines is explained below.</p>
 <div class="highlight-default notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -139,7 +139,7 @@ character on the screen and for terminating the VM.</p>
 closed again on <strong>line 23</strong>.</p>
 <p>In <strong>lines 5 and 6</strong> we copy the address of the <code class="docutils literal notranslate"><span class="pre">&quot;Hello</span> <span class="pre">world&quot;</span></code> text, defined from <strong>lines
 18 to 22</strong>,  into the <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> register. Notice that we need to move the value through the
-<code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register, because we can’t move immediate values directly into <code class="docutils literal notranslate"><span class="pre">%acc1</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register, because we can’t move immediate values directly into <code class="docutils literal notranslate"><span class="pre">%acc2</span></code>.</p>
 <p>In <strong>line 8</strong> we fetch one character of the text indirectly through register <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> and
 store it in register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code>. Right after the access, the <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> is incremented to
 point to the next character in the text. Using an interface function we then output this

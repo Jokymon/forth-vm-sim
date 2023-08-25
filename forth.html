@@ -88,11 +88,12 @@ differ. The following diagram shows the fields and the arrangement used in this 
 <img alt="_images/general_word.svg" src="_images/general_word.svg" /><p>The fields in detail are</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">link</span></code> - A 32-bit address to the <code class="docutils literal notranslate"><span class="pre">link</span></code>-field of the previous word in the dictionary.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">flags&amp;len</span></code> - A 8-bit field containing flags for this word (currently only the <code class="docutils literal notranslate"><span class="pre">IMMEDIATE</span></code>
-flag in bit 7 is used) and a 5-bit value with the length of the word name.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code> - Varying length field containing the name of the word. The amount of bytes is stored
-in <code class="docutils literal notranslate"><span class="pre">len</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">link</span></code> - A 32-bit address to the <code class="docutils literal notranslate"><span class="pre">link</span></code>-field of the previous word in the dictionary. For
+the first word, this address is the null pointer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flags&amp;len</span></code> - A 8-bit field containing flags for this word (the meaning of the flags can be
+defined by the implementation) and a 5-bit value with the length of the word name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code> - Varying length field containing the name of the word. The length in bytes is stored
+in the <code class="docutils literal notranslate"><span class="pre">len</span></code> field.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">CFA</span></code> - Code Field Address of this word. This is a 32-bit address pointing to the assembly
 code, implementing this word.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PFA</span></code> - Parameter Field Adress. This field contains parameters relevant to this word and can
@@ -101,10 +102,11 @@ be of varying length or even missing completely.</p></li>
 </div></blockquote>
 <p>Depending on the type of word and the type of Forth implementation, the exact content of a word’s
 definition may vary. In the following sections the descriptions assume an indirect threaded code (ITC)
-model of Forth implementation.</p>
+model of a Forth implementation.</p>
 <div class="section" id="native-word">
 <h3>Native word<a class="headerlink" href="#native-word" title="Permalink to this headline">¶</a></h3>
-<p>Native words are implement purely in the assembly language of the target architecture.</p>
+<p>Native words are implement purely in the assembly language of the target architecture. In this project
+the target architecture is the Forth VM and the FBuilder language.</p>
 <img alt="_images/code_word.svg" src="_images/code_word.svg" /><p>The <code class="docutils literal notranslate"><span class="pre">CFA</span></code> field simply points to the address of the <code class="docutils literal notranslate"><span class="pre">PFA</span></code>. The <code class="docutils literal notranslate"><span class="pre">PFA</span></code> field contains the
 assembly code implementing this word. The last part of the code is implemented by the <code class="docutils literal notranslate"><span class="pre">$NEXT</span></code>-
 macro which jumps to the next word.</p>
@@ -115,8 +117,8 @@ macro which jumps to the next word.</p>
 <img alt="_images/colon_word.svg" src="_images/colon_word.svg" /><p>The <code class="docutils literal notranslate"><span class="pre">CFA</span></code> field points to a special piece of code, usually called <code class="docutils literal notranslate"><span class="pre">DOCOL</span></code>. The <code class="docutils literal notranslate"><span class="pre">PFA</span></code>
 field contains a list of <code class="docutils literal notranslate"><span class="pre">CFA</span></code>-addresses making up the words of this definition. The
 function of <code class="docutils literal notranslate"><span class="pre">DOCOL</span></code> is to iterate through the addresses in the <code class="docutils literal notranslate"><span class="pre">PFA</span></code> field and execute
-them one after the other. The last word in the word list must be an <code class="docutils literal notranslate"><span class="pre">EXIT</span></code>. This acts
-as a form of return statement for this colon word.</p>
+them one by one. The last word in the word list must be the CFA of the <code class="docutils literal notranslate"><span class="pre">EXIT</span></code> word. This
+acts as a form of return statement for this colon word.</p>
 </div>
 </div>
 </div>

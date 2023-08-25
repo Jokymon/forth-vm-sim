@@ -98,9 +98,10 @@
 <div class="section" id="system">
 <h2>System<a class="headerlink" href="#system" title="Permalink to this headline">¶</a></h2>
 <p>The virtual machine is a 32-bit, little endian, byte code interpreter. The guiding idea was to provide as few different instructions
-as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithemtic ALU, a
+as possible so that they can easily be mapped to real processor architectures. It contains a simple 32-bit integer arithmetic ALU, a
 simple memory interface to access code and data memory, 8 32-bit registers and the carry flag.</p>
-<p>The following registers represent the state of processor</p>
+<p>TODO: concept of different possibilites for stack strategies</p>
+<p>The following registers represent the state of the processor</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 5%" />
@@ -113,7 +114,7 @@ simple memory interface to access code and data memory, 8 32-bit registers and t
 </thead>
 <tbody>
 <tr class="row-even"><td><p>PC</p></td>
-<td><p>Program Counter; This register points at the currently executed assembler instruction.</p></td>
+<td><p>Program Counter; This register points at the currently executed machine code.</p></td>
 </tr>
 <tr class="row-odd"><td><p>IP</p></td>
 <td><p>Instruction Pointer;</p></td>
@@ -122,10 +123,10 @@ simple memory interface to access code and data memory, 8 32-bit registers and t
 <td><p>Word Pointer;</p></td>
 </tr>
 <tr class="row-odd"><td><p>RSP</p></td>
-<td><p>Return Stack Pointer;</p></td>
+<td><p>Return Stack Pointer; This register implements the Forth return stack.</p></td>
 </tr>
 <tr class="row-even"><td><p>DSP</p></td>
-<td><p>Data Stack Pointer;</p></td>
+<td><p>Data Stack Pointer; This register implements the Forth data stack.</p></td>
 </tr>
 <tr class="row-odd"><td><p>ACC1</p></td>
 <td><p>Accumulator 1; This register is intended as a general purpose register for various calculations. The accumulator 1 is the only register that can be loaded from an immediate value.</p></td>
@@ -134,19 +135,20 @@ simple memory interface to access code and data memory, 8 32-bit registers and t
 <td><p>Accumulator 2;</p></td>
 </tr>
 <tr class="row-odd"><td><p>RET</p></td>
-<td><p>Return Pointer;</p></td>
+<td><p>Return Pointer; This register is used to store the address immediately following a call instruction.</p></td>
 </tr>
 <tr class="row-even"><td><p>Carry</p></td>
-<td><p>The carry flag; This flag can only be affected by the arithmetic operations add and sub.
-The flag is used by the jc jump instruction to conditionally jump based on over- or underflow
-in the last add or sub operation.</p></td>
+<td><p>The carry flag; This flag can only be affected by the arithmetic operations <code class="docutils literal notranslate"><span class="pre">add</span></code> and <code class="docutils literal notranslate"><span class="pre">sub</span></code>.
+The flag is used by the <code class="docutils literal notranslate"><span class="pre">jc</span></code> jump instruction to conditionally jump based on over- or underflow
+in the last <code class="docutils literal notranslate"><span class="pre">add</span></code> or <code class="docutils literal notranslate"><span class="pre">sub</span></code> operation.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="instruction-set">
 <h2>Instruction set<a class="headerlink" href="#instruction-set" title="Permalink to this headline">¶</a></h2>
-<p>The virtual machine implements a simple byte-code instruction set with variable amounts of parameters. The instruction mnemonics, their encoding, possible parameters and the semantics are explained in this section.</p>
+<p>The virtual machine implements a simple byte-code instruction set with variable amounts of parameters. The
+instruction mnemonics, their encoding, possible parameters and the semantics are explained in this section.</p>
 <div class="section" id="operand-types">
 <h3>Operand types<a class="headerlink" href="#operand-types" title="Permalink to this headline">¶</a></h3>
 <table class="docutils align-default">
@@ -246,7 +248,7 @@ in the last add or sub operation.</p></td>
 <td><p>A 32-bit unsigned integer value in little-endian encoding</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">reg</span></code></p></td>
-<td><p>A register as encoded above; This encoding is only used as summand
+<td><p>A register as encoded above; This encoding is only used as part
 in encodings and therefore doesn’t have a specified bit length</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rr</span></code></p></td>
@@ -323,15 +325,19 @@ direct or indirect. A <code class="docutils literal notranslate"><span class="pr
 
 </script>
 </div>
+<p>This encoding describes an instruction where either the source or
+the target register is used in an indirect mode and is additionally
+affected by an increment- or decrement operation. Which register is
+used this way, depends on the actual machine instruction.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">DI</span></code> Flag to indicate what operation is to be performed on the
-target register. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means decrement, <code class="docutils literal notranslate"><span class="pre">0</span></code> means increment.</p></li>
+affected register. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means decrement, <code class="docutils literal notranslate"><span class="pre">0</span></code> means increment.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">PP</span></code> Flag to indicate whether the operation is performed before
-before indirectly accessing memory or after. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means pre
-operation, a <code class="docutils literal notranslate"><span class="pre">0</span></code> means post operation.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code> The register encoded as described above used as target
+indirectly accessing memory or after. A <code class="docutils literal notranslate"><span class="pre">1</span></code> means pre operation,
+a <code class="docutils literal notranslate"><span class="pre">0</span></code> means post operation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code> The register encoded as described above, used as target
 indication.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">reg_src</span></code> The register encoded as described above used as source
+<li><p><code class="docutils literal notranslate"><span class="pre">reg_src</span></code> The register encoded as described above, used as source
 indication.</p></li>
 </ul>
 </td>
@@ -407,8 +413,8 @@ the result in the register <code class="docutils literal notranslate"><span clas
 </tr>
 </tbody>
 </table>
-<p>This instruction ands <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
-register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The or is performed arithemtically and thus the bits are
+<p>This instruction ands <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> and stores the result in
+register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The and is performed arithmetically and thus the bits are
 affected individually.</p>
 </div>
 <div class="section" id="call-call">
@@ -456,7 +462,7 @@ following address in the <code class="docutils literal notranslate"><span class=
 </tbody>
 </table>
 <p>Allows calling certain functions special to the virtual machine.</p>
-<p>The virtual machine currently support the following interface functions.</p>
+<p>The virtual machine currently supports the following interface functions.</p>
 <table class="colwidths-given docutils align-default">
 <colgroup>
 <col style="width: 15%" />
@@ -544,8 +550,8 @@ instruction set extensions.</p>
 </tr>
 </tbody>
 </table>
-<p>The carry flag can only be set and cleared by performing an <code class="docutils literal notranslate"><span class="pre">ADD</span></code> or <code class="docutils literal notranslate"><span class="pre">SUB</span></code>
-instruction. The <code class="docutils literal notranslate"><span class="pre">JC</span></code> instruction jumps to an immediate address when this carry
+<p>The carry flag can only be set and cleared by performing an <code class="docutils literal notranslate"><span class="pre">add</span></code> or <code class="docutils literal notranslate"><span class="pre">sub</span></code>
+instruction. The <code class="docutils literal notranslate"><span class="pre">jc</span></code> instruction jumps to an immediate address when this carry
 flag is set.</p>
 </div>
 <div class="section" id="jmp-jump-unconditionally">
@@ -604,11 +610,11 @@ value given as the operand of the instruction.</p>
 <tbody>
 <tr class="row-even"><td><p>71 <cite>/u32</cite></p></td>
 <td><p>JZ <cite>label</cite></p></td>
-<td><p>Jump to immediate address when %acc1 is zero</p></td>
+<td><p>Jump to immediate address when <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> is zero</p></td>
 </tr>
 </tbody>
 </table>
-<p>With <code class="docutils literal notranslate"><span class="pre">JZ</span></code> a jump to an immediate address is performed if the value of the
+<p>With <code class="docutils literal notranslate"><span class="pre">jz</span></code> a jump to an immediate address is performed if the value of the
 accumulator register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> has the value <code class="docutils literal notranslate"><span class="pre">0x0</span></code>.</p>
 </div>
 <div class="section" id="mov-move">
@@ -639,8 +645,8 @@ accumulator register <code class="docutils literal notranslate"><span class="pre
 <td><p>Move register to register indirect memory with operation word sized</p></td>
 </tr>
 <tr class="row-odd"><td><p>23 <cite>/rop</cite></p></td>
-<td><p>MOV.B <cite>reg</cite>, <cite>regi_op</cite></p></td>
-<td><p>Move register indirect memory to register with operation byte sized</p></td>
+<td><p>MOV.B <cite>regi_op</cite>, <cite>reg</cite></p></td>
+<td><p>Move register to register indirect memory with operation byte sized</p></td>
 </tr>
 <tr class="row-even"><td><p>24 <cite>/rop</cite></p></td>
 <td><p>MOV.W <cite>reg</cite>, <cite>regi_op</cite></p></td>
@@ -660,7 +666,7 @@ accumulator register <code class="docutils literal notranslate"><span class="pre
 </tr>
 </tbody>
 </table>
-<p>The virtual machine support three different types of move operations.</p>
+<p>The virtual machine supports three different types of move operations.</p>
 <p>The first type of move operations supports registers and register-indexed memory
 locations. All registers and combinations of register and register-indexing are
 supported. For example in the following instruction</p>
@@ -683,9 +689,11 @@ For example in the following instruction</p>
 <p>the content of register <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> is stored in the memory location specified by
 the <code class="docutils literal notranslate"><span class="pre">%dsp</span></code> register. After storing the value, the value of the <code class="docutils literal notranslate"><span class="pre">%dsp</span></code> register
 is incremented by <code class="docutils literal notranslate"><span class="pre">4</span></code> to point to the next word in memory. These registers are
-meant for pushing register values onto stacks and popping them again.</p>
+meant for pushing register values onto stacks and popping them again. When Using
+the byte sized variant of these instructions, the registers for accessing the
+memory are only incremented or decremented by 1.</p>
 <p>For the third type of move operations, only the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> and <code class="docutils literal notranslate"><span class="pre">%acc2</span></code> registers
-can be used. It allows for storing immediate 32-bit values into the register. For
+can be used. It allows for loading immediate 32-bit values into the registers. For
 example in the following instruction</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MOV</span><span class="o">.</span><span class="n">W</span> <span class="o">%</span><span class="n">acc1</span><span class="p">,</span> <span class="c1">#0x12345678</span>
 </pre></div>
@@ -736,8 +744,8 @@ example in the following instruction</p>
 </tr>
 </tbody>
 </table>
-<p>This instruction ors <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
-register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The or is performed arithemtically and thus the bits are
+<p>This instruction ors <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> and stores the result in
+register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The or is performed arithmetically and thus the bits are
 affected individually.</p>
 </div>
 <div class="section" id="sra-shift-right-arithmetically">
@@ -811,8 +819,8 @@ register <code class="docutils literal notranslate"><span class="pre">reg_tgt</s
 </tr>
 </tbody>
 </table>
-<p>This instruction xors <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> and stores the result in
-register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The xor is performed arithemtically and thus the bits are
+<p>This instruction xors <code class="docutils literal notranslate"><span class="pre">reg_src1</span></code> with <code class="docutils literal notranslate"><span class="pre">reg_src2</span></code> and stores the result in
+register <code class="docutils literal notranslate"><span class="pre">reg_tgt</span></code>. The xor is performed arithmetically and thus the bits are
 affected individually.</p>
 </div>
 </div>
