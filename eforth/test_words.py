@@ -323,8 +323,60 @@ def test_u_lt_test3(me):
     assert len(stack) == 1
     assert stack[0] == 0x0
 
-# See https://forth-standard.org/standard/core/WITHIN
 
+# See https://forth-standard.org/standard/core/less
+@passmein
+def test_lt_test1(me):
+    """doLIT 0 doLIT 1 <"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0xffffffff
+
+@passmein
+def test_lt_test2(me):
+    """doLIT -1 doLIT 0 <"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0xffffffff
+
+@passmein
+def test_lt_test3(me):
+    """doLIT 1 doLIT 0 <"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0
+
+
+@passmein
+def test_min_returns_smaller_of_two_numbers(me):
+    """doLIT 2 doLIT 1 MIN"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 1
+
+@passmein
+def test_min_treats_negative_numbers_as_smaller_than_corresponding_positive_number(me):
+    """doLIT -39 doLIT 50 MIN"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0xffffffff - 39 + 1
+
+
+@passmein
+def test_max_returns_larger_of_two_numbers(me):
+    """doLIT 32 doLIT 1 MAX"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 32
+
+
+# See https://forth-standard.org/standard/core/WITHIN
 @passmein
 def test_within_test1(me):
     """doLIT 40 doLIT 10 doLIT 200 WITHIN"""

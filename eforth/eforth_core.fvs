@@ -362,20 +362,46 @@ end
 // -------------------------------------------------------------------
 // Comparison
 
-def word(colon) =          // w w -- t
+def word(colon) alias EQUAL =  // w w -- t
     XOR
     ?BRANCH :equ1
-    doLIT 0 EXIT
+    doLIT 0 EXIT        // values are different
 equ1:
-    doLIT -1 EXIT
+    doLIT -1 EXIT       // values are equal
 end
 
-def word(colon) U<
+def word(colon) U<      // u u -- t
     2DUP XOR 0<
     ?BRANCH :ules1
     SWAP DROP 0< EXIT
 ules1:
     - 0<
+    EXIT
+end
+
+def word(colon) <       // n1 n2 -- t
+    2DUP XOR 0<
+    ?BRANCH :less1
+    DROP 0< EXIT
+less1:
+    - 0< EXIT
+end
+
+def word(colon) MIN     // n n -- n
+    2DUP SWAP <
+    ?BRANCH :min1
+    SWAP
+min1:
+    DROP
+    EXIT
+end
+
+def word(colon) MAX     // n n -- n
+    2DUP <
+    ?BRANCH :max1
+    SWAP
+max1:
+    DROP
     EXIT
 end
 
