@@ -409,6 +409,67 @@ def test_ummod_calculates_correctly(me):
 
 
 # ------------------------
+# Multiply
+@passmein
+def test_um_multiply_calculates_correctly(me):
+    """doLIT 1234 doLIT 4567 UM*"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 0            # high word
+    assert stack[1] == 1234*4567    # low word
+
+
+@passmein
+def test_um_multiply_calculates_correctly_with_overflow(me):
+    """doLIT 4300000 doLIT 12000 UM*"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 0xc          # high word
+    assert stack[1] == 0x3998400    # low word
+
+
+@passmein
+def test_multiply_only_returns_low_word(me):
+    """doLIT 4300000 doLIT 12000 *"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 0x3998400
+
+
+@passmein
+def test_mstar_multiplies_with_sign(me):
+    """doLIT -7654 doLIT 35132 M*"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 0xffffffff   # high word
+    assert stack[1] == 0xeff8e818   # low word
+
+
+@passmein
+def test_mstar_creates_positiv_with_two_negatives(me):
+    """doLIT -7654 doLIT -5132 M*"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 0
+    assert stack[1] == 7654 * 5132
+
+
+@passmein
+def test_multiply_mod_works_correctly(me):
+    """doLIT 3252 doLIT 2349 doLIT 342 */MOD"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 2
+    assert stack[0] == 22336    # quotient
+    assert stack[1] == 36       # modulus
+
+
+# ------------------------
 # Memory access
 @passmein
 def test_count_turns_counted_string_to_address_and_count(me):
