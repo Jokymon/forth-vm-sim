@@ -445,6 +445,38 @@ umm4:
     doLIT -1 DUP EXIT
 end
 
+def word(colon) M/MOD   // d n -- r q
+    DUP 0< DUP >R
+    ?BRANCH :mmod1
+    NEGATE >R DNEGATE R>
+mmod1:
+    >R DUP 0<
+    ?BRANCH :mmod2
+    R@ +
+mmod2:
+    R> UM/MOD R>
+    ?BRANCH :mmod3
+    SWAP NEGATE SWAP
+mmod3:
+    EXIT
+end
+
+def word(colon) /MOD    // n n -- r q
+    OVER 0< SWAP M/MOD
+    EXIT
+end
+
+def word(colon) MOD     // n n -- r
+    /MOD DROP
+    EXIT
+end
+
+def word(colon) /       // n n -- q
+    /MOD NIP
+    EXIT
+end
+
+
 // -------------------------------------------------------------------
 // Bits & Bytes
 
