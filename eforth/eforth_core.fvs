@@ -280,12 +280,20 @@ def word(colon) DNEGATE     // d -- -d
     EXIT
 end
 
-def asm(code) -
+def asm(code) -             // w w -- w
     POPD(%acc2)
     POPD(%acc1)
     sub %acc1, %acc1, %acc2
     PUSHD(%acc1)
     NEXT()
+end
+
+def word(colon) ABS         // n -- +n
+    DUP 0<
+    ?BRANCH :abs1
+    NEGATE
+abs1:
+    EXIT
 end
 
 // -------------------------------------------------------------------

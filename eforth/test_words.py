@@ -231,6 +231,15 @@ def test_umplus_pushes_zero_for_no_carry(me):
     assert stack[1] == 9
 
 
+@passmein
+def test_abs_turns_negative_number_to_positive(me):
+    """doLIT -542234 ABS"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 542234
+
+
 class TestNegate:
     def test_negate_turns_positive_into_negative(self):
         stack = run_vm_image("doLIT 23522 NEGATE")
