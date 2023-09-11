@@ -470,6 +470,55 @@ def test_multiply_mod_works_correctly(me):
 
 
 # ------------------------
+# Bits & Bytes
+@passmein
+def test_cells_converts_cell_count_to_bytes(me):
+    """doLIT 7 CELLS"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 28
+
+
+class TestToChar:
+    def test_turns_non_printable_char_to_underscore(self):
+        stack = run_vm_image("doLIT 10 >CHAR")
+
+        assert len(stack) == 1
+        assert stack[0] == ord('_')
+
+    def test_keeps_printable_char_as_is(self):
+        stack = run_vm_image("doLIT 65 >CHAR")
+
+        assert len(stack) == 1
+        assert stack[0] == ord('A')
+
+
+@passmein
+def test_depth_runs_item_count_in_stack(me):
+    """doLIT 3252 doLIT 2349 doLIT 342 DEPTH"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 4
+    assert stack[0] == 3        # depth
+    assert stack[1] == 342
+    assert stack[2] == 2349
+    assert stack[3] == 3252
+
+
+@passmein
+def test_pick_2_takes_third_stack_entry(me):
+    """doLIT 3252 doLIT 2349 doLIT 342 doLIT 2 PICK"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 4
+    assert stack[0] == 3252
+    assert stack[1] == 342
+    assert stack[2] == 2349
+    assert stack[3] == 3252
+
+
+# ------------------------
 # Memory access
 @passmein
 def test_count_turns_counted_string_to_address_and_count(me):

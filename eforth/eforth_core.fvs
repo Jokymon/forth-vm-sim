@@ -514,13 +514,42 @@ end
 // -------------------------------------------------------------------
 // Bits & Bytes
 
-def word(colon) CELL+
-    doLIT 4 +
+def word(colon) CELL+       // a -- a
+    doLIT CELLSIZE +
     EXIT
 end
 
-def word(colon) BL
+def word(colon) CELL-       // a -- a
+    doLIT -4 +
+    EXIT
+end
+
+def word(colon) CELLS       // n -- n
+    doLIT CELLSIZE *
+    EXIT
+end
+
+def word(colon) BL          // -- 32
     doLIT 32
+    EXIT
+end
+
+def word(colon) >CHAR       // c -- c
+    doLIT 127 AND DUP       // mask MSB
+    doLIT 127 BL WITHIN     // check for printable
+    ?BRANCH :tcha1
+    DROP doLIT 95           // replace with '_'
+tcha1:
+    EXIT
+end
+
+def word(colon) DEPTH       // -- n
+    SP@ SP0 @ SWAP - doLIT CELLSIZE /
+    EXIT
+end
+
+def word(colon) PICK        // +n -- w
+    doLIT 1 + CELLS SP@ + @
     EXIT
 end
 
