@@ -74,7 +74,10 @@ const std::map<uint8_t, std::string> register_name_mapping = {
     {Vm::Pc, "%pc"}
 };
 
-Vm::Vm(Memory &memory) : memory(memory) {
+Vm::Vm(Memory &memory, Memory &data_stack, Memory &return_stack)
+: main_memory(memory)
+, data_stack(data_stack)
+, return_stack(return_stack) {
     std::fill(state.registers.begin(), state.registers.end(), 0x0);
 }
 
@@ -193,18 +196,18 @@ Vm::Result Vm::singleStep() {
             movs_di_b(param8);
             break;
         case Opcode::MOVI_ACC1:
-            param32 = memory.get32(state.registers[Pc]);
+            param32 = main_memory.get32(state.registers[Pc]);
             state.registers[Pc] += 4;
             state.registers[Acc1] = param32;
             break;
         case Opcode::MOVI_ACC2:
-            param32 = memory.get32(state.registers[Pc]);
+            param32 = main_memory.get32(state.registers[Pc]);
             state.registers[Pc] += 4;
             state.registers[Acc2] = param32;
             break;
         case Opcode::JC:
             if (state.carry) {
-                param32 = memory.get32(state.registers[Pc]);
+                param32 = main_memory.get32(state.registers[Pc]);
                 state.registers[Pc] = param32;
             }
             else {
@@ -219,7 +222,7 @@ Vm::Result Vm::singleStep() {
         case Opcode::JMPI_ACC2:
         case Opcode::JMPI_RET:
         case Opcode::JMPI_PC:
-            state.registers[Pc] = memory.get32(state.registers[opcode - static_cast<int>(Opcode::JMPI_IP)]);
+            state.registers[Pc] = main_memory.get32(state.registers[opcode - static_cast<int>(Opcode::JMPI_IP)]);
             break;
         case Opcode::JMPD_IP:
         case Opcode::JMPD_WP:
@@ -232,12 +235,12 @@ Vm::Result Vm::singleStep() {
             state.registers[Pc] = state.registers[opcode - static_cast<int>(Opcode::JMPD_IP)];
             break;
         case Opcode::JMPD:
-            param32 = memory.get32(state.registers[Pc]);
+            param32 = main_memory.get32(state.registers[Pc]);
             state.registers[Pc] = param32;
             break;
         case Opcode::JZ:
             if (state.registers[Acc1]==0) {
-                param32 = memory.get32(state.registers[Pc]);
+                param32 = main_memory.get32(state.registers[Pc]);
                 state.registers[Pc] = param32;
             }
             else {
@@ -245,7 +248,7 @@ Vm::Result Vm::singleStep() {
             }
             break;
         case Opcode::CALL:
-            param32 = memory.get32(state.registers[Pc]);
+            param32 = main_memory.get32(state.registers[Pc]);
             state.registers[Ret] = state.registers[Pc]+4;
             state.registers[Pc] = param32;
             break;
@@ -269,7 +272,7 @@ Vm::Result Vm::singleStep() {
                 case IfktCodes::TERMINATE:
                     return Finished;
                 case IfktCodes::DUMP:
-                    std::cout << "\nDump: " << memory.get32(state.registers[Dsp]) << "\n";
+                    std::cout << "\nDump: " << main_memory.get32(state.registers[Dsp]) << "\n";
                     break;
                 case IfktCodes::DUMP_M:
                     start_address = state.registers[Acc1];
@@ -278,7 +281,7 @@ Vm::Result Vm::singleStep() {
                         std::swap(start_address, end_address);
 
                     for (auto addr=start_address; addr<end_address; addr+=4) {
-                        fmt::print("{:08x}\n", memory.get32(addr));
+                        fmt::print("{:08x}\n", main_memory.get32(addr));
                     }
                     break;
                 default:
@@ -317,13 +320,13 @@ void Vm::setState(const Vm::State &new_state) {
 std::string Vm::disassembleAtPc() const {
     uint32_t param;
 
-    switch (static_cast<Opcode>(memory[state.registers[Pc]])) {
+    switch (static_cast<Opcode>(main_memory[state.registers[Pc]])) {
         case Opcode::NOP:
             return "nop";
         case Opcode::ADDR_W:
             {
-                uint8_t param1 = memory[state.registers[Pc]+1];
-                uint8_t param2 = memory[state.registers[Pc]+2];
+                uint8_t param1 = main_memory[state.registers[Pc]+1];
+                uint8_t param2 = main_memory[state.registers[Pc]+2];
 
                 uint8_t target = (param1 & 0x70) >> 4;
                 uint8_t source1 = param1 & 0x7;
@@ -336,8 +339,8 @@ std::string Vm::disassembleAtPc() const {
             }
         case Opcode::SUBR_W:
             {
-                uint8_t param1 = memory[state.registers[Pc]+1];
-                uint8_t param2 = memory[state.registers[Pc]+2];
+                uint8_t param1 = main_memory[state.registers[Pc]+1];
+                uint8_t param2 = main_memory[state.registers[Pc]+2];
 
                 uint8_t target = (param1 & 0x70) >> 4;
                 uint8_t source1 = param1 & 0x7;
@@ -350,8 +353,8 @@ std::string Vm::disassembleAtPc() const {
             }
         case Opcode::ORR_W:
             {
-                uint8_t param1 = memory[state.registers[Pc]+1];
-                uint8_t param2 = memory[state.registers[Pc]+2];
+                uint8_t param1 = main_memory[state.registers[Pc]+1];
+                uint8_t param2 = main_memory[state.registers[Pc]+2];
 
                 uint8_t target = (param1 & 0x70) >> 4;
                 uint8_t source1 = param1 & 0x7;
@@ -364,8 +367,8 @@ std::string Vm::disassembleAtPc() const {
             }
         case Opcode::ANDR_W:
             {
-                uint8_t param1 = memory[state.registers[Pc]+1];
-                uint8_t param2 = memory[state.registers[Pc]+2];
+                uint8_t param1 = main_memory[state.registers[Pc]+1];
+                uint8_t param2 = main_memory[state.registers[Pc]+2];
 
                 uint8_t target = (param1 & 0x70) >> 4;
                 uint8_t source1 = param1 & 0x7;
@@ -378,8 +381,8 @@ std::string Vm::disassembleAtPc() const {
             }
         case Opcode::XORR_W:
             {
-                uint8_t param1 = memory[state.registers[Pc]+1];
-                uint8_t param2 = memory[state.registers[Pc]+2];
+                uint8_t param1 = main_memory[state.registers[Pc]+1];
+                uint8_t param2 = main_memory[state.registers[Pc]+2];
 
                 uint8_t target = (param1 & 0x70) >> 4;
                 uint8_t source1 = param1 & 0x7;
@@ -392,7 +395,7 @@ std::string Vm::disassembleAtPc() const {
             }
         case Opcode::SRA_W:
             {
-                uint8_t param = memory[state.registers[Pc]+1];
+                uint8_t param = main_memory[state.registers[Pc]+1];
                 uint8_t reg = (param >> 5) & 0x7;
                 uint8_t imm5 = param & 0x1f;
                 return fmt::format("sra.w {}, {:#x}",
@@ -401,31 +404,31 @@ std::string Vm::disassembleAtPc() const {
                 );
             }
         case Opcode::MOVR_W:
-            param = memory[state.registers[Pc]+1];
+            param = main_memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movr_parameters(param));
         case Opcode::MOVR_B:
-            param = memory[state.registers[Pc]+1];
+            param = main_memory[state.registers[Pc]+1];
             return fmt::format("mov.b {}", disassemble_movr_parameters(param));
         case Opcode::MOVS_ID_W:
-            param = memory[state.registers[Pc]+1];
+            param = main_memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Direct));
         case Opcode::MOVS_ID_B:
-            param = memory[state.registers[Pc]+1];
+            param = main_memory[state.registers[Pc]+1];
             return fmt::format("mov.b {}", disassemble_movs_parameters(param, MoveTarget::Direct));
         case Opcode::MOVS_DI_W:
-            param = memory[state.registers[Pc]+1];
+            param = main_memory[state.registers[Pc]+1];
             return fmt::format("mov.w {}", disassemble_movs_parameters(param, MoveTarget::Indirect));
         case Opcode::MOVS_DI_B:
-            param = memory[state.registers[Pc]+1];
+            param = main_memory[state.registers[Pc]+1];
             return fmt::format("mov.b {}", disassemble_movs_parameters(param, MoveTarget::Indirect));
         case Opcode::MOVI_ACC1:
-            param = memory.get32(state.registers[Pc]+1);
+            param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("mov %acc1, {:#x}", param);
         case Opcode::MOVI_ACC2:
-            param = memory.get32(state.registers[Pc]+1);
+            param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("mov %acc2, {:#x}", param);
         case Opcode::JC:
-            param = memory.get32(state.registers[Pc]+1);
+            param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("jc {:#x}", param);
         case Opcode::JMPI_IP:
             return "jmp [%ip]";
@@ -460,27 +463,27 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::JMPD_PC:
             return "jmp %pc";
         case Opcode::JMPD:
-            param = memory.get32(state.registers[Pc]+1);
+            param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("jmp {:#x}", param);
         case Opcode::JZ:
-            param = memory.get32(state.registers[Pc]+1);
+            param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("jz {:#x}", param);
         case Opcode::CALL:
-            param = memory.get32(state.registers[Pc]+1);
+            param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("call {:#x}", param);
         case Opcode::IFKT:
-            param = memory.get16(state.registers[Pc]+1);
+            param = main_memory.get16(state.registers[Pc]+1);
             return fmt::format("ifkt {:#x}", param);
         case Opcode::ILLEGAL:
             return "illegal";
         default:
-            return fmt::format("<unknown {:x}>", memory[state.registers[Pc]]);
+            return fmt::format("<unknown {:x}>", main_memory[state.registers[Pc]]);
     }
 }
 
 
 uint8_t Vm::fetch_op() {
-    return memory[state.registers[Pc]++];
+    return main_memory[state.registers[Pc]++];
 }
 
 void Vm::movr_b(uint8_t param) {
@@ -488,13 +491,13 @@ void Vm::movr_b(uint8_t param) {
     uint8_t source = param & 0x07;
 
     if ((param & 0x80) && (param & 0x08)) {
-        memory[state.registers[target]] = memory[state.registers[source]];
+        main_memory[state.registers[target]] = main_memory[state.registers[source]];
     }
     else if (param & 0x80) {
-        memory[state.registers[target]] = state.registers[source];
+        main_memory[state.registers[target]] = state.registers[source];
     }
     else if (param & 0x08) {
-        state.registers[target] = memory[state.registers[source]];
+        state.registers[target] = main_memory[state.registers[source]];
     }
     else {
         state.registers[target] = state.registers[source];
@@ -506,13 +509,13 @@ void Vm::movr_w(uint8_t param) {
     uint8_t source = param & 0x07;
 
     if ((param & 0x80) && (param & 0x08)) {
-        memory.put32(state.registers[target], memory.get32(state.registers[source]));
+        main_memory.put32(state.registers[target], main_memory.get32(state.registers[source]));
     }
     else if (param & 0x80) {
-        memory.put32(state.registers[target], state.registers[source]);
+        main_memory.put32(state.registers[target], state.registers[source]);
     }
     else if (param & 0x08) {
-        state.registers[target] = memory.get32(state.registers[source]);
+        state.registers[target] = main_memory.get32(state.registers[source]);
     }
     else {
         state.registers[target] = state.registers[source];
@@ -535,7 +538,7 @@ void Vm::movs_id_w(uint8_t param) {
         }
     }
 
-    memory.put32(state.registers[target], state.registers[source]);
+    main_memory.put32(state.registers[target], state.registers[source]);
 
     if (!pre) {
         if (decrement) {
@@ -563,7 +566,7 @@ void Vm::movs_id_b(uint8_t param) {
         }
     }
 
-    memory[state.registers[target]] = state.registers[source];
+    main_memory[state.registers[target]] = state.registers[source];
 
     if (!pre) {
         if (decrement) {
@@ -591,7 +594,7 @@ void Vm::movs_di_w(uint8_t param) {
         }
     }
 
-    state.registers[target] = memory.get32(state.registers[source]);
+    state.registers[target] = main_memory.get32(state.registers[source]);
 
     if (!pre) {
         if (decrement) {
@@ -619,7 +622,7 @@ void Vm::movs_di_b(uint8_t param) {
         }
     }
 
-    state.registers[target] = memory[state.registers[source]];
+    state.registers[target] = main_memory[state.registers[source]];
 
     if (!pre) {
         if (decrement) {
@@ -632,7 +635,7 @@ void Vm::movs_di_b(uint8_t param) {
 }
 
 void Vm::show_trace_at_pc() const {
-    fmt::print("{:08x} {:02x} {}\n", state.registers[Pc], memory[state.registers[Pc]], disassembleAtPc());
+    fmt::print("{:08x} {:02x} {}\n", state.registers[Pc], main_memory[state.registers[Pc]], disassembleAtPc());
 }
 
 std::string Vm::disassemble_movr_parameters(uint8_t parameter) const {

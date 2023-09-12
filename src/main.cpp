@@ -23,11 +23,13 @@ int main(int argc, char* argv[])
     }
 
     Symbols symbols;
-    Memory memory;
-    Vm vm{memory};
+    Memory main_memory;
+    Memory data_stack;
+    Memory return_stack;
+    Vm vm{main_memory, data_stack, return_stack};
 
     ghc::filesystem::path binaryInputPath(args::get(binaryInput));
-    memory.loadImageFromFile(args::get(binaryInput));
+    main_memory.loadImageFromFile(args::get(binaryInput));
     binaryInputPath.replace_extension("sym");
     if (ghc::filesystem::exists(binaryInputPath)) {
         symbols.loadFromFile(binaryInputPath.string());
@@ -82,7 +84,7 @@ int main(int argc, char* argv[])
                     if (i%16==0) {
                         fmt::print("{:>8x} |", start_address+line_no*16);                        
                     }
-                    fmt::print("{:>3x}", memory[start_address+i]);
+                    fmt::print("{:>3x}", main_memory[start_address+i]);
                     if (i%16==15) {
                         fmt::print("\n");
                         line_no++;

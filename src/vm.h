@@ -26,7 +26,7 @@ public:
         std::array<uint32_t, 8> registers;
     };
 
-    explicit Vm(Memory &memory);
+    explicit Vm(Memory &main_memory, Memory &data_stack, Memory &return_stack);
 
     Result singleStep();
     Result interpret(bool show_trace);
@@ -57,7 +57,9 @@ private:
         {0, 0, 0, 0, 0, 0, 0, 0}
     };
 
-    Memory& memory;
+    Memory& main_memory;
+    Memory& data_stack;
+    Memory& return_stack;
 };
 
 #endif

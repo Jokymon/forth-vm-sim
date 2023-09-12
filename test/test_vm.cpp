@@ -32,8 +32,10 @@ TEST_CASE("Illegal instructions return IllegalInstruction", "[opcode]") {
     Memory testdata = {
         0xfd            // just take come opcode that so far has no meaning ;-)
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     REQUIRE( Vm::IllegalInstruction == uut.singleStep() );
 }
@@ -45,8 +47,10 @@ TEST_CASE("Register based move bytes instructions", "[opcode]") {
         0x21, 0x4b,     // mov.b %acc1, [%dsp]
         0x21, 0xcd,     // mov.b [%acc1], [%acc2]
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x59;
@@ -94,8 +98,10 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
         0x20, 0x4b,     // mov.w %acc1, [%dsp]
         0x20, 0xcd,     // mov.w [%acc1], [%acc2]
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x12ab89dc;
@@ -138,7 +144,9 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
 
 TEST_CASE("Stack based move operations", "[opcode]") {
     Memory testdata;
-    Vm uut{testdata};
+    Memory data_stack;
+    Memory return_stack;
+    Vm uut{testdata, data_stack, return_stack};
 
     SECTION("Copy acc1 to wp indirect with post increment") {
         testdata = {
@@ -251,8 +259,10 @@ TEST_CASE("Move immediate to acc1", "[opcode]") {
     Memory testdata = {
         0x26, 0x10, 0x41, 0x32, 0x22    // mov %acc1, 0x22324110
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     REQUIRE( Vm::Success == uut.singleStep() );
 
@@ -265,8 +275,10 @@ TEST_CASE("Move immediate to acc2", "[opcode]") {
     Memory testdata = {
         0x27, 0x10, 0x41, 0x32, 0x22    // mov %acc2, 0x22324110
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     REQUIRE( Vm::Success == uut.singleStep() );
 
@@ -290,8 +302,10 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
         0x50, 0x0, 0x0, 0x0,    // pointed to by %acc1
         0x60, 0x0, 0x0, 0x0,    // pointed to by %acc2
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     Vm::State state = uut.getState();
     state.registers[Vm::Ip] = 6;
@@ -380,8 +394,10 @@ TEST_CASE("Register direct jumping", "[opcode]") {
         0x60, 0x0, 0x0, 0x0,    // pointed to by %acc2
         0x70, 0x0, 0x0, 0x0,    // pointed to by %ret
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     Vm::State state = uut.getState();
     state.registers[Vm::Ip] = 7;
@@ -471,8 +487,10 @@ TEST_CASE("Jumping direct via call", "[opcode]") {
         0x00,       // nop
         0x00,       // nop (jump target)
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     REQUIRE( Vm::Success == uut.singleStep());
 
@@ -488,8 +506,10 @@ TEST_CASE("Immediate direct jumping", "[opcode]") {
         0x00,       // nop
         0x00,       // nop (jump target)
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     REQUIRE( Vm::Success == uut.singleStep());
 
@@ -504,8 +524,10 @@ TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
         0x00,       // nop
         0x00,       // nop (jump target)
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     SECTION("Should jump if acc1 is 0") {
         auto state = uut.getState();
@@ -538,8 +560,10 @@ TEST_CASE("Register direct jumping based on carry flag", "[opcode]") {
         0x00,       // nop
         0x00,       // nop (jump target)
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     SECTION("Should jump if carry is set") {
         auto state = uut.getState();
@@ -572,8 +596,10 @@ TEST_CASE("Add instruction") {
     Memory testdata = {
         0x30, 0x01, 0x4,    // add.w %ip, %wp, %acc1
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -592,8 +618,10 @@ TEST_CASE("Sub instruction") {
     Memory testdata = {
         0x32, 0x01, 0x4,    // sub.w %ip, %wp, %acc1
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -612,8 +640,10 @@ TEST_CASE("Xor instruction") {
     Memory testdata = {
         0x38, 0x01, 0x4,    // xor.w %ip, %wp, %acc1
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -632,8 +662,10 @@ TEST_CASE("Or instruction") {
     Memory testdata = {
         0x34, 0x01, 0x4,    // or.w %ip, %wp, %acc1
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -652,8 +684,10 @@ TEST_CASE("And instruction") {
     Memory testdata = {
         0x36, 0x01, 0x4,    // and.w %ip, %wp, %acc1
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -672,8 +706,10 @@ TEST_CASE("Sra instruction with signed value") {
     Memory testdata = {
         0x3c, 0x65,    // sra.w %dsp, #0x5
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x80000000;
@@ -690,8 +726,10 @@ TEST_CASE("Sra instruction with unsigned value") {
     Memory testdata = {
         0x3c, 0x64,    // sra.w %dsp, #0x4
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x60000000;
@@ -733,8 +771,10 @@ TEST_CASE("Disassembling") {
         0x38, 0x01, 0x4,    // xor.w %ip, %wp, %acc1
         0x3c, 0x65          // sra.w %dsp, #5
     };
+    Memory data_stack;
+    Memory return_stack;
 
-    Vm uut{testdata};
+    Vm uut{testdata, data_stack, return_stack};
     auto state = uut.getState();
 
     SECTION("Disassembling nop instruction") {
@@ -900,12 +940,14 @@ TEST_CASE("Disassembling") {
 
 TEST_CASE("Detailed disassembly", "[disassembly]") {
     Memory testdata;
+    Memory data_stack;
+    Memory return_stack;
 
     SECTION("Or") {
         testdata = {
             0x34, 0x01, 0x4,    // or.w %ip, %wp, %acc1
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "or.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
@@ -914,7 +956,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x36, 0x01, 0x4,    // and.w %ip, %wp, %acc1
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "and.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
@@ -923,7 +965,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x73, 0x15, 0x00, 0x00, 0x00,   // call 0x15
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "call 0x15" == uut.disassembleAtPc() );
     }
@@ -932,7 +974,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x72, 0x15, 0x00, 0x00, 0x00,   // jc 0x15
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "jc 0x15" == uut.disassembleAtPc() );
     }
@@ -941,7 +983,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x62   // jmp [%rsp]
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "jmp [%rsp]" == uut.disassembleAtPc() );
     }
@@ -950,7 +992,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x63   // jmp [%dsp]
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "jmp [%dsp]" == uut.disassembleAtPc() );
     }
@@ -959,7 +1001,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x6e   // jmp %ret
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "jmp %ret" == uut.disassembleAtPc() );
     }
@@ -968,7 +1010,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x27, 0x10, 0x41, 0x32, 0x22,   // mov %acc2, 0x22324110
         };
-        Vm uut{testdata};
+        Vm uut{testdata, data_stack, return_stack};
 
         REQUIRE( "mov %acc2, 0x22324110" == uut.disassembleAtPc() );
     }

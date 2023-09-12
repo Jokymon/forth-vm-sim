@@ -10,8 +10,10 @@
 #include "vm_memory.h"
 
 int main(int argc, char *argv[]) {
-    Memory memory;
-    Vm vm{memory};
+    Memory main_memory;
+    Memory data_stack;
+    Memory return_stack;
+    Vm vm{main_memory, data_stack, return_stack};
 
     bool stacks_initialized = false;
     uint32_t dsp_top = 0x0;
@@ -77,7 +79,7 @@ int main(int argc, char *argv[]) {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
                 std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                memory.loadImageFromFile(filePathName);
+                main_memory.loadImageFromFile(filePathName);
             }
 
             ImGuiFileDialog::Instance()->Close();
@@ -118,7 +120,7 @@ int main(int argc, char *argv[]) {
                                                          ImGui::GetContentRegionAvail().y * 0.5))) {
                 if (stacks_initialized) {
                     for (uint32_t address=dsp_top; address>registers.registers[Vm::Dsp]; address-=4) {
-                        std::string entry_text = fmt::format("{:>8x}", memory.get32(address));
+                        std::string entry_text = fmt::format("{:>8x}", main_memory.get32(address));
                         ImGui::Selectable(entry_text.c_str(), false);
                     }
                 }
@@ -130,7 +132,7 @@ int main(int argc, char *argv[]) {
                                                          ImGui::GetContentRegionAvail().y))) {
                 if (stacks_initialized) {
                     for (uint32_t address=rsp_bottom; address<registers.registers[Vm::Rsp]; address+=4) {
-                        std::string entry_text = fmt::format("{:>8x}", memory.get32(address));
+                        std::string entry_text = fmt::format("{:>8x}", main_memory.get32(address));
                         ImGui::Selectable(entry_text.c_str(), false);
                     }
                 }
