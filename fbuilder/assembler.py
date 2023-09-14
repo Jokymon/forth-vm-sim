@@ -216,6 +216,10 @@ class VmForthAssembler(Interpreter):
             self.emitter.emit_conditional_jump(JMP_COND_ZERO, parameters[0])
         elif mnemonic == "mov":
             self.emitter.emit_mov(suffix, parameters[0], parameters[1])
+        elif mnemonic in ["pushd", "pushr", "popd", "popr"]:
+            if suffix == "b":
+                raise ValueError(f"{mnemonic} only supports word-sized mode on line {tree.children[0].line}")
+            self.emitter.emit_stack_op(mnemonic[:-1], mnemonic[-1], parameters[0])
         elif mnemonic == "nop":
             self.emitter.emit_nop()
         elif mnemonic == "illegal":

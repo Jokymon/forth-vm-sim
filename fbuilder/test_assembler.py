@@ -507,6 +507,90 @@ class TestAssemblingJmpInstructions:
         assert binary == assemble(source)
 
 
+class TestAssemblingStackInstructions:
+    def test_data_stack_instructions(self):
+        source = """
+        codeblock
+            pushd %acc1
+            pushd.w %ip
+            popd %acc2
+            popd.w %wp
+        end
+        """
+
+        binary = b"\xA4"
+        binary += b"\xA0"
+        binary += b"\xAD"
+        binary += b"\xA9"
+
+        assert binary == assemble(source)
+
+    def test_return_stack_instructions(self):
+        source = """
+        codeblock
+            pushr %acc1
+            pushr.w %ip
+            popr %acc2
+            popr.w %wp
+        end
+        """
+
+        binary = b"\xB4"
+        binary += b"\xB0"
+        binary += b"\xBD"
+        binary += b"\xB9"
+
+        assert binary == assemble(source)
+
+    def test_data_stack_push_byte_operation_is_not_allowed(self):
+        source = """
+        codeblock
+            pushd.b %acc1
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "pushd only supports word-sized mode" in str(parsing_error)
+
+    def test_data_stack_pop_byte_operation_is_not_allowed(self):
+        source = """
+        codeblock
+            popd.b %acc1
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "popd only supports word-sized mode" in str(parsing_error)
+
+    def test_return_stack_push_byte_operation_is_not_allowed(self):
+        source = """
+        codeblock
+            pushr.b %acc1
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "pushr only supports word-sized mode" in str(parsing_error)
+
+    def test_return_stack_pop_byte_operation_is_not_allowed(self):
+        source = """
+        codeblock
+            popr.b %acc1
+        end
+        """
+
+        with pytest.raises(ValueError) as parsing_error:
+            assemble(source)
+        assert "on line 3" in str(parsing_error)
+        assert "popr only supports word-sized mode" in str(parsing_error)
+
+
 class TestAssemblingMovInstructions:
     def test_moving_between_instructions(self):
         source = """

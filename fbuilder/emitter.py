@@ -22,6 +22,10 @@ JMPD = 0x70
 JZ = 0x71
 JC = 0x72
 CALL = 0x73
+PUSHRD_W = 0xA0
+POPRD_W = 0xA8
+PUSHRR_W = 0xB0
+POPRR_W = 0xB8
 IFTK = 0xfe
 ILLEGAL = 0xff
 
@@ -251,6 +255,19 @@ class MachineCodeEmitter:
             self.binary_code += struct.pack("BB", opcode,
                 (source.encoding | indirect_source) | (target.encoding | indirect_target) << 4)
 
+    def emit_stack_op(self, operation: str, stack: str, register):
+        if stack == "d":
+            if operation == "push":
+                opcode = PUSHRD_W
+            else:
+                opcode = POPRD_W
+        elif stack == "r":
+            if operation == "push":
+                opcode = PUSHRR_W
+            else:
+                opcode = POPRR_W
+        self.binary_code += struct.pack("B", opcode | register.encoding)
+
     def emit_nop(self):
         self.binary_code += struct.pack("B", NOP)
 
@@ -477,3 +494,14 @@ class DisassemblyEmitter:
             new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
             machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
             self.disassembly += f"{machine_code:<18} mov.{suffix} {target}, {source}\n"
+
+    def emit_stack_op(self, operation: str, stack: str, register):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_stack_op(operation, stack, register)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} {operation}{stack} {register}\n"
