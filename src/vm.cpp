@@ -50,6 +50,46 @@ enum class Opcode {
     JC = 0x72,
     CALL = 0x73,
 
+    PUSHRD_W = 0xA0,
+    PUSHRD_W_IP = 0xA0,
+    PUSHRD_W_WP = 0xA1,
+    PUSHRD_W_RSP = 0xA2,
+    PUSHRD_W_DSP = 0xA3,
+    PUSHRD_W_ACC1 = 0xA4,
+    PUSHRD_W_ACC2 = 0xA5,
+    PUSHRD_W_RET = 0xA6,
+    PUSHRD_W_PC = 0xA7,
+
+    POPRD_W = 0xA8,
+    POPRD_W_IP = 0xA8,
+    POPRD_W_WP = 0xA9,
+    POPRD_W_RSP = 0xAA,
+    POPRD_W_DSP = 0xAB,
+    POPRD_W_ACC1 = 0xAC,
+    POPRD_W_ACC2 = 0xAD,
+    POPRD_W_RET = 0xAE,
+    POPRD_W_PC = 0xAF,
+
+    PUSHRR_W = 0xB0,
+    PUSHRR_W_IP = 0xB0,
+    PUSHRR_W_WP = 0xB1,
+    PUSHRR_W_RSP = 0xB2,
+    PUSHRR_W_DSP = 0xB3,
+    PUSHRR_W_ACC1 = 0xB4,
+    PUSHRR_W_ACC2 = 0xB5,
+    PUSHRR_W_RET = 0xB6,
+    PUSHRR_W_PC = 0xB7,
+
+    POPRR_W = 0xB8,
+    POPRR_W_IP = 0xB8,
+    POPRR_W_WP = 0xB9,
+    POPRR_W_RSP = 0xBA,
+    POPRR_W_DSP = 0xBB,
+    POPRR_W_ACC1 = 0xBC,
+    POPRR_W_ACC2 = 0xBD,
+    POPRR_W_RET = 0xBE,
+    POPRR_W_PC = 0xBF,
+
     IFKT = 0xFE,
     ILLEGAL = 0xFF
 };
@@ -251,6 +291,60 @@ Vm::Result Vm::singleStep() {
             param32 = main_memory.get32(state.registers[Pc]);
             state.registers[Ret] = state.registers[Pc]+4;
             state.registers[Pc] = param32;
+            break;
+        case Opcode::PUSHRD_W_IP:
+        case Opcode::PUSHRD_W_WP:
+        case Opcode::PUSHRD_W_RSP:
+        case Opcode::PUSHRD_W_DSP:
+        case Opcode::PUSHRD_W_ACC1:
+        case Opcode::PUSHRD_W_ACC2:
+        case Opcode::PUSHRD_W_RET:
+        case Opcode::PUSHRD_W_PC:
+            data_stack.put32(state.registers[Dsp],
+                             state.registers[opcode - static_cast<int>(Opcode::PUSHRD_W)]);
+            state.registers[Dsp] += 4;
+            break;
+        case Opcode::POPRD_W_IP:
+        case Opcode::POPRD_W_WP:
+        case Opcode::POPRD_W_RSP:
+        case Opcode::POPRD_W_DSP:
+        case Opcode::POPRD_W_ACC1:
+        case Opcode::POPRD_W_ACC2:
+        case Opcode::POPRD_W_RET:
+        case Opcode::POPRD_W_PC:
+            if (state.registers[Dsp] == 0x0) {
+                return Error;
+            }
+            state.registers[Dsp] -= 4;
+            state.registers[opcode - static_cast<int>(Opcode::POPRD_W)] =
+                data_stack.get32(state.registers[Dsp]);
+            break;
+        case Opcode::PUSHRR_W_IP:
+        case Opcode::PUSHRR_W_WP:
+        case Opcode::PUSHRR_W_RSP:
+        case Opcode::PUSHRR_W_DSP:
+        case Opcode::PUSHRR_W_ACC1:
+        case Opcode::PUSHRR_W_ACC2:
+        case Opcode::PUSHRR_W_RET:
+        case Opcode::PUSHRR_W_PC:
+            return_stack.put32(state.registers[Rsp],
+                             state.registers[opcode - static_cast<int>(Opcode::PUSHRR_W)]);
+            state.registers[Rsp] += 4;
+            break;
+        case Opcode::POPRR_W_IP:
+        case Opcode::POPRR_W_WP:
+        case Opcode::POPRR_W_RSP:
+        case Opcode::POPRR_W_DSP:
+        case Opcode::POPRR_W_ACC1:
+        case Opcode::POPRR_W_ACC2:
+        case Opcode::POPRR_W_RET:
+        case Opcode::POPRR_W_PC:
+            if (state.registers[Rsp] == 0x0) {
+                return Error;
+            }
+            state.registers[Rsp] -= 4;
+            state.registers[opcode - static_cast<int>(Opcode::POPRR_W)] =
+                return_stack.get32(state.registers[Rsp]);
             break;
         case Opcode::IFKT:
             param16 = fetch_op();

@@ -287,6 +287,120 @@ TEST_CASE("Move immediate to acc2", "[opcode]") {
     REQUIRE( 0x5 == state.registers[Vm::Pc] );
 }
 
+TEST_CASE("Stack operations", "[opcode]") {
+    Memory testdata;
+    Memory data_stack;
+    Memory return_stack;
+    
+    SECTION("Pushd pushes data onto data stack and increments dsp") {
+        testdata = {
+            0xa4   // pushd %acc1
+        };
+        Vm uut{testdata, data_stack, return_stack};
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Dsp] = 0x0;
+        state.registers[Vm::Rsp] = 0x0;
+        state.registers[Vm::Acc1] = 0x10A456B3;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x4 == state.registers[Vm::Dsp] );
+        REQUIRE( 0x10A456B3 == data_stack.get32(0x0) );
+    }
+
+    SECTION("Popd returns data from data stack and decrements dsp") {
+        testdata = {
+            0xad   // popd %acc2
+        };
+        Vm uut{testdata, data_stack, return_stack};
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Acc2] = 0x0;
+        state.registers[Vm::Dsp] = 0x8;
+        state.registers[Vm::Rsp] = 0x0;
+        uut.setState(state);
+        data_stack.put32(0x0, 0x12345678);
+        data_stack.put32(0x4, 0x11AACD78);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x4 == state.registers[Vm::Dsp] );
+        REQUIRE( 0x11AACD78 == state.registers[Vm::Acc2] );
+    }
+    
+    SECTION("Pushr pushes data onto return stack and increments rsp") {
+        testdata = {
+            0xb4   // pushr %acc1
+        };
+        Vm uut{testdata, data_stack, return_stack};
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Dsp] = 0x0;
+        state.registers[Vm::Rsp] = 0x0;
+        state.registers[Vm::Acc1] = 0x10A456B3;
+        uut.setState(state);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x4 == state.registers[Vm::Rsp] );
+        REQUIRE( 0x10A456B3 == return_stack.get32(0x0) );
+    }
+
+    SECTION("Popr returns data from return stack and decrements rsp") {
+        testdata = {
+            0xb9   // popr %wp
+        };
+        Vm uut{testdata, data_stack, return_stack};
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Wp] = 0x0;
+        state.registers[Vm::Dsp] = 0x0;
+        state.registers[Vm::Rsp] = 0x8;
+        uut.setState(state);
+        return_stack.put32(0x0, 0x12345678);
+        return_stack.put32(0x4, 0x11AACD78);
+
+        REQUIRE( Vm::Success == uut.singleStep() );
+
+        state = uut.getState();
+        REQUIRE( 0x4 == state.registers[Vm::Rsp] );
+        REQUIRE( 0x11AACD78 == state.registers[Vm::Wp] );
+    }
+
+    SECTION("Popd on an empty stack creates an error") {
+        testdata = {
+            0xa9   // popd %wp
+        };
+        Vm uut{testdata, data_stack, return_stack};
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Dsp] = 0x0;
+        state.registers[Vm::Rsp] = 0x0;
+        uut.setState(state);
+
+        REQUIRE( Vm::Error == uut.singleStep() );
+    }
+
+    SECTION("Popr on an empty stack creates an error") {
+        testdata = {
+            0xb9   // popr %wp
+        };
+        Vm uut{testdata, data_stack, return_stack};
+
+        Vm::State state = uut.getState();
+        state.registers[Vm::Dsp] = 0x0;
+        state.registers[Vm::Rsp] = 0x0;
+        uut.setState(state);
+
+        REQUIRE( Vm::Error == uut.singleStep() );
+    }
+}
+
 TEST_CASE("Register indirect jumping", "[opcode]") {
     Memory testdata = {
         0x60,       // jmp [%ip]
