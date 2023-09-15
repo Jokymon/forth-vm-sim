@@ -5,6 +5,7 @@
 #include "absl/strings/str_split.h"
 #include <args.hxx>
 #include <fmt/core.h>
+#include <nlohmann/json.hpp>
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -14,6 +15,7 @@ int main(int argc, char* argv[])
     args::ValueFlag<std::string> binaryInput(parser, "binary", "Binary file containing byte code", {'i'});
     args::Flag debug(parser, "debug", "Start in debugging mode", {'d'});
     args::Flag trace(parser, "trace", "Print trace of instructions while running", {'t'});
+    args::Flag dumpState(parser, "dump-state", "Dump the entire state of the CPU, including registers and stacks at the end of the run as one JSON line", {"dump-state"});
     try {
         parser.ParseCLI(argc, argv);
     }
@@ -108,6 +110,34 @@ int main(int argc, char* argv[])
             case Vm::IllegalInstruction:
                 std::cout << "Interpreter hit invalid instruction\n";
                 break;
+        }
+
+        if (dumpState) {
+            auto vmState = vm.getState();
+            nlohmann::json stateDump;
+            stateDump["registers"] = {
+                {"ip", vmState.registers[Vm::Ip]},
+                {"wp", vmState.registers[Vm::Wp]},
+                {"rsp", vmState.registers[Vm::Rsp]},
+                {"dsp", vmState.registers[Vm::Dsp]},
+                {"acc1", vmState.registers[Vm::Acc1]},
+                {"acc2", vmState.registers[Vm::Acc2]},
+                {"ret", vmState.registers[Vm::Ret]},
+                {"pc", vmState.registers[Vm::Pc]},
+            };
+            std::vector<int> dataStack;
+            for (int i=0; i<vmState.registers[Vm::Dsp]; i+=4) {
+                dataStack.push_back(data_stack.get32(i));
+            }
+            stateDump["dataStack"] = dataStack;
+
+            std::vector<int> returnStack;
+            for (int i=0; i<vmState.registers[Vm::Rsp]; i+=4) {
+                returnStack.push_back(return_stack.get32(i));
+            }
+            stateDump["returnStack"] = returnStack;
+
+            std::cout << stateDump.dump() << std::endl;
         }
     }
 
