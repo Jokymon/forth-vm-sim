@@ -453,6 +453,20 @@ Shift the given register arithmetically right by the given 5-bit immediate value
 It shifts the most significant bit, number 31, into the following less significant
 bits.
 
+SLL - Shift Left Logically
+--------------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+---------------------+-------------------------------------------------------------+
+    | Opcode    | Mnemonic            | Description                                                 |
+    +===========+=====================+=============================================================+
+    | 3E `/ri5` | SLL.W `reg`, `imm5` | Logically shift the given register left by the given amount |
+    +-----------+---------------------+-------------------------------------------------------------+
+
+Shift the given register logically left by the given 5-bit immediate value.
+
 SUB - Subtract
 --------------
 

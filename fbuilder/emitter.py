@@ -16,6 +16,7 @@ ORR_W = 0x34
 ANDR_W = 0x36
 XORR_W = 0x38
 SRA_W = 0x3c
+SLLR_W = 0x3e
 JMPI_R = 0x60
 JMPD_R = 0x68
 JMPD = 0x70
@@ -151,6 +152,13 @@ class MachineCodeEmitter:
 
     def emit_sra(self, reg, value):
         opcode = SRA_W
+        operand = value.number & 0x1F
+        operand |= reg.encoding << 5
+
+        self.binary_code += struct.pack("BB", opcode, operand)
+
+    def emit_sll(self, reg, value):
+        opcode = SLLR_W
         operand = value.number & 0x1F
         operand |= reg.encoding << 5
 
@@ -379,6 +387,17 @@ class DisassemblyEmitter:
         machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
 
         self.disassembly += f"{machine_code:<18} sra {reg}, {value}\n"
+
+    def emit_sll(self, reg, value):
+        previous_pos = self.get_current_code_address()
+        self.binary_emitter.emit_sll(reg, value)
+        new_pos = self.get_current_code_address()
+
+        self.disassembly += f"{previous_pos:08x}: "
+        new_assembly = self.binary_emitter.binary_code[previous_pos:new_pos]
+        machine_code = " ".join(map(lambda n: f"{n:02x}", new_assembly))
+
+        self.disassembly += f"{machine_code:<18} sll {reg}, {value}\n"
 
     def emit_conditional_jump(self, condition, target):
         previous_pos = self.get_current_code_address()

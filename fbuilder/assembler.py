@@ -196,6 +196,8 @@ class VmForthAssembler(Interpreter):
             self.emitter.emit_xor(parameters[0], parameters[1], parameters[2])
         elif mnemonic == "sra":
             self.emitter.emit_sra(parameters[0], parameters[1])
+        elif mnemonic == "sll":
+            self.emitter.emit_sll(parameters[0], parameters[1])
         elif mnemonic == "db":
             if isinstance(parameters[0], StringOperand):
                 self.emitter.emit_data_string(parameters[0].string)

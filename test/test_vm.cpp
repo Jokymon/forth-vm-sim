@@ -856,6 +856,26 @@ TEST_CASE("Sra instruction with unsigned value") {
     REQUIRE( 0x2 == state.registers[Vm::Pc] );
 }
 
+TEST_CASE("Sll instruction") {
+    Memory testdata = {
+        0x3e, 0x62,    // sll.w %dsp, #0x2
+    };
+    Memory data_stack;
+    Memory return_stack;
+
+    Vm uut{testdata, data_stack, return_stack};
+
+    auto state = uut.getState();
+    state.registers[Vm::Dsp] = 0x00000006;
+    uut.setState(state);
+
+    REQUIRE( Vm::Success == uut.singleStep());
+
+    state = uut.getState();
+    REQUIRE( 0x00000018 == state.registers[Vm::Dsp] );
+    REQUIRE( 0x2 == state.registers[Vm::Pc] );
+}
+
 TEST_CASE("Disassembling") {
     Memory testdata = {
         0x00,               // nop

@@ -1426,3 +1426,14 @@ class TestALUInstruction:
         binary = b"\x3c\x65"
 
         assert binary == assemble(source)
+
+    def test_shift_left_logically(self):
+        source = """
+        codeblock
+            sll.w %dsp, #2
+        end
+        """
+
+        binary = b"\x3e\x62"
+
+        assert binary == assemble(source)
