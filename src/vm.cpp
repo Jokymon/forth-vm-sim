@@ -565,6 +565,74 @@ std::string Vm::disassembleAtPc() const {
         case Opcode::CALL:
             param = main_memory.get32(state.registers[Pc]+1);
             return fmt::format("call {:#x}", param);
+        case Opcode::PUSHRD_W_IP:
+            return "pushd %ip";
+        case Opcode::PUSHRD_W_WP:
+            return "pushd %wp";
+        case Opcode::PUSHRD_W_RSP:
+            return "pushd %rsp";
+        case Opcode::PUSHRD_W_DSP:
+            return "pushd %dsp";
+        case Opcode::PUSHRD_W_ACC1:
+            return "pushd %acc1";
+        case Opcode::PUSHRD_W_ACC2:
+            return "pushd %acc2";
+        case Opcode::PUSHRD_W_RET:
+            return "pushd %ret";
+        case Opcode::PUSHRD_W_PC:
+            return "pushd %pc";
+    
+        case Opcode::POPRD_W_IP:
+            return "popd %ip";
+        case Opcode::POPRD_W_WP:
+            return "popd %wp";
+        case Opcode::POPRD_W_RSP:
+            return "popd %rsp";
+        case Opcode::POPRD_W_DSP:
+            return "popd %dsp";
+        case Opcode::POPRD_W_ACC1:
+            return "popd %acc1";
+        case Opcode::POPRD_W_ACC2:
+            return "popd %acc2";
+        case Opcode::POPRD_W_RET:
+            return "popd %ret";
+        case Opcode::POPRD_W_PC:
+            return "popd %pc";
+    
+        case Opcode::PUSHRR_W_IP:
+            return "pushr %ip";
+        case Opcode::PUSHRR_W_WP:
+            return "pushr %wp";
+        case Opcode::PUSHRR_W_RSP:
+            return "pushr %rsp";
+        case Opcode::PUSHRR_W_DSP:
+            return "pushr %dsp";
+        case Opcode::PUSHRR_W_ACC1:
+            return "pushr %acc1";
+        case Opcode::PUSHRR_W_ACC2:
+            return "pushr %acc2";
+        case Opcode::PUSHRR_W_RET:
+            return "pushr %ret";
+        case Opcode::PUSHRR_W_PC:
+            return "pushr %pc";
+
+        case Opcode::POPRR_W_IP:
+            return "popr %ip";
+        case Opcode::POPRR_W_WP:
+            return "popr %wp";
+        case Opcode::POPRR_W_RSP:
+            return "popr %rsp";
+        case Opcode::POPRR_W_DSP:
+            return "popr %dsp";
+        case Opcode::POPRR_W_ACC1:
+            return "popr %acc1";
+        case Opcode::POPRR_W_ACC2:
+            return "popr %acc2";
+        case Opcode::POPRR_W_RET:
+            return "popr %ret";
+        case Opcode::POPRR_W_PC:
+            return "popr %pc";
+    
         case Opcode::IFKT:
             param = main_memory.get16(state.registers[Pc]+1);
             return fmt::format("ifkt {:#x}", param);
