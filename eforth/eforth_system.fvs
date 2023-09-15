@@ -8,7 +8,7 @@ start_word:
     dw :testw_cfa
 
 doLIST:
-    PUSHR(%ip)
+    pushr %ip
     mov %ip, %ret
     NEXT()
 end

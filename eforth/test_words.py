@@ -7,6 +7,7 @@ import keyboard
 import time
 
 from dataclasses import dataclass
+import json
 import os
 import subprocess
 import tempfile
@@ -21,7 +22,7 @@ def passmein(func):
 def assemble(source):
     @dataclass
     class DefaultOptions:
-        format : str = "bin"
+        format: str = "bin"
     asm = Assembler(DefaultOptions())
     return asm.assemble_source(source)
 
@@ -33,7 +34,7 @@ def build_vm_image(word_under_test, test_data):
         source = source.replace("%WUT%", word_under_test)
         test_data_source = "\n".join(map(lambda x: "db #"+str(hex(x)), test_data))
         source = source.replace("%TEST_DATA%", test_data_source)
-    
+
         binary = assemble(source)
     tmp = tempfile.NamedTemporaryFile(suffix=".bin", delete=False)
     tmp.write(binary)
@@ -43,24 +44,21 @@ def build_vm_image(word_under_test, test_data):
 
 def get_stack(text_output):
     lines = text_output.split(b"\r")
-    stack = []
-    for line in lines:
-        try:
-            stack.append(int(line, 16))
-        except ValueError:
-            pass    # ignore lines without parsable numbers
+    state = json.loads(lines[-2])
+    stack = state["dataStack"]
     return stack
 
 
 def run_vm_image(word_under_test, input_data=None, test_data=[]):
     image = build_vm_image(word_under_test, test_data)
-    with subprocess.Popen(["build-debug/forth-vm-sim", "-i",
-                          image.name],
+    with subprocess.Popen(["build-debug/forth-vm-sim",
+                           "--dump-state",
+                           "-i", image.name],
                           stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE) as proc:
         if input_data:
             for ch in input_data:
-                if ch=="\n":
+                if ch == "\n":
                     keyboard.press_and_release('enter')
                 else:
                     keyboard.press_and_release(ch)
@@ -78,8 +76,8 @@ def test_infrastructure_for_test_data(me):
     stack = run_vm_image(me.__doc__, test_data=test_data)
 
     assert len(stack) == 2
-    assert stack[0] == 0xa6
-    assert stack[1] == 0x53
+    assert stack[1] == 0xa6
+    assert stack[0] == 0x53
 
 # ---------------------------------------------
 
@@ -102,10 +100,10 @@ begin:
     """
     stack = run_vm_image(me.__doc__)
     assert len(stack) == 4
-    assert stack[0] == 0
-    assert stack[1] == 1
-    assert stack[2] == 2
-    assert stack[3] == 3
+    assert stack[3] == 0
+    assert stack[2] == 1
+    assert stack[1] == 2
+    assert stack[0] == 3
 
 
 @passmein
@@ -154,28 +152,29 @@ def test_subtract_is_second_minus_first_stack(me):
 def test_lt_zero_returns_true_for_negative_numbers(me):
     """doLIT 0 doLIT 1 - 0<"""
     stack = run_vm_image(me.__doc__)
-    assert stack[0] == 0xffffffff
+    assert stack[0] == -1
 
 # ------------------------
 # data stack
 
 @passmein
 def test_sp_at_returns_current_stack_pointer(me):
-    """SP@"""
+    # Fill stack with some elements so the pointer is != 0
+    """doLIT 1 doLIT 2 doLIT 3 SP@"""
     stack = run_vm_image(me.__doc__)
 
-    assert len(stack) == 1
-    assert stack[0] == 0x5000   # as initialized in eforth_basic
+    assert len(stack) == 4
+    assert stack[-1] == 3 * 0x4
 
 
 @passmein
 def test_sp_store_writes_new_sp_value_from_stack(me):
-    """doLIT DSP_BASE doLIT 52 + SP!"""
+    """doLIT 52 SP!"""
     stack = run_vm_image(me.__doc__)
 
     # Use indirect observation of changes in the SP:
-    # we store DSP_BASE+13*4 in SP and expect the stack size to
-    # be 13 4 byte words now
+    # we store 13*4 in SP and expect the stack size to
+    # be 13 4-byte words now
     assert len(stack) == 13
 
 
@@ -185,9 +184,18 @@ def test_rot_rotates_third_element_to_tos(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 3
-    assert stack[0] == 123
+    assert stack[2] == 123
     assert stack[1] == 6234
-    assert stack[2] == 4352
+    assert stack[0] == 4352
+
+
+@passmein
+def test_plus_adds_values_without_carry(me):
+    """doLIT 2290649224 doLIT 2290649224 +"""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == 286331152
 
 
 @passmein
@@ -217,8 +225,8 @@ def test_umplus_pushes_one_for_carry(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 1
-    assert stack[1] == 286331152
+    assert stack[1] == 1
+    assert stack[0] == 286331152
 
 
 @passmein
@@ -227,8 +235,8 @@ def test_umplus_pushes_zero_for_no_carry(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 0
-    assert stack[1] == 9
+    assert stack[1] == 0
+    assert stack[0] == 9
 
 
 @passmein
@@ -245,7 +253,7 @@ class TestNegate:
         stack = run_vm_image("doLIT 23522 NEGATE")
 
         assert len(stack) == 1
-        assert stack[0] == 2**32 - 23522
+        assert stack[0] == -23522
 
     def test_negate_turns_negative_into_positive(self):
         stack = run_vm_image("doLIT -23522 NEGATE")
@@ -263,8 +271,8 @@ class TestNegate:
         stack = run_vm_image("doLIT 123456 doLIT 3 DNEGATE")
 
         assert len(stack) == 2
-        assert stack[0] == 4294967292
-        assert stack[1] == 4294843840
+        assert stack[1] == -4
+        assert stack[0] == -123456
 
 
 # ------------------------
@@ -276,7 +284,7 @@ def test_sp0_returns_data_stack_base_address(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0x5000
+    assert stack[0] == 0x0
 
 @passmein
 def test_rp0_returns_return_stack_base_address(me):
@@ -284,7 +292,7 @@ def test_rp0_returns_return_stack_base_address(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0x6000
+    assert stack[0] == 0x0
 
 # ------------------------
 # Comparison
@@ -304,7 +312,7 @@ def test_eq_returns_minus_one_on_same_values(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0xffffffff
+    assert stack[0] == -1
 
 
 # See https://forth-standard.org/standard/core/Uless
@@ -314,7 +322,7 @@ def test_u_lt_test1(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0xffffffff
+    assert stack[0] == -1
 
 @passmein
 def test_u_lt_test2(me):
@@ -340,7 +348,7 @@ def test_lt_test1(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0xffffffff
+    assert stack[0] == -1
 
 @passmein
 def test_lt_test2(me):
@@ -348,7 +356,7 @@ def test_lt_test2(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0xffffffff
+    assert stack[0] == -1
 
 @passmein
 def test_lt_test3(me):
@@ -373,7 +381,7 @@ def test_min_treats_negative_numbers_as_smaller_than_corresponding_positive_numb
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0xffffffff - 39 + 1
+    assert stack[0] == -39
 
 
 @passmein
@@ -392,7 +400,7 @@ def test_within_test1(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 1
-    assert stack[0] == 0xffffffff
+    assert stack[0] == -1
 
 
 # ------------------------
@@ -404,8 +412,8 @@ def test_ummod_calculates_correctly(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 8        # quotient
-    assert stack[1] == 2        # reminder
+    assert stack[1] == 8        # quotient
+    assert stack[0] == 2        # reminder
 
 
 # ------------------------
@@ -416,8 +424,8 @@ def test_um_multiply_calculates_correctly(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 0            # high word
-    assert stack[1] == 1234*4567    # low word
+    assert stack[1] == 0            # high word
+    assert stack[0] == 1234*4567    # low word
 
 
 @passmein
@@ -426,8 +434,8 @@ def test_um_multiply_calculates_correctly_with_overflow(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 0xc          # high word
-    assert stack[1] == 0x3998400    # low word
+    assert stack[1] == 0xc          # high word
+    assert stack[0] == 0x3998400    # low word
 
 
 @passmein
@@ -445,8 +453,8 @@ def test_mstar_multiplies_with_sign(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 0xffffffff   # high word
-    assert stack[1] == 0xeff8e818   # low word
+    assert stack[1] == -1               # high word
+    assert stack[0] == -(7654*35132)    # low word
 
 
 @passmein
@@ -455,8 +463,8 @@ def test_mstar_creates_positiv_with_two_negatives(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 0
-    assert stack[1] == 7654 * 5132
+    assert stack[1] == 0
+    assert stack[0] == 7654 * 5132
 
 
 @passmein
@@ -465,8 +473,8 @@ def test_multiply_mod_works_correctly(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 2
-    assert stack[0] == 22336    # quotient
-    assert stack[1] == 36       # modulus
+    assert stack[1] == 22336    # quotient
+    assert stack[0] == 36       # modulus
 
 
 # ------------------------
@@ -500,10 +508,10 @@ def test_depth_runs_item_count_in_stack(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 4
-    assert stack[0] == 3        # depth
-    assert stack[1] == 342
-    assert stack[2] == 2349
-    assert stack[3] == 3252
+    assert stack[3] == 3        # depth
+    assert stack[2] == 342
+    assert stack[1] == 2349
+    assert stack[0] == 3252
 
 
 @passmein
@@ -512,10 +520,10 @@ def test_pick_2_takes_third_stack_entry(me):
     stack = run_vm_image(me.__doc__)
 
     assert len(stack) == 4
-    assert stack[0] == 3252
-    assert stack[1] == 342
-    assert stack[2] == 2349
     assert stack[3] == 3252
+    assert stack[2] == 342
+    assert stack[1] == 2349
+    assert stack[0] == 3252
 
 
 # ------------------------
@@ -528,8 +536,8 @@ def test_count_turns_counted_string_to_address_and_count(me):
     stack = run_vm_image(me.__doc__, test_data=[0x3, 0x6f, 0x6b, 0x2e])
 
     assert len(stack) == 3
-    pre_init_address = stack[2]
-    assert stack[0] == 3
+    pre_init_address = stack[0]
+    assert stack[2] == 3
     assert stack[1] == pre_init_address + 1
 
 
@@ -551,9 +559,9 @@ def test_cmove_non_overlapping(me):
     """
     stack = run_vm_image(me.__doc__, test_data=[0x34, 0x53, 0xd8])
     assert len(stack) == 3
-    assert stack[0] == 0xd8
+    assert stack[2] == 0xd8
     assert stack[1] == 0x53
-    assert stack[2] == 0x34
+    assert stack[0] == 0x34
 
 
 @passmein
@@ -565,10 +573,10 @@ def test_pack_copies_string_with_length(me):
     """
     stack = run_vm_image(me.__doc__, test_data=[0x34, 0x53, 0xd8])
     assert len(stack) == 4
-    assert stack[0] == 0x53
-    assert stack[1] == 0x34
-    assert stack[2] == 0x3      # first byte at target is length
-    assert stack[3] == 28500    # PACK$ returns the target address
+    assert stack[3] == 0x53
+    assert stack[2] == 0x34
+    assert stack[1] == 0x3      # first byte at target is length
+    assert stack[0] == 28500    # PACK$ returns the target address
 
 
 # ------------------------
@@ -599,10 +607,10 @@ def test_parse_finds_one_space_delimited_word(me):
     stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
 
     assert len(stack) == 4
-    pre_init_address = stack[3]
-    assert stack[2] == pre_init_address + 2
-    assert stack[1] == 4
-    assert stack[0] == 7
+    pre_init_address = stack[0]
+    assert stack[1] == pre_init_address + 2
+    assert stack[2] == 4
+    assert stack[3] == 7
 
 
 @passmein
@@ -612,10 +620,10 @@ def test_parse_finds_one_space_delimited_word_from_multiple(me):
     stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
 
     assert len(stack) == 4
-    pre_init_address = stack[3]
-    assert stack[2] == pre_init_address + 3
-    assert stack[1] == 7
-    assert stack[0] == 11
+    pre_init_address = stack[0]
+    assert stack[1] == pre_init_address + 3
+    assert stack[2] == 7
+    assert stack[3] == 11
 
 
 @passmein
@@ -626,10 +634,10 @@ def test_parse_finds_text_delimited_by_bracket(me):
     stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
 
     assert len(stack) == 4
-    pre_init_address = stack[3]
-    assert stack[2] == pre_init_address
-    assert stack[1] == 14
-    assert stack[0] == 15
+    pre_init_address = stack[0]
+    assert stack[1] == pre_init_address
+    assert stack[2] == 14
+    assert stack[3] == 15
 
 
 # ------------------------
@@ -641,8 +649,8 @@ def test_expect_returns_the_address_and_the_amount_of_read_chars(me):
     stack = run_vm_image(me.__doc__, "hello\n")
 
     assert len(stack) == 2
-    assert stack[0] == 5
-    assert stack[1] == 12000
+    assert stack[1] == 5
+    assert stack[0] == 12000
 
 # ------------------------
 # QUERY
@@ -653,5 +661,5 @@ def test_QUERY_stores_number_of_read_characters_and_resets_parser_pointer(me):
     stack = run_vm_image(me.__doc__, "hello\n")
 
     assert len(stack) == 2
-    assert stack[0] == 0
-    assert stack[1] == 5
+    assert stack[1] == 0
+    assert stack[0] == 5

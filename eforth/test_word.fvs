@@ -8,7 +8,7 @@ start_word:
     dw :run_test_cfa
 
 doLIST:
-    PUSHR(%ip)
+    pushr %ip
     mov %ip, %ret
     NEXT()
 end
@@ -18,22 +18,13 @@ include "eforth/eforth_core.fvs"
 // -----------------------------------------------------------
 // test environment
 
-def asm(code) DUMP_STACK
-    mov %acc1, DSP_BASE
-    mov %acc2, %acc1
-
-    mov %acc1, %dsp
-    ifkt FKT_DUMP_M
-    NEXT()
-end
-
 def asm(code) PRE_INIT_DATA
     // This is a special test word can will be filled out
     // with pre-initialized data by the unittest. Calling
     // this word will put the address of the test data on
     // the data stack
     mov %acc1, :data_block
-    PUSHD(%acc1)
+    pushd %acc1
     jmp :after_pre_init_data
 data_block:
     %TEST_DATA%
@@ -53,6 +44,5 @@ end
 def word(colon) RUN_TEST
     %WUT%      // word under test
 
-    DUMP_STACK
     BYE
 end

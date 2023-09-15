@@ -35,36 +35,16 @@ macro COUNTED_WORD(s)
 'string_end:
 end
 
-
-// dsp always points to the TOS
-macro PUSHD(reg)
-    mov [--%dsp], @reg
-end
-
-macro POPD(reg)
-    mov @reg, [%dsp++]
-end
-
-macro PUSHR(reg)
-    mov [%rsp++], @reg
-end
-
-macro POPR(reg)
-    mov @reg, [--%rsp]
-end
-
 // -----------------------------------------------------------
 // constants
 
     // Setup the memory layout
     // +------------+------------+--------------+----------------+-------------+
-    // | Dictionary | Data Stack | Return Stack | User Variables | I/O Buffers |
+    // | Dictionary |                           | User Variables | I/O Buffers |
     // +------------+------------+--------------+----------------+-------------+
     //  16k           4k           4k             4k               4k
-    //   -->                  <--           <--
+    //   -->
 
-const RSP_BASE = 0x6000     // (16+4+4) * 1024
-const DSP_BASE = 0x5000     // (16+4) * 1024
 const TIBB = 0x3000
 
 // flags
@@ -75,20 +55,15 @@ const IMMEDIATE = 0x80
 // startup code
 
 codeblock
-    mov %acc1, RSP_BASE
-    mov %rsp, %acc1
-    mov %acc1, DSP_BASE
-    mov %dsp, %acc1
-
     mov %acc1, :start_word
     mov %ip, %acc1
     NEXT()
 
 uzero:
 u_sp0:
-    dw DSP_BASE     // SP0
+    dw #0           // SP0
 u_rp0:
-    dw RSP_BASE     // RP0
+    dw #0           // RP0
 u_qkey:
     dw :qrx_cfa     // '?KEY
 u_temit:

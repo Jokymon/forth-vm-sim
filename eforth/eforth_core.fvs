@@ -9,12 +9,12 @@ const CRR = 13
 
 def asm(code) alias QRX ?RX
     ifkt FKT_KEY
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) alias TXSTO TX!
-    POPD(%acc1)
+    popd %acc1
     ifkt FKT_EMIT
     NEXT()
 end
@@ -24,7 +24,7 @@ end
 
 def asm(code) doLIT
     mov %acc1, [%ip++]
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
@@ -33,12 +33,12 @@ def asm(code) BYE
 end
 
 def asm(code) EXIT
-    mov %ip, [--%rsp]
+    popr %ip
     NEXT()
 end
 
 def asm(code) EXECUTE
-    POPD(%acc1)
+    popd %acc1
     jmp %acc1
     NEXT()
 end
@@ -46,10 +46,10 @@ end
 def asm(code) next
     mov %acc1, #0x1
     mov %acc2, %acc1
-    POPR(%acc1)
+    popr %acc1
     sub %acc1, %acc1, %acc2
     jc :next1
-    PUSHR(%acc1)
+    pushr %acc1
     mov %ip, [%ip]
     NEXT()
 next1:
@@ -64,7 +64,7 @@ def asm(code) BRANCH
 end
 
 def asm(code) ?BRANCH
-    POPD(%acc1)
+    popd %acc1
     jz :nobranch
     mov %acc1, CELLSIZE
     add %ip, %ip, %acc1
@@ -78,30 +78,30 @@ end
 // memory fetch & store
 
 def asm(code) !       // w a --
-    POPD(%acc1)
-    POPD(%acc2)
+    popd %acc1
+    popd %acc2
     mov [%acc1], %acc2
     NEXT()
 end
 
 def asm(code) @       // a -- w
-    POPD(%acc1)
+    popd %acc1
     mov %acc1, [%acc1]
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) C!      // c b --
-    POPD(%acc1)     // get address
-    POPD(%acc2)     // get data
+    popd %acc1     // get address
+    popd %acc2     // get data
     mov.b [%acc1], %acc2
     NEXT()
 end
 
 def asm(code) C@      // b -- c
-    POPD(%acc1)     // get address
+    popd %acc1     // get address
     mov.b %acc2, [%acc1]    // fetch the character from this address
-    PUSHD(%acc2)    // push the character on the data stack
+    pushd %acc2    // push the character on the data stack
     NEXT()
 end
 
@@ -109,31 +109,31 @@ end
 // return stack
 
 def asm(code) RP@     // -- a
-    PUSHD(%rsp)
+    pushd %rsp
     NEXT()
 end
 
 def asm[COMPILE_ONLY](code) RP!     // a --
-    POPD(%rsp)
+    popd %rsp
     NEXT()
 end
 
 def asm[COMPILE_ONLY](code) R>      // -- w
-    POPR(%acc1)
-    PUSHD(%acc1)
+    popr %acc1
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) R@      // -- w
-    POPR(%acc1)
-    PUSHR(%acc1)
-    PUSHD(%acc1)
+    popr %acc1
+    pushr %acc1
+    pushd %acc1
     NEXT()
 end
 
 def asm[COMPILE_ONLY](code) >R      // w --
-    POPD(%acc1)
-    PUSHR(%acc1)
+    popd %acc1
+    pushr %acc1
     NEXT()
 end
 
@@ -142,42 +142,42 @@ end
 
 def asm(code) SP@       // -- a
     mov %acc1, %dsp
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) SP!       // a --
-    POPD(%acc1)
+    popd %acc1
     mov %dsp, %acc1
     NEXT()
 end
 
 def asm(code) DROP      // w --
-    POPD(%acc1)
+    popd %acc1
     NEXT()
 end
 
 def asm(code) DUP       // w -- w w
-    POPD(%acc1)
-    PUSHD(%acc1)
-    PUSHD(%acc1)
+    popd %acc1
+    pushd %acc1
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) SWAP      // w1 w2 -- w2 w1
-    POPD(%acc1)
-    POPD(%acc2)
-    PUSHD(%acc1)
-    PUSHD(%acc2)
+    popd %acc1
+    popd %acc2
+    pushd %acc1
+    pushd %acc2
     NEXT()
 end
 
 def asm(code) OVER    // w1 w2 -- w1 w2 w1
-    POPD(%acc2)
-    POPD(%acc1)
-    PUSHD(%acc1)
-    PUSHD(%acc2)
-    PUSHD(%acc1)
+    popd %acc2
+    popd %acc1
+    pushd %acc1
+    pushd %acc2
+    pushd %acc1
     NEXT()
 end
 
@@ -212,33 +212,33 @@ end
 // Logic
 
 def asm(code) 0<
-    POPD(%acc1)
+    popd %acc1
     sra %acc1, #31
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) OR
-    POPD(%acc1)
-    POPD(%acc2)
+    popd %acc1
+    popd %acc2
     or %acc1, %acc1, %acc2
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) AND
-    POPD(%acc1)
-    POPD(%acc2)
+    popd %acc1
+    popd %acc2
     and %acc1, %acc1, %acc2
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
 def asm(code) XOR
-    POPD(%acc1)
-    POPD(%acc2)
+    popd %acc1
+    popd %acc2
     xor %acc1, %acc1, %acc2
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
@@ -251,8 +251,8 @@ end
 // Arithmetic
 
 def asm(code) UM+           // u u -- u cy or u u -- ud
-    POPD(%acc1)
-    POPD(%acc2)
+    popd %acc1
+    popd %acc2
     add %acc1, %acc1, %acc2
     jc :ump_carry
     mov %acc2, #0
@@ -260,8 +260,8 @@ def asm(code) UM+           // u u -- u cy or u u -- ud
 ump_carry:
     mov %acc2, #1
 ump_push_all:
-    PUSHD(%acc1)
-    PUSHD(%acc2)
+    pushd %acc1
+    pushd %acc2
     NEXT()
 end
 
@@ -281,10 +281,10 @@ def word(colon) DNEGATE     // d -- -d
 end
 
 def asm(code) -             // w w -- w
-    POPD(%acc2)
-    POPD(%acc1)
+    popd %acc2
+    popd %acc1
     sub %acc1, %acc1, %acc2
-    PUSHD(%acc1)
+    pushd %acc1
     NEXT()
 end
 
@@ -544,13 +544,21 @@ tcha1:
 end
 
 def word(colon) DEPTH       // -- n
-    SP@ SP0 @ SWAP - doLIT CELLSIZE /
+    // ATTENTION: The order of SP@ and SP0 need to be
+    // swapped if the stack grows downwards
+    SP@ SP0 @ - doLIT CELLSIZE /
     EXIT
 end
 
-def word(colon) PICK        // +n -- w
-    doLIT 1 + CELLS SP@ + @
-    EXIT
+def asm(code) PICK         // +n -- w
+    popd %acc1
+    sll %acc1, #2   // convert cells to bytes
+    pushr %dsp      // save %dsp so we can manipulate it
+    sub %dsp, %dsp, %acc1
+    popd %acc1      // get the n-th entry in data stack
+    popr %dsp       // restore %dsp
+    pushd %acc1
+    NEXT()
 end
 
 def word[IMMEDIATE](colon) ALIGNED // b -- a
