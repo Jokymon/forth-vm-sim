@@ -7,6 +7,15 @@
 
 const static size_t MEMORY_SIZE = 32768;
 
+class memory_access_error : public std::runtime_error {
+public:
+    memory_access_error(const std::string &message, uint32_t access_address,
+                        uint32_t maximum_address);
+    
+    uint32_t access_address;
+    uint32_t maximum_address;
+};
+
 class Memory {
 public:
     Memory();

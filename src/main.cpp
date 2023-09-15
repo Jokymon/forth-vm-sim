@@ -96,20 +96,26 @@ int main(int argc, char* argv[])
 
         } while ((input!="quit") && (input!="q"));
     } else {
-        auto res = vm.interpret(trace);
+        try {
+            auto res = vm.interpret(trace);
 
-        switch (res) {
-            case Vm::Error:
-                std::cout << "Error during byte code interpretation\n";
-                break;
+            switch (res) {
+                case Vm::Error:
+                    std::cout << "Error during byte code interpretation\n";
+                    break;
 
-            case Vm::Finished:
-                std::cout << "Byte code interpretation successful\n";
-                break;
+                case Vm::Finished:
+                    std::cout << "Byte code interpretation successful\n";
+                    break;
 
-            case Vm::IllegalInstruction:
-                std::cout << "Interpreter hit invalid instruction\n";
-                break;
+                case Vm::IllegalInstruction:
+                    std::cout << "Interpreter hit invalid instruction\n";
+                    break;
+            }
+        }
+        catch (memory_access_error& e) {
+            fmt::print("Memory access error during interpretation; accessing {:#x} which is beyond {:#x}\n",
+                       e.access_address, e.maximum_address);
         }
 
         if (dumpState) {

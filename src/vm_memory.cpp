@@ -3,6 +3,14 @@
 #include <iostream>
 #include <cassert>
 
+memory_access_error::memory_access_error(
+  const std::string &message, uint32_t access_address,
+  uint32_t maximum_address) 
+    : std::runtime_error(message)
+    , access_address(access_address)
+    , maximum_address(maximum_address)
+{ }
+
 Memory::Memory() {}
 
 Memory::Memory(std::initializer_list<uint8_t> l) :
@@ -19,17 +27,23 @@ uint8_t& Memory::operator[](size_t index) {
 }
 
 uint16_t Memory::get16(size_t address) const {
-    assert(address+1 < MEMORY_SIZE);
+    if (address+1 > MEMORY_SIZE) {
+        throw memory_access_error("Read 2 bytes outside available memory", address, MEMORY_SIZE);
+    }
     return (memory[address] | (memory[address+1] << 8));
 }
 
 uint32_t Memory::get32(size_t address) const {
-    assert(address+3 < MEMORY_SIZE);
+    if (address+3 > MEMORY_SIZE) {
+        throw memory_access_error("Read 4 bytes outside available memory", address, MEMORY_SIZE);
+    }
     return (memory[address] | (memory[address+1] << 8) | (memory[address+2] << 16) | (memory[address+3] << 24)); 
 }
 
 void Memory::put32(uint32_t address, uint32_t value) {
-    assert(address+3 < MEMORY_SIZE);
+    if (address+3 > MEMORY_SIZE) {
+        throw memory_access_error("Write 4 bytes outside available memory", address, MEMORY_SIZE);
+    }
     memory[address] = value & 0xff;
     memory[address+1] = (value >> 8) & 0xff;
     memory[address+2] = (value >> 16) & 0xff;
