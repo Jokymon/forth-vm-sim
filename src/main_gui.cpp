@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
     Memory return_stack;
     Vm vm{main_memory, data_stack, return_stack};
 
-    bool stacks_initialized = false;
     uint32_t dsp_top = 0x0;
     uint32_t rsp_bottom = 0x0;
     int current_item;
@@ -88,12 +87,6 @@ int main(int argc, char *argv[]) {
         if (ImGui::Button("Single Step")) {
             vm.singleStep();
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Reset stack")) {
-            dsp_top = registers.registers[Vm::Dsp];
-            rsp_bottom = registers.registers[Vm::Rsp];
-            stacks_initialized = true;
-        }
 
         ImGui::Text("Next instruction: %s", vm.disassembleAtPc().c_str());
 
@@ -118,11 +111,9 @@ int main(int argc, char *argv[]) {
             ImGui::Text("Data Stack");
             if (ImGui::BeginListBox("Data stack", ImVec2(ImGui::GetContentRegionAvail().x,
                                                          ImGui::GetContentRegionAvail().y * 0.5))) {
-                if (stacks_initialized) {
-                    for (uint32_t address=dsp_top; address>registers.registers[Vm::Dsp]; address-=4) {
-                        std::string entry_text = fmt::format("{:>8x}", main_memory.get32(address));
-                        ImGui::Selectable(entry_text.c_str(), false);
-                    }
+                for (uint32_t address=0; address<registers.registers[Vm::Dsp]; address+=4) {
+                    std::string entry_text = fmt::format("{:>8x}", data_stack.get32(address));
+                    ImGui::Selectable(entry_text.c_str(), false);
                 }
                 ImGui::EndListBox();
             };
@@ -130,11 +121,9 @@ int main(int argc, char *argv[]) {
             ImGui::Text("Return Stack");
             if (ImGui::BeginListBox("Return stack", ImVec2(ImGui::GetContentRegionAvail().x,
                                                          ImGui::GetContentRegionAvail().y))) {
-                if (stacks_initialized) {
-                    for (uint32_t address=rsp_bottom; address<registers.registers[Vm::Rsp]; address+=4) {
-                        std::string entry_text = fmt::format("{:>8x}", main_memory.get32(address));
-                        ImGui::Selectable(entry_text.c_str(), false);
-                    }
+                for (uint32_t address=0; address<registers.registers[Vm::Rsp]; address+=4) {
+                    std::string entry_text = fmt::format("{:>8x}", return_stack.get32(address));
+                    ImGui::Selectable(entry_text.c_str(), false);
                 }
                 ImGui::EndListBox();
             };
