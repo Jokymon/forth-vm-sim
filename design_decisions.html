@@ -52,6 +52,16 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#implementation-of-stacks">Implementation of stacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Problem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#options">Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#stacks-occupy-the-same-memory-as-all-other-data">(1) Stacks occupy the same memory as all other data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stacks-are-placed-in-dedicated-memories">(2) Stacks are placed in dedicated memories</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Solution</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -121,6 +131,104 @@ The next idea therefore is to somehow mark the jump with special sequence that w
 <li><p>Process for resolution is a little more complex than that for label resolution</p></li>
 </ul>
 </div>
+</div>
+</div>
+<div class="section" id="implementation-of-stacks">
+<h2>Implementation of stacks<a class="headerlink" href="#implementation-of-stacks" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 70%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Creation date</strong></p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Last update</strong></p></td>
+<td><p>12.9.2023</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Status</strong></p></td>
+<td><p>active</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="id1">
+<h3>Problem<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Forth uses two different stacks, the data stack and the return stack. For these
+stacks we need to provide corresponding memory somewhere and the stack pointers
+need to be initialised correctly. According to the Forth specification (citation
+needed) it is left to the implementation whether these stacks are in the same
+memory as dictionaries, <cite>TIB</cite> etc. or whether they use a separate memory.</p>
+<p>This allows for some freedoms in the implementation of such stacks in this
+Forth VM.</p>
+</div>
+<div class="section" id="options">
+<h3>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="stacks-occupy-the-same-memory-as-all-other-data">
+<h4>(1) Stacks occupy the same memory as all other data<a class="headerlink" href="#stacks-occupy-the-same-memory-as-all-other-data" title="Permalink to this headline">¶</a></h4>
+<p>In this variant, the implementor of a Forth has to reserve space in the
+data memory that is allocated to the corresponding stacks. Before the
+first stack operation is performed, they also need to initialise the stack
+pointers to point to a location inside this allocated memory.</p>
+<p><strong>Advantages</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The VM only needs one memory region that is used by everything in the
+implementation.</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Disadvantages</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The guiding idea of the VM was to allow for easy porting to different
+target systems. However when the stacks are placed in the same memory
+as the rest, required space and a location has to be assigned already
+when implementing a Forth system. These decisions are then fixed when
+doing the porting effort and are difficult to change.</p></li>
+<li><p>Because the stacks first have to be initialised by VM code, the
+debugger can’t easily determine where exactly the stack top/bottom is
+located.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="stacks-are-placed-in-dedicated-memories">
+<h4>(2) Stacks are placed in dedicated memories<a class="headerlink" href="#stacks-are-placed-in-dedicated-memories" title="Permalink to this headline">¶</a></h4>
+<p>In this variant, the data and return stacks are handled through dedicated
+memories. The stack pointers can simply be initialised to 0x0 and both
+stacks can simply grow upwards without losing generality when porting.</p>
+<p><strong>Advantages</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p>No special stack initialisation is necessary.</p></li>
+<li><p>Introspection into the stack gets easier for the debugger, because
+stacks can always grow in the same direction and it clear from the
+start, at what address the stack bottom is found.</p></li>
+</ul>
+</div></blockquote>
+<p><strong>Disadvantages</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><p>From the Forth perspective, access to the stack has to be handled
+through additional dedicated instructions.</p></li>
+<li><p>Operations that access specific elements on the stack either require a
+series of push and pop operations or additional, dedicated assembler
+instructions.</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>Solution<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>The decision was made for the <strong>(2) stacks in dedicated memories</strong> solution.
+The main reasons for this are the ease of stack handling from a debugging
+and initialisation perspective and the better portability to different
+target systems.</p>
+<p>For access to the stack, dedicated push and pop operations are implemented
+in the virtual machine.</p>
+<p>The push and pop operations are only implemented in the cell-sized version.
+When mixing byte- and cellsized operations on the stack, it could become
+difficult to keep track of whether the current top element is a byte or a
+word.</p>
 </div>
 </div>
 </div>

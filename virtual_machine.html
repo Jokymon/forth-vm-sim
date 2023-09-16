@@ -59,9 +59,11 @@
 <li class="toctree-l2"><a class="reference internal" href="#jmp-jump-unconditionally">JMP - Jump unconditionally</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jz-jump-if-zero">JZ - Jump if zero</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mov-move">MOV - Move</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pushd-popd-pushr-popr-stack-operations">PUSHD, POPD, PUSHR, POPR - Stack operations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nop-no-operation">NOP - No Operation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#or-arithmetic-or">OR - Arithmetic or</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sra-shift-right-arithmetically">SRA - Shift Right Arithmetically</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sll-shift-left-logically">SLL - Shift Left Logically</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sub-subtract">SUB - Subtract</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#xor-arithmetic-exclusive-or">XOR - Arithmetic exclusive or</a></li>
 </ul>
@@ -700,6 +702,45 @@ example in the following instruction</p>
 </div>
 <p>the immediate value <code class="docutils literal notranslate"><span class="pre">0x12345678</span></code> is stored into the <code class="docutils literal notranslate"><span class="pre">%acc1</span></code> register.</p>
 </div>
+<div class="section" id="pushd-popd-pushr-popr-stack-operations">
+<h2>PUSHD, POPD, PUSHR, POPR - Stack operations<a class="headerlink" href="#pushd-popd-pushr-popr-stack-operations" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>A0 + <cite>/reg</cite></p></td>
+<td><p>PUSHD <cite>regi</cite></p></td>
+<td><p>Push register to the data stack</p></td>
+</tr>
+<tr class="row-odd"><td><p>A8 + <cite>/reg</cite></p></td>
+<td><p>POPD <cite>regi</cite></p></td>
+<td><p>Pop top of data stack into register</p></td>
+</tr>
+<tr class="row-even"><td><p>B0 + <cite>/reg</cite></p></td>
+<td><p>PUSHR <cite>regi</cite></p></td>
+<td><p>Push register to the return stack</p></td>
+</tr>
+<tr class="row-odd"><td><p>B8 + <cite>/reg</cite></p></td>
+<td><p>POPR <cite>regi</cite></p></td>
+<td><p>Pop top of return stack into register</p></td>
+</tr>
+</tbody>
+</table>
+<p>The virtual machine features two separate memory regions for the data and return
+stacks. Data is moved to and form these stacks using <cite>push</cite> and <cite>pop</cite> instructions.
+The related stack (data or return) is indicated by a one-letter suffix on the
+corresponding instructions - a <cite>d</cite> for the data stack, an <cite>r</cite> for the return stack.
+Stack operations only support 32-bit values.</p>
+</div>
 <div class="section" id="nop-no-operation">
 <h2>NOP - No Operation<a class="headerlink" href="#nop-no-operation" title="Permalink to this headline">¶</a></h2>
 <table class="colwidths-given docutils align-default">
@@ -772,6 +813,29 @@ affected individually.</p>
 <p>Shift the given register arithmetically right by the given 5-bit immediate value.
 It shifts the most significant bit, number 31, into the following less significant
 bits.</p>
+</div>
+<div class="section" id="sll-shift-left-logically">
+<h2>SLL - Shift Left Logically<a class="headerlink" href="#sll-shift-left-logically" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 23%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Opcode</p></th>
+<th class="head"><p>Mnemonic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>3E <cite>/ri5</cite></p></td>
+<td><p>SLL.W <cite>reg</cite>, <cite>imm5</cite></p></td>
+<td><p>Logically shift the given register left by the given amount</p></td>
+</tr>
+</tbody>
+</table>
+<p>Shift the given register logically left by the given 5-bit immediate value.</p>
 </div>
 <div class="section" id="sub-subtract">
 <h2>SUB - Subtract<a class="headerlink" href="#sub-subtract" title="Permalink to this headline">¶</a></h2>

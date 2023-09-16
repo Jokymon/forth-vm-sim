@@ -383,6 +383,30 @@ example in the following instruction
 
 the immediate value ``0x12345678`` is stored into the ``%acc1`` register.
 
+PUSHD, POPD, PUSHR, POPR - Stack operations
+-------------------------------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-------------+--------------+---------------------------------------+
+    | Opcode      | Mnemonic     | Description                           |
+    +=============+==============+=======================================+
+    | A0 + `/reg` | PUSHD `regi` | Push register to the data stack       |
+    +-------------+--------------+---------------------------------------+
+    | A8 + `/reg` | POPD `regi`  | Pop top of data stack into register   |
+    +-------------+--------------+---------------------------------------+
+    | B0 + `/reg` | PUSHR `regi` | Push register to the return stack     |
+    +-------------+--------------+---------------------------------------+
+    | B8 + `/reg` | POPR `regi`  | Pop top of return stack into register |
+    +-------------+--------------+---------------------------------------+
+
+The virtual machine features two separate memory regions for the data and return
+stacks. Data is moved to and form these stacks using `push` and `pop` instructions.
+The related stack (data or return) is indicated by a one-letter suffix on the
+corresponding instructions - a `d` for the data stack, an `r` for the return stack.
+Stack operations only support 32-bit values.
+
 NOP - No Operation
 ------------------
 
@@ -428,6 +452,20 @@ SRA - Shift Right Arithmetically
 Shift the given register arithmetically right by the given 5-bit immediate value.
 It shifts the most significant bit, number 31, into the following less significant
 bits.
+
+SLL - Shift Left Logically
+--------------------------
+
+.. table::
+    :widths: 15 25 70
+
+    +-----------+---------------------+-------------------------------------------------------------+
+    | Opcode    | Mnemonic            | Description                                                 |
+    +===========+=====================+=============================================================+
+    | 3E `/ri5` | SLL.W `reg`, `imm5` | Logically shift the given register left by the given amount |
+    +-----------+---------------------+-------------------------------------------------------------+
+
+Shift the given register logically left by the given 5-bit immediate value.
 
 SUB - Subtract
 --------------
