@@ -367,6 +367,10 @@ def asm(uservar) CP
     USER_OFFSET(:u_ctop)
 end
 
+def asm(uservar) LAST
+    USER_OFFSET(:u_lastn)
+end
+
 // -------------------------------------------------------------------
 // Comparison
 

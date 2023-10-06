@@ -96,8 +96,10 @@ u_handler:
     // DW	0			;CURRENT pointer
     // DW	0			;vocabulary link pointer
 u_ctop:
-    dw :testw_end   // CP
+    dw :__last_end  // CP (next available location in code dict)
+    // NP is not used in this implementation of eForth
     // DW	NTOP			;NP
-    // DW	LASTN			;LAST
+u_lastn:
+    dw :__last_cfa  // LAST
 ulast:
 end
