@@ -936,6 +936,23 @@ class TestCodeDefinitions:
         result = assemble(source)
         assert result[0:4] == b"\x0e\x00\x00\x00"
 
+    def test_last_word_in_dictionary_is_available(self):
+        source = """
+        codeblock
+            dw :__last_cfa
+        end
+        // code offset 0x4
+        def asm(code) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        // code offset 14
+        def asm(code) WORD2
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x18\x00\x00\x00"
+
 
 class TestWordDefinitions:
     def test_word_definition_starts_with_backlink(self):
@@ -1243,6 +1260,23 @@ class TestWordDefinitions:
         """
         result = assemble(source)
         assert result[11:15] == b"\xff\xff\xff\xff"
+
+    def test_last_word_in_dictionary_is_available(self):
+        source = """
+        codeblock
+            dw :__last_cfa
+        end
+        // code offset 0x4
+        def word(colon) WORD1
+            // backlink (4) + word size (1) + word name (5)
+        end
+        // code offset 14
+        def word(colon) WORD2
+            // backlink (4) + word size (1) + word name (5)
+        end
+        """
+        result = assemble(source)
+        assert result[0:4] == b"\x18\x00\x00\x00"
 
 
 class TestCustomWordTypes:

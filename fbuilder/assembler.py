@@ -38,6 +38,8 @@ class VmForthAssembler(Interpreter):
             return 0x0
 
     def start(self, tree):
+        self.emitter.mark_label("__last_cfa")
+        self.emitter.mark_label("__last_end")
         self.visit_children(tree)
 
         self.emitter.finalize()
@@ -71,6 +73,7 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for the word and the alias
         self.emitter.mark_label(word_name.lower() + "_cfa")
+        self.emitter.mark_label("__last_cfa")
         self.word_addresses[word_name] = \
             self.emitter.get_current_code_address()
         if alias_name != "":
@@ -87,6 +90,7 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
+        self.emitter.mark_label("__last_end")
         if alias_name != "":
             self.emitter.mark_label(alias_name.lower() + "_end")
 
@@ -130,6 +134,7 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for the word and the alias
         self.emitter.mark_label(word_name.lower() + "_cfa")
+        self.emitter.mark_label("__last_cfa")
         self.word_addresses[word_name] = \
             self.emitter.get_current_code_address()
         if alias_name != "":
@@ -146,6 +151,7 @@ class VmForthAssembler(Interpreter):
 
         # creating a label for address after word
         self.emitter.mark_label(word_name.lower() + "_end")
+        self.emitter.mark_label("__last_end")
         if alias_name != "":
             self.emitter.mark_label(alias_name.lower() + "_end")
 

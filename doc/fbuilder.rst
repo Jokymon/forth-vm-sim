@@ -75,3 +75,15 @@ The **lines 19-21** define the text data that we want to output.
 
 The codeblock is compiled to memory location ``0x0`` in the generated binary image. This
 image can then be loaded by the virtual machine which starts running at address ``0x0``.
+
+Labels
+------
+
+Special Labels
+~~~~~~~~~~~~~~
+
+The FBuilder provides a set of automatically updated special labels. To easily access the
+last word defined in the dictionary and use it in code, the FBuilder provides that
+`__last_`-labels. Just as with any other label marking parts of a word definition, these
+"last"-labels provide access to the CFA of the last word through `__last_cfa` and to the
+address right after the last word through `__last_end`.
