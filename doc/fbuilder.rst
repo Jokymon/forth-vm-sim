@@ -80,10 +80,38 @@ Labels
 ------
 
 Special Labels
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
-The FBuilder provides a set of automatically updated special labels. To easily access the
-last word defined in the dictionary and use it in code, the FBuilder provides that
-`__last_`-labels. Just as with any other label marking parts of a word definition, these
-"last"-labels provide access to the CFA of the last word through `__last_cfa` and to the
-address right after the last word through `__last_end`.
+For every word defined as assembly word (`def asm` words) or as Forth word (`def word`
+words), the FBuilder generates a set of labels to allow for easier access to the
+various fields of a word. For example if you defined a word like this:
+
+```
+def word(colon) WORDNAME
+    // .... definition of the word
+end
+```
+
+you can use the following labels anywhere in the assembly code to access the
+corresponding fields:
+
+.. table::
+    :widths: 30 20 40
+
+    +-----------------+--------+-------------------------------------------------------------+
+    | Label           | Suffix | Purpose                                                     |
+    +=================+========+=============================================================+
+    | `_wordname_nfa` | `_nfa` | First address of the name field of `WORDNAME`               |
+    +-----------------+--------+-------------------------------------------------------------+
+    | `_wordname_cfa` | `_cfa` | First address of the code field of `WORDNAME`               |
+    +-----------------+--------+-------------------------------------------------------------+
+    | `_wordname_end` | `_end` | First address after the end of the definition of `WORDNAME` |
+    +-----------------+--------+-------------------------------------------------------------+
+
+Additionally, the FBuilder provides a set of automatically updated special labels. To
+easily access the last word defined in the dictionary and use it in code, the FBuilder 
+provides the `__last_`-labels. Just as with any other label marking parts of a word
+definition, these "last"-labels provide access to the CFA, NFA etc. of the last word
+through `__last_cfa` and to the address right after the last word through `__last_end`.
+
+Expressions

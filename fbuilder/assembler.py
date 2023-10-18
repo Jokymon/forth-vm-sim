@@ -68,6 +68,8 @@ class VmForthAssembler(Interpreter):
             word_name = str(tree.children[next_index + 2])
         else:
             word_name = str(tree.children[next_index])
+        self.emitter.mark_label(word_name.lower() + "_nfa")
+        self.emitter.mark_label("__last_nfa")
         self.emitter.emit_data_8(len(word_name) | flags)
         self.emitter.emit_data_string(word_name)
 
@@ -129,6 +131,8 @@ class VmForthAssembler(Interpreter):
             word_name = str(tree.children[next_index + 2])
         else:
             word_name = str(tree.children[next_index])
+        self.emitter.mark_label(word_name.lower() + "_nfa")
+        self.emitter.mark_label("__last_nfa")
         self.emitter.emit_data_8(len(word_name) | flags)
         self.emitter.emit_data_string(word_name)
 
