@@ -86,11 +86,11 @@ For every word defined as assembly word (`def asm` words) or as Forth word (`def
 words), the FBuilder generates a set of labels to allow for easier access to the
 various fields of a word. For example if you defined a word like this:
 
-```
+.. code-block:: fvs
+
 def word(colon) WORDNAME
     // .... definition of the word
 end
-```
 
 you can use the following labels anywhere in the assembly code to access the
 corresponding fields:
