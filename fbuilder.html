@@ -44,6 +44,10 @@
 <li class="toctree-l1"><a class="reference internal" href="forth.html">Forth overview</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">FBuilder</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#an-example">An Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#labels">Labels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#special-labels">Special Labels</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="virtual_machine.html">VM Internals</a></li>
@@ -157,6 +161,58 @@ next character.</p>
 <p>The <strong>lines 19-21</strong> define the text data that we want to output.</p>
 <p>The codeblock is compiled to memory location <code class="docutils literal notranslate"><span class="pre">0x0</span></code> in the generated binary image. This
 image can then be loaded by the virtual machine which starts running at address <code class="docutils literal notranslate"><span class="pre">0x0</span></code>.</p>
+</div>
+<div class="section" id="labels">
+<h2>Labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="special-labels">
+<h3>Special Labels<a class="headerlink" href="#special-labels" title="Permalink to this headline">¶</a></h3>
+<p>For every word defined as assembly word (<cite>def asm</cite> words) or as Forth word (<cite>def word</cite>
+words), the FBuilder generates a set of labels to allow for easier access to the
+various fields of a word. For example if you defined a word like this:</p>
+<div class="highlight-fvs notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>def word(colon) WORDNAME</dt><dd><p>// …. definition of the word</p>
+</dd>
+</dl>
+<p>end</p>
+<p>you can use the following labels anywhere in the assembly code to access the
+corresponding fields:</p>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 22%" />
+<col style="width: 44%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Label</p></th>
+<th class="head"><p>Suffix</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><cite>_wordname_nfa</cite></p></td>
+<td><p><cite>_nfa</cite></p></td>
+<td><p>First address of the name field of <cite>WORDNAME</cite></p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>_wordname_cfa</cite></p></td>
+<td><p><cite>_cfa</cite></p></td>
+<td><p>First address of the code field of <cite>WORDNAME</cite></p></td>
+</tr>
+<tr class="row-even"><td><p><cite>_wordname_end</cite></p></td>
+<td><p><cite>_end</cite></p></td>
+<td><p>First address after the end of the definition of <cite>WORDNAME</cite></p></td>
+</tr>
+</tbody>
+</table>
+<p>Additionally, the FBuilder provides a set of automatically updated special labels. To
+easily access the last word defined in the dictionary and use it in code, the FBuilder
+provides the <cite>__last_</cite>-labels. Just as with any other label marking parts of a word
+definition, these “last”-labels provide access to the CFA, NFA etc. of the last word
+through <cite>__last_cfa</cite> and to the address right after the last word through <cite>__last_end</cite>.</p>
+<p>Expressions</p>
+</div>
 </div>
 </div>
 

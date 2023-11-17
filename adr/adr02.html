@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choice of programming languages &mdash; Forth virtual machine  documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="https://wavedrom.com/skins/default.js"></script>
+        <script src="https://wavedrom.com/wavedrom.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Forth virtual machine
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../system_overview.html">System Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../forth.html">Forth overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fbuilder.html">FBuilder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virtual_machine.html">VM Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design_decisions.html">Design decisions</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Forth virtual machine</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Choice of programming languages</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/adr/adr02.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="choice-of-programming-languages">
+<h1>Choice of programming languages<a class="headerlink" href="#choice-of-programming-languages" title="Permalink to this headline">¶</a></h1>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 70%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Creation date</strong></p></td>
+<td><p>None</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Last update</strong></p></td>
+<td><p>6.7.2023</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Status</strong></p></td>
+<td><p>active</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="problem">
+<h2>Problem<a class="headerlink" href="#problem" title="Permalink to this headline">¶</a></h2>
+<p>For the implementation of the virtual machine and the assembler, fitting
+programming languages need to be chosen. Since this project is pretty
+much free standing and has no dependencies on any other library, framework
+or application and since there will most likely only ever be one developer,
+the constraints aren’t very tight.</p>
+</div>
+<div class="section" id="options">
+<h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
+<p><strong>C++</strong> is a compiled, system level, mixed paradigm programming language. It is
+well suited for high performance applications and for embedded software development
+with ressource constraints. The main developer is very familiar with this language
+and has used it for over a decade so far.</p>
+<p><strong>Python</strong> is a compiled/interpreted, VM-based, object oriented scripting language.
+It is well suited for fast prototyping and is widely spread in the AI/ML community.
+The main developer is very familiar with this language and has used it for over a
+decade so far.</p>
+<p><strong>Rust</strong> is a compiled, system level, mixed paradigm programming language. It is
+well suited for security sensible and high performance applications. It also
+allows for bare metal embedded programming using a reduced standard library.
+The main developer is fairly familiar with this language but has never developed
+any major application with it.</p>
+<p><strong>Java</strong> is a compiled mixed paradigm programming language running on a virtual
+machine. It is well suited for platform independent backend programming.
+The main developer is fairly familiar with this language but has never developed
+any major application with it.</p>
+<p><strong>JavaScript</strong> Is an interpreted, object oriented programming language running in
+a virtual machine, usually inside a browser. It is the goto-language for web
+applications and allows for platform independent programming.
+The main developer is familiar with the core concepts of the language and has
+implemented a few very small web applications that involve some JavaScript code.</p>
+<p><strong>C#</strong> Is a compiled language running on a virtual machine similar to Java. It
+is also well suited for platform independent software development.
+The main developer has never written any C# code and is mostly unfamiliar with
+the language.</p>
+<p><strong>Many others.</strong> Beyond the languages listed above, many more languages would be
+potential candidates for this project. However since the main developer is not very
+or not at all familiar with them, they were excluded from the beginning.</p>
+</div>
+<div class="section" id="solution">
+<h2>Solution<a class="headerlink" href="#solution" title="Permalink to this headline">¶</a></h2>
+<p>Because the focus of this project was to explore Forth systems, the
+implementation languages should not put too much burden on the development.
+Therefore languages familiar to the main developer were chosen.</p>
+<p><strong>C++ and Python</strong></p>
+<p>The reasoning for chosing C++ for the virtual machine was, that it would be
+closer to any target system (closer to C/machine language) and that it could
+potentially even be used to port this entire system to a small MCU.</p>
+<p>The reasoning for chosing Python for the assembler was, that Python is very
+well suited for string/language processing and due to its scripting nature,
+allows for very fast development cycles.</p>
+</div>
+</div>
+
+    <script type="text/javascript">
+        function init() {
+            WaveDrom.ProcessAll();
+        }
+        window.onload = init;
+    </script>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Silvan Wegmann.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
