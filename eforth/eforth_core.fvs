@@ -374,6 +374,15 @@ end
 // -------------------------------------------------------------------
 // Comparison
 
+def word(colon) 0=      // w -- t
+    ?BRANCH :zeq
+    doLIT 0
+    EXIT
+zeq:
+    doLIT -1
+    EXIT
+end
+
 def word(colon) alias EQUAL =  // w w -- t
     XOR
     ?BRANCH :equ1

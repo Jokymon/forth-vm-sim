@@ -13,6 +13,11 @@ import subprocess
 import tempfile
 
 
+# Forth constants
+TRUE = -1
+FALSE = 0
+
+
 def passmein(func):
     def wrapper(*args, **kwargs):
         return func(func, *args, **kwargs)
@@ -64,6 +69,8 @@ def run_vm_image(word_under_test, input_data=None, test_data=[]):
                     keyboard.press_and_release(ch)
                 time.sleep(0.00001)
         output = proc.stdout.read()
+        if "Vm hit illegal instruction" in output.decode(encoding="utf-8"):
+            raise RuntimeError("VM execution failed")
     os.remove(image.name)
     return get_stack(output)
 
@@ -294,8 +301,25 @@ def test_rp0_returns_return_stack_base_address(me):
     assert len(stack) == 1
     assert stack[0] == 0x0
 
+
 # ------------------------
 # Comparison
+@passmein
+def test_equal_zero_returns_true_on_zero(me):
+    """doLIT 0 0="""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == TRUE
+
+
+@passmein
+def test_equal_zero_returns_false_on_non_zero(me):
+    """doLIT 134 0="""
+    stack = run_vm_image(me.__doc__)
+
+    assert len(stack) == 1
+    assert stack[0] == FALSE
 
 
 @passmein
