@@ -333,6 +333,11 @@ def asm(uservar) 'EXPECT
     USER_OFFSET(:u_texpect)
 end
 
+// Storage of the radix base for numeric I/O.
+def asm(uservar) BASE
+    USER_OFFSET(:u_base)
+end
+
 def asm(uservar) temp
     USER_OFFSET(:u_temp)
 end
@@ -586,6 +591,12 @@ def word(colon) HERE    // -- a
     EXIT
 end
 
+// Return the address of a temporary buffer
+def word(colon) PAD     // -- a
+    HERE doLIT 80 +
+    EXIT
+end
+
 def word(colon) TIB     // -- a
     #TIB CELL+ @
     EXIT
@@ -624,15 +635,121 @@ def word(colon) PACK$   // b u a -- a
 end
 
 // -------------------------------------------------------------------
+// Numeric Output
+
+// Convert digit u to a character
+def word(colon) DIGIT           // u - c
+    doLIT 9 OVER < doLIT 7 AND + doLIT 48 +     // 48 is character '0'
+    EXIT
+end
+
+// Extract the least significat digit from n
+def word(colon) EXTRACT         // n base -- n c
+    doLIT 0 SWAP UM/MOD
+    SWAP DIGIT
+    EXIT
+end
+
+// Initiate the numeric output process
+def word(colon) <#              // --
+    PAD HLD !
+    EXIT
+end
+
+// Insert a character into the numeric output string
+def word(colon) HOLD            // c --
+    HLD @ doLIT 1 -
+    DUP HLD ! C!
+    EXIT
+end
+
+// Extract one digit from u and append the digit to output string
+def word(colon) #               // u -- u
+    BASE @ EXTRACT HOLD
+    EXIT
+end
+
+// Convert u until all digits are added to the output string
+def word(colon) #S
+digs1:
+    # DUP
+    ?BRANCH :digs2
+    BRANCH :digs1
+digs2:
+    EXIT
+end
+
+// Add a minus sign to the numeric output string
+def word(colon) SIGN            // n --
+    0<
+    ?BRANCH :sign1
+    doLIT 45 HOLD               // put '-' in hold
+sign1:
+    EXIT
+end
+
+// Prepare the output string to be TYPE'd
+def word(colon) #>              // w -- b u
+    DROP HLD @ PAD OVER -
+    EXIT
+end
+
+// Convert a signed integer to a numeric string
+def word(colon) str
+    DUP >R ABS
+    <# #S R> SIGN #>
+    EXIT
+end
+
+// Use radix 16 as base for numeric conversions
+def word(colon) HEX             // --
+    doLIT 16 BASE !
+    EXIT
+end
+
+// Use radix 10 as base for numeric conversions
+def word(colon) DECIMAL         // --
+    doLIT 10 BASE !
+    EXIT
+end
+
+
+// -------------------------------------------------------------------
 // Basic I/O
 
-def word(colon) KEY
+// Return input character and true or a false if no input
+def word(colon) KEY?    // -- c T | F
+    // TODO: This should actualy return immediately
     '?KEY @EXECUTE
     EXIT
 end
 
-def word(colon) EMIT
+// wait for and return an input character
+def word(colon) KEY     // -- c
+    '?KEY @EXECUTE
+    EXIT
+end
+
+// send a character to the output device
+def word(colon) EMIT    // c --
     'EMIT @EXECUTE
+    EXIT
+end
+
+// send the blank character to the output device
+def word(colon) SPACE   // --
+    BL EMIT
+    EXIT
+end
+
+// send n spaces to the output device
+def word(colon) SPACES  // +n --
+    doLIT 0 MAX >R
+    BRANCH :char2
+char1:
+    SPACE
+char2:
+    next :char1
     EXIT
 end
 
@@ -641,18 +758,20 @@ def word(colon) ECHO
     EXIT
 end
 
-def word(colon) do$     // -- a
-    // TODO: COMPILE-ONLY
+// Return the address of a compiled string
+def word[COMPILE_ONLY](colon) do$     // -- a
     R> R@ R> COUNT + ALIGNED >R
     SWAP >R
     EXIT
 end
 
+// Runtime routine compiled by $". Return address of a compiled string
 def word(colon) alias STRQP $"| // -- a
     do$
     EXIT
 end
 
+// output u characters from b
 def word(colon) TYPE    // b u --
     >R
     BRANCH :type2
@@ -662,6 +781,53 @@ type1:
 type2:
     next :type1
     DROP
+    EXIT
+end
+
+def word(colon) .$      // a --
+    COUNT TYPE EXIT
+end
+
+// Runtime routine of ." Output a compiled string
+def word[COMPILE_ONLY](colon) alias DOTQP ."|   // --
+    do$ .$
+    EXIT
+end
+
+// output a carriage return and a line feed
+def word(colon) CR      // --
+    doLIT 13 EMIT
+    doLIT 10 EMIT
+    EXIT
+end
+
+// Display an integer in a field of n columns, right justified
+def word(colon) .R      // n +n --
+    >R str R> OVER -
+    SPACES TYPE
+    EXIT
+end
+
+// Display an unsigned integer in n column, right justified
+def word(colon) U.R     // u +n --
+    >R <# #S #> R> OVER -
+    SPACES TYPE
+    EXIT
+end
+
+// Display an unsigned integer in free format
+def word(colon) U.      // u --
+    <# #S #> SPACE TYPE
+    EXIT
+end
+
+// Display an integer in free format, preceeded by a space
+def word(colon) .       // w --
+    BASE @ doLIT 10 XOR // is it decimal?
+    ?BRANCH :dot1
+    U. EXIT             // no, display unsigned
+dot1:
+    str SPACE TYPE      // yes, display signed
     EXIT
 end
 

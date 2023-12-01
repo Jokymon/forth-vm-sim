@@ -614,6 +614,37 @@ def test_stringQuoteBar_leaves_string_address_on_stack(me):
     assert stack[0] == stack[1]
 
 
+@passmein
+def test_say_hello(me):
+    """PRE_INIT_DATA doLIT 5 TYPE"""
+    parse_input = "Hello"
+    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+    # TODO: capture stdout to check for 'Hello'
+
+
+@passmein
+def test_print_right_justified_number(me):
+    """doLIT 123 doLIT 5 .R"""
+    stack = run_vm_image(me.__doc__)
+    # TODO: capture stdout to check for '  123'
+
+
+@passmein
+def test_dot_outputs_unsigned_number_with_space_in_front(me):
+    """doLIT 4352 ."""
+    stack = run_vm_image(me.__doc__)
+    # TODO: capture stdout to check for ' 4352'
+
+
+@passmein
+def test_dot_outputs_signed_number_with_space_and_sign_in_front(me):
+    """doLIT -4352 ."""
+    stack = run_vm_image(me.__doc__)
+    # TODO: capture stdout to check for ' -4352'
+
+
+# ------------------------
+
 # ------------------------
 # parse
 # In these tests, we always put PRE_INIT_DATA at the

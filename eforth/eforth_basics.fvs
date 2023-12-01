@@ -86,10 +86,8 @@ u_temit:
 u_texpect:
     dw :accept_cfa  // 'EXPECT
     dw :ktap_cfa    // 'TAP
-    // DW	KTAP			;'TAP
-    // DW	TXSTO			;'ECHO
-    // DW	DOTOK			;'PROMPT
-    // DW	BASEE			;BASE
+u_base:
+    dw BASEE        // BASE
 u_temp:
     dw #0           // tmp
 u_span:
