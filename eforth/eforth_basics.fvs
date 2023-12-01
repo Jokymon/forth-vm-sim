@@ -38,6 +38,21 @@ end
 // -----------------------------------------------------------
 // constants
 
+const COMPO = 0x40
+const MASKK = 0x7f1f
+const LENMASK = 0x1f
+
+const BASEE = 10        // default radix
+
+const BKSPP = 8
+const LF = 10
+const CRR = 13
+const ERR = 27
+
+const LF = 10
+const CRR = 13
+const ERR = 27
+
     // Setup the memory layout
     // +------------+------------+--------------+----------------+-------------+
     // | Dictionary |                           | User Variables | I/O Buffers |
@@ -45,7 +60,7 @@ end
     //  16k           4k           4k             4k               4k
     //   -->
 
-const TIBB = 0x3000
+const TIBB = 0x3000         // terminal input buffer (TIB)
 
 // flags
 const COMPILE_ONLY = 0x40
