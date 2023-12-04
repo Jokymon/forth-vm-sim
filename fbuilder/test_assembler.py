@@ -71,6 +71,20 @@ def test_ifkt_is_translated_with_16bit_argument():
     assert binary == assemble(source)
 
 
+def test_duplicate_label_raises_exception():
+    source = """
+    codeblock
+    label1:
+    label1:
+    end
+    """
+
+    with pytest.raises(ValueError) as parsing_error:
+        assemble(source)
+    assert "on line 4" in str(parsing_error)
+    assert "duplicate label 'label1'" in str(parsing_error)
+
+
 class TestAssemblingMacros:
     def test_calling_macros_inserts_the_code(self):
         source = """

@@ -30,6 +30,7 @@ class VmForthAssembler(Interpreter):
 
         self.emitter = emitter
         self.symbol_table = symbol_table
+        self.labels = set()
 
     def _get_cfa_from_word(self, word):
         if word in self.word_addresses:
@@ -304,6 +305,10 @@ class VmForthAssembler(Interpreter):
         label_name = str(tree.children[0])
         if label_name[0] == "'":
             label_name += f"_{self.macro_call_number}"
+        if label_name in self.labels:
+            raise ValueError(f"duplicate label '{label_name}' on line {tree.children[0].line}")
+        else:
+            self.labels.add(label_name)
         self.emitter.mark_label(label_name)
 
     def word(self, tree):
