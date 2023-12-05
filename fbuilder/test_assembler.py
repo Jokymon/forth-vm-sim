@@ -1,5 +1,5 @@
-from assembler import *
-from app import Assembler
+from fbuilder.assembler import aligned
+from fbuilder.app import Assembler
 from dataclasses import dataclass
 import pytest
 

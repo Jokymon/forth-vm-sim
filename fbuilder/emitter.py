@@ -1,4 +1,5 @@
-from operands import *
+from fbuilder.operands import JMP_COND_ZERO
+from fbuilder.operands import ExpressionOperand, JumpOperand, NumberOperand, RegisterOperand
 import struct
 
 NOP = 0x00
@@ -219,9 +220,11 @@ class MachineCodeEmitter:
             self._insert_expression_marker(source)
         elif isinstance(source, NumberOperand):
             if target.name == "acc1":
-                self.binary_code += struct.pack("<BI", MOVI_ACC1, source.number)
+                self.binary_code += struct.pack("<BI", MOVI_ACC1,
+                                                source.number)
             elif target.name == "acc2":
-                self.binary_code += struct.pack("<BI", MOVI_ACC2, source.number)
+                self.binary_code += struct.pack("<BI", MOVI_ACC2,
+                                                source.number)
             else:
                 raise ValueError(f"immediate value can only be moved to acc1 or acc2 on line {target.line_no}")
         elif target.is_("increment") or target.is_("decrement") or \
@@ -260,8 +263,8 @@ class MachineCodeEmitter:
                 indirect_target = 0x8
             if source.is_indirect:
                 indirect_source = 0x8
-            self.binary_code += struct.pack("BB", opcode,
-                (source.encoding | indirect_source) | (target.encoding | indirect_target) << 4)
+            self.binary_code += struct.pack("BB", opcode, 
+                                            (source.encoding | indirect_source) | (target.encoding | indirect_target) << 4)
 
     def emit_stack_op(self, operation: str, stack: str, register):
         if stack == "d":

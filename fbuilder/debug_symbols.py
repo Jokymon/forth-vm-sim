@@ -3,7 +3,7 @@ class WordCollection:
         self.word_ranges = []
 
     def add_word(self, word, start, end):
-        self.word_ranges.append( (word, start, end) )
+        self.word_ranges.append((word, start, end))
 
     def clear(self):
         self.word_ranges.clear()

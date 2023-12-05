@@ -1,12 +1,13 @@
 import pathlib
 from lark import Lark
 from lark.lexer import Lexer, LexerState
-from assembler import VmForthAssembler
-from emitter import MachineCodeEmitter, DisassemblyEmitter
-from debug_symbols import WordCollection
+from .assembler import VmForthAssembler
+from .emitter import MachineCodeEmitter, DisassemblyEmitter
+from .debug_symbols import WordCollection
 
 
-# Recursive lexer idea copied from https://gist.github.com/MegaIng/c6abba4d9be87473d8d586734f2b39c9
+# Recursive lexer idea copied from
+# https://gist.github.com/MegaIng/c6abba4d9be87473d8d586734f2b39c9
 # and adapted slightly
 class RecursiveLexerThread:
     def __init__(self, lexer: Lexer, lexer_state: LexerState):
@@ -30,7 +31,8 @@ class RecursiveLexerThread:
                     name = token.value.split()[-1]  # get just the string
                     name = name[1:-1]  # Remove "
                     include_file = pathlib.Path(name)
-                    self.state_stack.append(LexerState(include_file.read_text()))
+                    self.state_stack.append(
+                        LexerState(include_file.read_text()))
                 yield token  # The parser still expects this token either way
 
 
@@ -59,7 +61,8 @@ class Assembler:
         script_dir = pathlib.Path(__file__).parent
         lark_grammar_path = script_dir / "grammar.lark"
         grammar = lark_grammar_path.read_text()
-        lark_parser = Lark(grammar, parser='lalr', _plugins={"LexerThread": RecursiveLexerThread})
+        lark_parser = Lark(grammar, parser='lalr',
+                           _plugins={"LexerThread": RecursiveLexerThread})
 
         parse_tree = lark_parser.parse(source_code)
 

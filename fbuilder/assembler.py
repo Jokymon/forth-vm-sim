@@ -1,5 +1,9 @@
-from operands import *
-from emitter import *
+from fbuilder.operands import (Operand, StringOperand, NumberOperand,
+                               RegisterOperand, JumpOperand, ExpressionOperand,
+                               FlagList)
+from fbuilder.operands import JMP_COND_ZERO, JMP_COND_CARRY
+#from fbuilder.emitter import *
+
 from lark import Token
 from lark.visitors import Interpreter
 
@@ -352,9 +356,10 @@ class VmForthAssembler(Interpreter):
         if all(isinstance(element, Operand) and element.is_constant() for element in elements):
             value = self.visit(tree.children[0])
             expression_rest = tree.children[1:]
-            for operator, value_node in zip(expression_rest[::2], expression_rest[1::2]):
+            for operator, value_node in zip(expression_rest[::2],
+                                            expression_rest[1::2]):
                 operand = self.visit(value_node)
-                if str(operator)=="+":
+                if str(operator) == "+":
                     value.number += operand.number
                 else:
                     value.number -= operand.number

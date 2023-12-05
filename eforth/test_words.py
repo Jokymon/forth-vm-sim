@@ -1,8 +1,4 @@
-import sys
-sys.path.append("fbuilder")
-
-from assembler import *
-from app import Assembler
+from fbuilder.app import Assembler
 import keyboard
 import time
 
@@ -74,8 +70,8 @@ def run_vm_image(word_under_test, input_data=None, test_data=[]):
     os.remove(image.name)
     return get_stack(output)
 
-# ---------------------------------------------
 
+# ---------------------------------------------
 @passmein
 def test_infrastructure_for_test_data(me):
     """PRE_INIT_DATA DUP C@ SWAP doLIT 1 + C@"""
@@ -86,8 +82,8 @@ def test_infrastructure_for_test_data(me):
     assert stack[1] == 0xa6
     assert stack[0] == 0x53
 
-# ---------------------------------------------
 
+# ---------------------------------------------
 @passmein
 def test_doLIT_pushes_value_on_the_stack(me):
     """doLIT 42"""
@@ -135,9 +131,9 @@ begin:
     assert len(stack) == 1
     assert stack[0] == 4
 
+
 # -----------------------------------------------------
 # memory fetch & store
-
 @passmein
 def test_c_at_gets_value_at_address(me):
     """doLIT 0x12345678 doLIT 0x7000 !
@@ -161,9 +157,9 @@ def test_lt_zero_returns_true_for_negative_numbers(me):
     stack = run_vm_image(me.__doc__)
     assert stack[0] == -1
 
+
 # ------------------------
 # data stack
-
 @passmein
 def test_sp_at_returns_current_stack_pointer(me):
     # Fill stack with some elements so the pointer is != 0
@@ -293,6 +289,7 @@ def test_sp0_returns_data_stack_base_address(me):
     assert len(stack) == 1
     assert stack[0] == 0x0
 
+
 @passmein
 def test_rp0_returns_return_stack_base_address(me):
     """RP0 @"""
@@ -330,6 +327,7 @@ def test_eq_returns_0_on_different_values(me):
     assert len(stack) == 1
     assert stack[0] == 0
 
+
 @passmein
 def test_eq_returns_minus_one_on_same_values(me):
     """doLIT 25 doLIT 25 ="""
@@ -348,6 +346,7 @@ def test_u_lt_test1(me):
     assert len(stack) == 1
     assert stack[0] == -1
 
+
 @passmein
 def test_u_lt_test2(me):
     """doLIT 1 doLIT 1 U<"""
@@ -355,6 +354,7 @@ def test_u_lt_test2(me):
 
     assert len(stack) == 1
     assert stack[0] == 0x0
+
 
 @passmein
 def test_u_lt_test3(me):
@@ -374,6 +374,7 @@ def test_lt_test1(me):
     assert len(stack) == 1
     assert stack[0] == -1
 
+
 @passmein
 def test_lt_test2(me):
     """doLIT -1 doLIT 0 <"""
@@ -381,6 +382,7 @@ def test_lt_test2(me):
 
     assert len(stack) == 1
     assert stack[0] == -1
+
 
 @passmein
 def test_lt_test3(me):
@@ -398,6 +400,7 @@ def test_min_returns_smaller_of_two_numbers(me):
 
     assert len(stack) == 1
     assert stack[0] == 1
+
 
 @passmein
 def test_min_treats_negative_numbers_as_smaller_than_corresponding_positive_number(me):
@@ -618,28 +621,28 @@ def test_stringQuoteBar_leaves_string_address_on_stack(me):
 def test_say_hello(me):
     """PRE_INIT_DATA doLIT 5 TYPE"""
     parse_input = "Hello"
-    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+    run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
     # TODO: capture stdout to check for 'Hello'
 
 
 @passmein
 def test_print_right_justified_number(me):
     """doLIT 123 doLIT 5 .R"""
-    stack = run_vm_image(me.__doc__)
+    run_vm_image(me.__doc__)
     # TODO: capture stdout to check for '  123'
 
 
 @passmein
 def test_dot_outputs_unsigned_number_with_space_in_front(me):
     """doLIT 4352 ."""
-    stack = run_vm_image(me.__doc__)
+    run_vm_image(me.__doc__)
     # TODO: capture stdout to check for ' 4352'
 
 
 @passmein
 def test_dot_outputs_signed_number_with_space_and_sign_in_front(me):
     """doLIT -4352 ."""
-    stack = run_vm_image(me.__doc__)
+    run_vm_image(me.__doc__)
     # TODO: capture stdout to check for ' -4352'
 
 
