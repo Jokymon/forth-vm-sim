@@ -38,8 +38,7 @@ def asm(code) EXECUTE
 end
 
 def asm(code) next
-    mov %acc1, #0x1
-    mov %acc2, %acc1
+    mov %acc2, #0x1
     popr %acc1
     sub %acc1, %acc1, %acc2
     jc :next1
