@@ -580,11 +580,32 @@ end
 // -------------------------------------------------------------------
 // Memory access
 
+// Add n to the contents at address a
+def word(colon) +!      // n a --
+    SWAP OVER @ +
+    SWAP !
+    EXIT
+end
+
+// Store the double integer to address a
+def word(colon) 2!      // d a --
+    SWAP OVER ! CELL+ !
+    EXIT
+end
+
+// Fetch double integer from address a
+def word(colon) 2@      // a -- d
+    DUP CELL+ @ SWAP @
+    EXIT
+end
+
+// Return count byte of a string and add 1 to byte address
 def word(colon) COUNT   // b -- b +n
     DUP doLIT 1 + SWAP C@
     EXIT
 end
 
+// Return the top of the code dictionary
 def word(colon) HERE    // -- a
     CP @
     EXIT
@@ -596,19 +617,31 @@ def word(colon) PAD     // -- a
     EXIT
 end
 
+// Return the address of the terminal input buffer
 def word(colon) TIB     // -- a
     #TIB CELL+ @
     EXIT
 end
 
-def word(colon) @EXECUTE    // a --
-    @ ?DUP
-    ?BRANCH :exe1
-    EXECUTE
-exe1:
+// NP word is not implemented since we combine code
+// and name dictionaries into one
+
+// Point to the last name in the name dictionary.
+def word(colon) LAST
+    CP CELL+
     EXIT
 end
 
+// Execute vector stored in address a
+def word(colon) @EXECUTE    // a --
+    @ ?DUP          // ?address or zero
+    ?BRANCH :exe1
+    EXECUTE         // execute if non-zero
+exe1:
+    EXIT            // do nothing if zero
+end
+
+// Copy u bytes from b1 to b2
 def word(colon) CMOVE   // b1 b2 u --
     >R
     BRANCH :cmov2
@@ -622,6 +655,39 @@ cmov2:
     EXIT
 end
 
+// Adjust the count to eliminate trailing white space
+def word(colon) -TRAILING // b u -- b u
+    >R
+    BRANCH :dtra2
+dtra1:
+    BL OVER R@ + C@ <
+    ?BRANCH :dtra2
+    R> doLIT 1 + EXIT   // adjusted count
+dtra2:
+    next :dtra1
+    doLIT 0 EXIT        // count=0
+    EXIT
+end
+
+// Fill u bytes of character c to area beginning at b
+def word(colon) FILL    // b u c --
+    SWAP >R SWAP
+    BRANCH :fill2
+fill1:
+    2DUP C! doLIT 1 +
+fill2:
+    next :fill1
+    2DROP
+    EXIT
+end
+
+// Fill u bytes of 0 to area beginning at b
+def word(colon) ERASE   // b u --
+    doLIT 0 FILL
+    EXIT
+end
+
+// Build a counted string with u characters from b. Null fill.
 def word(colon) PACK$   // b u a -- a
     ALIGNED DUP >R      // strings only on cell boundary
     OVER DUP doLIT 0

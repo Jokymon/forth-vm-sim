@@ -556,6 +556,33 @@ def test_pick_2_takes_third_stack_entry(me):
 # ------------------------
 # Memory access
 @passmein
+def test_plus_store_increases_value_at_address(me):
+    """doLIT 123 PRE_INIT_DATA +! PRE_INIT_DATA @
+    """
+    stack = run_vm_image(me.__doc__, test_data=[0x0, 0x10, 0x0, 0x0])
+    assert len(stack) == 1
+    assert stack[0] == 0x1000 + 123
+
+
+@passmein
+def test_2store_stores_double_integer(me):
+    """doLIT 123 doLIT 456 PRE_INIT_DATA 2! PRE_INIT_DATA @ PRE_INIT_DATA CELL+ @"""
+    stack = run_vm_image(me.__doc__, test_data=8*[0x0])
+    assert len(stack) == 2
+    assert stack[0] == 456
+    assert stack[1] == 123
+
+
+@passmein
+def test_2at_gets_double_integer_from_address(me):
+    """PRE_INIT_DATA 2@"""
+    stack = run_vm_image(me.__doc__, test_data=[0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8])
+    assert len(stack) == 2
+    assert stack[0] == 0x08070605
+    assert stack[1] == 0x04030201
+
+
+@passmein
 def test_count_turns_counted_string_to_address_and_count(me):
     """PRE_INIT_DATA DUP
     COUNT
@@ -592,14 +619,43 @@ def test_cmove_non_overlapping(me):
 
 
 @passmein
+def test_fill_puts_character_in_memory_block(me):
+    """PRE_INIT_DATA doLIT 3 doLIT 10 FILL
+    PRE_INIT_DATA C@
+    PRE_INIT_DATA doLIT 1 + C@
+    PRE_INIT_DATA doLIT 2 + C@
+    PRE_INIT_DATA doLIT 3 + C@
+    """
+    stack = run_vm_image(me.__doc__, test_data=4*[0x0])
+    assert len(stack) == 4
+    assert stack[0] == 10
+    assert stack[1] == 10
+    assert stack[2] == 10
+    assert stack[3] == 0
+
+
+@passmein
+def test_mtrailing_removes_leading_whitespace(me):
+    """PRE_INIT_DATA doLIT 4 -TRAILING PRE_INIT_DATA
+    """
+    stack = run_vm_image(me.__doc__, test_data=[0x65, 0x66, 0x20, 0x20])
+    assert len(stack) == 3
+    pre_init_address = stack[2]
+    assert stack[1] == 2
+    assert stack[0] == pre_init_address
+
+
+@passmein
 def test_pack_copies_string_with_length(me):
     """PRE_INIT_DATA doLIT 3 doLIT 28500 PACK$
     doLIT 28500 C@
     doLIT 28501 C@
     doLIT 28502 C@
+    doLIT 28503 C@
     """
     stack = run_vm_image(me.__doc__, test_data=[0x34, 0x53, 0xd8])
-    assert len(stack) == 4
+    assert len(stack) == 5
+    assert stack[4] == 0xd8
     assert stack[3] == 0x53
     assert stack[2] == 0x34
     assert stack[1] == 0x3      # first byte at target is length
