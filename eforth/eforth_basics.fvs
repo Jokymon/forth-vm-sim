@@ -85,7 +85,12 @@ u_temit:
     dw :txsto_cfa   // 'EMIT
 u_texpect:
     dw :accept_cfa  // 'EXPECT
+u_ttap:
     dw :ktap_cfa    // 'TAP
+u_techo:
+    dw :txsto_cfa   // 'ECHO
+u_tprompt:
+    dw #0           // 'PROMPT !TODO!
 u_base:
     dw BASEE        // BASE
 u_temp:
@@ -97,17 +102,29 @@ u_toin:
 u_htib:
     dw #0           // #TIB
     dw TIBB			// TIB
-    // DW	0			;CSP
-    // DW	INTER			;'EVAL
-    // DW	NUMBQ			;'NUMBER
+u_csp:
+    dw #0           // CSP
+u_teval:
+    dw #0           // 'EVAL !TODO!
+u_tnumber:
+    dw #0           // 'NUMBER !TODO!
 u_hld:
     dw #0           // HLD
 u_handler:
     dw #0           // HANDLER
-    // DW	0			;CONTEXT pointer
-    // DW	VOCSS DUP (0)		;vocabulary stack
-    // DW	0			;CURRENT pointer
-    // DW	0			;vocabulary link pointer
+u_context:
+    dw :__last_nfa  // CONTEXT pointer
+    dw #0           // 8 entries in the vocabulary stack
+    dw #0           // originaly defined through VOCSS
+    dw #0
+    dw #0
+    dw #0
+    dw #0
+    dw #0
+    dw #0           // always 0 to mark the last entry
+u_current:
+    dw #0           // CURRENT pointer
+    dw #0           // vocabulary link pointer
 u_ctop:
     dw :__last_end  // CP (next available location in code dict)
     // NP is not used in this implementation of eForth

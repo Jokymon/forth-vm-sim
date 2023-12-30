@@ -290,17 +290,20 @@ abs1:
 end
 
 // -------------------------------------------------------------------
-// system variables
+// user variables
 
-def word(colon) doVAR
+// Run time routine for VARIABLE and CREATE
+def word[COMPILE_ONLY](colon) doVAR     // -- a
     R>
     EXIT
 end
 
-def word(colon) UP
+// Pointer to the user area
+def word(colon) UP      // -- a
     doVAR :uzero
 end
 
+// Run time routine for user variables
 def word(colon) doUSER  // -- a
     R> @
     UP @ +
@@ -312,60 +315,108 @@ macro __DEFUSERVAR_CFA()
     dw :douser_cfa
 end
 
-def asm(uservar) SP0
+// Pointer to bottom of the data stack
+def asm(uservar) SP0    // -- a
     USER_OFFSET(:u_sp0)
 end
 
-def asm(uservar) RP0
+// Pointer to bottom of return stack
+def asm(uservar) RP0    // -- a
     USER_OFFSET(:u_rp0)
 end
 
-def asm(uservar) '?KEY
+// Execution vector of ?KEY
+def asm(uservar) '?KEY  // -- a
     USER_OFFSET(:u_qkey)
 end
 
-def asm(uservar) 'EMIT
+// Execution vector of EMIT
+def asm(uservar) 'EMIT  // -- a
     USER_OFFSET(:u_temit)
 end
 
-def asm(uservar) 'EXPECT
+// Execution vector of EXPECT
+def asm(uservar) 'EXPECT    // -- a
     USER_OFFSET(:u_texpect)
 end
 
+// Execution vector of TAP
+def asm(uservar) 'TAP   // -- a
+    USER_OFFSET(:u_ttap)
+end
+
+// Execution vector of ECHO
+def asm(uservar) 'ECHO  // -- a
+    USER_OFFSET(:u_techo)
+end
+
+// Execution vector of PROMPT
+def asm(uservar) 'PROMPT    // -- a
+    USER_OFFSET(:u_tprompt)
+end
+
 // Storage of the radix base for numeric I/O.
-def asm(uservar) BASE
+def asm(uservar) BASE   // -- a
     USER_OFFSET(:u_base)
 end
 
-def asm(uservar) temp
+// A temporary storage location used in parse and find
+def asm(uservar) temp   // -- a
     USER_OFFSET(:u_temp)
 end
 
-def asm(uservar) SPAN
+// Hold character count received by EXPECT
+def asm(uservar) SPAN   // -- a
     USER_OFFSET(:u_span)
 end
 
-def asm(uservar) >IN
+// Hold the character pointer while parsing input stream
+def asm(uservar) >IN    // -- a
     USER_OFFSET(:u_toin)
 end
 
-def asm(uservar) #TIB
+// Hold the current count and address of the terminal input buffer
+def asm(uservar) #TIB   // -- a
     USER_OFFSET(:u_htib)
 end
 
-def asm(uservar) HLD
+// Execution vector of EVAL
+def asm(uservar) alias TEVAL 'EVAL  // -- a
+    USER_OFFSET(:u_teval)
+end
+
+// Execution vector of NUMBER?
+def asm(uservar) alias TNUMB 'NUMBER    // -- a
+    USER_OFFSET(:u_tnumber)
+end
+
+// Hold a pointer in building a numeric output string
+def asm(uservar) HLD    // -- a
     USER_OFFSET(:u_hld)
 end
 
-def asm(uservar) HANDLER
+// Hold the return stack pointer for error handling
+def asm(uservar) HANDLER    // -- a
     USER_OFFSET(:u_handler)
 end
 
-def asm(uservar) CP
+// Area to specify vocabulary search order
+def asm(uservar) CONTEXT    // -- a
+    USER_OFFSET(:u_context)
+end
+
+// Point to the vocabulary to be extended
+def asm(uservar) CURRENT    // -- a
+    USER_OFFSET(:u_current)
+end
+
+// Point to the top of the code dictionary
+def asm(uservar) CP     // -- a
     USER_OFFSET(:u_ctop)
 end
 
-def asm(uservar) LAST
+// Point to the last name in the name dictionary
+def asm(uservar) LAST   // -- a
     USER_OFFSET(:u_lastn)
 end
 
