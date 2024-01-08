@@ -33,7 +33,10 @@ def build_vm_image(word_under_test, test_data):
         source = source_file.read()
 
         source = source.replace("%WUT%", word_under_test)
-        test_data_source = "\n".join(map(lambda x: "db #"+str(hex(x)), test_data))
+        if isinstance(test_data, str):
+            test_data = list(map(ord, test_data))
+        test_data_source = "\n".join(map(lambda x: "db #"+str(hex(x)),
+                                         test_data))
         source = source.replace("%TEST_DATA%", test_data_source)
 
         binary = assemble(source)
@@ -638,7 +641,7 @@ def test_fill_puts_character_in_memory_block(me):
 def test_mtrailing_removes_leading_whitespace(me):
     """PRE_INIT_DATA doLIT 4 -TRAILING PRE_INIT_DATA
     """
-    stack = run_vm_image(me.__doc__, test_data=[0x65, 0x66, 0x20, 0x20])
+    stack = run_vm_image(me.__doc__, test_data="AB  ")
     assert len(stack) == 3
     pre_init_address = stack[2]
     assert stack[1] == 2
@@ -676,8 +679,7 @@ def test_stringQuoteBar_leaves_string_address_on_stack(me):
 @passmein
 def test_say_hello(me):
     """PRE_INIT_DATA doLIT 5 TYPE"""
-    parse_input = "Hello"
-    run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+    run_vm_image(me.__doc__, test_data="Hello")
     # TODO: capture stdout to check for 'Hello'
 
 
@@ -717,8 +719,7 @@ def test_dot_outputs_signed_number_with_space_and_sign_in_front(me):
 @passmein
 def test_parse_finds_one_space_delimited_word(me):
     """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
-    parse_input = "  word "
-    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+    stack = run_vm_image(me.__doc__, test_data="  word ")
 
     assert len(stack) == 4
     pre_init_address = stack[0]
@@ -730,8 +731,7 @@ def test_parse_finds_one_space_delimited_word(me):
 @passmein
 def test_parse_finds_one_space_delimited_word_from_multiple(me):
     """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
-    parse_input = "   oneword   nextword  "
-    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+    stack = run_vm_image(me.__doc__, test_data="   oneword   nextword  ")
 
     assert len(stack) == 4
     pre_init_address = stack[0]
@@ -742,10 +742,9 @@ def test_parse_finds_one_space_delimited_word_from_multiple(me):
 
 @passmein
 def test_parse_finds_text_delimited_by_bracket(me):
-    # doLIT 41 == ord(')')
     """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 doLIT 41 parse"""
-    parse_input = "  comment text)"
-    stack = run_vm_image(me.__doc__, test_data=list(map(ord, parse_input)))
+    # doLIT 41 == ord(')')
+    stack = run_vm_image(me.__doc__, test_data="  comment text)")
 
     assert len(stack) == 4
     pre_init_address = stack[0]
