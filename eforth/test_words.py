@@ -664,6 +664,52 @@ def test_pack_copies_string_with_length(me):
     assert stack[1] == 0x3      # first byte at target is length
     assert stack[0] == 28500    # PACK$ returns the target address
 
+# ------------------------
+# Numeric Input
+@passmein
+def test_converting_digit_with_base_10_works(me):
+    """doLIT 56 doLIT 10 DIGIT?"""
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 2
+    assert stack[0] == 8
+    assert stack[1] == TRUE
+
+
+@passmein
+def test_converting_digit_F_with_base_16_works(me):
+    """doLIT 70 doLIT 16 DIGIT?"""
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 2
+    assert stack[0] == 15
+    assert stack[1] == TRUE
+
+
+@passmein
+def test_converting_illegal_digit_for_base_returns_false(me):
+    """doLIT 70 doLIT 10 DIGIT?"""
+    stack = run_vm_image(me.__doc__)
+    assert len(stack) == 2
+    # Don't care about the value
+    assert stack[1] == FALSE
+
+
+@passmein
+def test_base10_number_is_correctly_converted(me):
+    """PRE_INIT_DATA NUMBER?"""
+    stack = run_vm_image(me.__doc__, test_data="\x041234")
+    assert len(stack) == 2
+    assert stack[0] == 1234
+    assert stack[1] != FALSE
+
+
+@passmein
+def test_invalid_base10_number_returns_false(me):
+    """PRE_INIT_DATA NUMBER?"""
+    stack = run_vm_image(me.__doc__, test_data="\x041A34")
+    assert len(stack) == 2
+    # Don't care about the value
+    assert stack[1] == FALSE
+
 
 # ------------------------
 # Basic I/O

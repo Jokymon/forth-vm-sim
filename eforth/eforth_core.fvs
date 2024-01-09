@@ -829,6 +829,53 @@ def word(colon) DECIMAL         // --
     EXIT
 end
 
+// -------------------------------------------------------------------
+// Numeric Input
+
+// Convert a character to its numeric value. A flag indicates success.
+def word(colon) DIGIT?          // c base -- u t
+    >R doLIT 48 -       // 48 == '0'
+    doLIT 9 OVER <
+    ?BRANCH :dgtq1
+    doLIT 7 -           // subtract additional 7 to get to capital letters
+    DUP doLIT 10 < OR
+dgtq1:
+    DUP R> U< EXIT
+end
+
+// Convert a number string to integer. Push a flag on tos.
+def word(colon) alias NUMBQ NUMBER? // a -- n T, a F
+    BASE @ >R doLIT 0 OVER COUNT
+    OVER C@ doLIT 36 =          // 36 is character '$'
+    ?BRANCH :numq1
+    HEX SWAP doLIT 1 +
+    SWAP doLIT 1 -
+numq1:
+    OVER C@ doLIT 45 = >R       // 45 is character '-'
+    SWAP R@ - SWAP R@ + ?DUP
+    ?BRANCH :numq6
+    doLIT 1 - >R
+numq2:
+    DUP >R C@ BASE @ DIGIT?
+    ?BRANCH :numq4
+    SWAP BASE @ * + R>
+    doLIT 1 +
+    next :numq2
+    R@ SWAP DROP
+    ?BRANCH :numq3
+    NEGATE
+numq3:
+    SWAP
+    BRANCH :numq5
+numq4:
+    R> R> 2DROP 2DROP doLIT 0
+numq5:
+    DUP
+numq6:
+    R> 2DROP
+    R> BASE !
+    EXIT
+end
 
 // -------------------------------------------------------------------
 // Basic I/O
