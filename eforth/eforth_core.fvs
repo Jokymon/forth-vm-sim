@@ -22,6 +22,13 @@ def asm(code) doLIT
     NEXT()
 end
 
+// Process colon list.
+def asm(code) doLIST    // a --
+    pushr %ip
+    mov %ip, %ret
+    NEXT()
+end
+
 def asm(code) BYE
     ifkt FKT_TERMINATE
 end
@@ -311,7 +318,7 @@ def word(colon) doUSER  // -- a
 end
 
 macro __DEFUSERVAR_CFA()
-    call :doLIST
+    call :dolist_cfa
     dw :douser_cfa
 end
 

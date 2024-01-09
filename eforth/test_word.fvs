@@ -6,11 +6,6 @@ include "eforth/eforth_basics.fvs"
 codeblock
 start_word:
     dw :run_test_cfa
-
-doLIST:
-    pushr %ip
-    mov %ip, %ret
-    NEXT()
 end
 
 include "eforth/eforth_core.fvs"
