@@ -115,10 +115,11 @@ const std::map<uint8_t, std::string> register_name_mapping = {
     {Vm::Pc, "%pc"}
 };
 
-Vm::Vm(Memory &memory, Memory &data_stack, Memory &return_stack)
+Vm::Vm(Memory &memory, Memory &data_stack, Memory &return_stack, Symbols &symbols)
 : main_memory(memory)
 , data_stack(data_stack)
-, return_stack(return_stack) {
+, return_stack(return_stack)
+, symbols(symbols) {
     std::fill(state.registers.begin(), state.registers.end(), 0x0);
 }
 
@@ -817,7 +818,15 @@ void Vm::movs_di_b(uint8_t param) {
 }
 
 void Vm::show_trace_at_pc() const {
-    fmt::print("{:08x} {:02x} {}\n", state.registers[Pc], main_memory[state.registers[Pc]], disassembleAtPc());
+    auto wp_symbols = symbols.symbolsAtAddress(state.registers[Vm::Wp]);
+    auto ip_symbols = symbols.symbolsAtAddress(state.registers[Vm::Ip]);
+    std::string wp_string = join(wp_symbols.begin(), wp_symbols.end(), ", ");
+    std::string ip_string = join(ip_symbols.begin(), ip_symbols.end(), ", ");
+    fmt::print("{:08x} {:02x} {:<20}; Wp: {}; Ip: {}\n",
+               state.registers[Pc],
+               main_memory[state.registers[Pc]],
+               disassembleAtPc(),
+               wp_string, ip_string);
 }
 
 std::string Vm::disassemble_movr_parameters(uint8_t parameter) const {

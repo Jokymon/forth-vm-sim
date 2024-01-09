@@ -3,6 +3,7 @@
 
 #include <array>
 #include "vm_memory.h"
+#include "symbols.h"
 
 class Vm {
 public:
@@ -26,7 +27,7 @@ public:
         std::array<uint32_t, 8> registers;
     };
 
-    explicit Vm(Memory &main_memory, Memory &data_stack, Memory &return_stack);
+    explicit Vm(Memory &main_memory, Memory &data_stack, Memory &return_stack, Symbols &symbols);
 
     Result singleStep();
     Result interpret(bool show_trace);
@@ -60,6 +61,7 @@ private:
     Memory& main_memory;
     Memory& data_stack;
     Memory& return_stack;
+    Symbols& symbols;
 };
 
 #endif

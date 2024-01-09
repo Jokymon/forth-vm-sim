@@ -8,12 +8,14 @@
 #include "fmt/core.h"
 #include "vm.h"
 #include "vm_memory.h"
+#include "symbols.h"
 
 int main(int argc, char *argv[]) {
     Memory main_memory;
     Memory data_stack;
     Memory return_stack;
-    Vm vm{main_memory, data_stack, return_stack};
+    Symbols symbols;
+    Vm vm{main_memory, data_stack, return_stack, symbols};
 
     uint32_t dsp_top = 0x0;
     uint32_t rsp_bottom = 0x0;

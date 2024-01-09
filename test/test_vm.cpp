@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "vm.h"
 #include "vm_memory.h"
+#include "symbols.h"
 
 CATCH_REGISTER_ENUM(Vm::Result,
     Vm::Result::Success,
@@ -34,8 +35,9 @@ TEST_CASE("Illegal instructions return IllegalInstruction", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     REQUIRE( Vm::IllegalInstruction == uut.singleStep() );
 }
@@ -49,8 +51,9 @@ TEST_CASE("Register based move bytes instructions", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x59;
@@ -100,8 +103,9 @@ TEST_CASE("Register based move words instructions", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x12ab89dc;
@@ -146,7 +150,8 @@ TEST_CASE("Stack based move operations", "[opcode]") {
     Memory testdata;
     Memory data_stack;
     Memory return_stack;
-    Vm uut{testdata, data_stack, return_stack};
+    Symbols symbols;
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     SECTION("Copy acc1 to wp indirect with post increment") {
         testdata = {
@@ -261,8 +266,9 @@ TEST_CASE("Move immediate to acc1", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     REQUIRE( Vm::Success == uut.singleStep() );
 
@@ -277,8 +283,9 @@ TEST_CASE("Move immediate to acc2", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     REQUIRE( Vm::Success == uut.singleStep() );
 
@@ -291,12 +298,13 @@ TEST_CASE("Stack operations", "[opcode]") {
     Memory testdata;
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
     
     SECTION("Pushd pushes data onto data stack and increments dsp") {
         testdata = {
             0xa4   // pushd %acc1
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         Vm::State state = uut.getState();
         state.registers[Vm::Dsp] = 0x0;
@@ -315,7 +323,7 @@ TEST_CASE("Stack operations", "[opcode]") {
         testdata = {
             0xad   // popd %acc2
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         Vm::State state = uut.getState();
         state.registers[Vm::Acc2] = 0x0;
@@ -336,7 +344,7 @@ TEST_CASE("Stack operations", "[opcode]") {
         testdata = {
             0xb4   // pushr %acc1
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         Vm::State state = uut.getState();
         state.registers[Vm::Dsp] = 0x0;
@@ -355,7 +363,7 @@ TEST_CASE("Stack operations", "[opcode]") {
         testdata = {
             0xb9   // popr %wp
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         Vm::State state = uut.getState();
         state.registers[Vm::Wp] = 0x0;
@@ -376,7 +384,7 @@ TEST_CASE("Stack operations", "[opcode]") {
         testdata = {
             0xa9   // popd %wp
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         Vm::State state = uut.getState();
         state.registers[Vm::Dsp] = 0x0;
@@ -390,7 +398,7 @@ TEST_CASE("Stack operations", "[opcode]") {
         testdata = {
             0xb9   // popr %wp
         };
-        Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
         Vm::State state = uut.getState();
         state.registers[Vm::Dsp] = 0x0;
@@ -418,8 +426,9 @@ TEST_CASE("Register indirect jumping", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     Vm::State state = uut.getState();
     state.registers[Vm::Ip] = 6;
@@ -510,8 +519,9 @@ TEST_CASE("Register direct jumping", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     Vm::State state = uut.getState();
     state.registers[Vm::Ip] = 7;
@@ -603,8 +613,9 @@ TEST_CASE("Jumping direct via call", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     REQUIRE( Vm::Success == uut.singleStep());
 
@@ -622,8 +633,9 @@ TEST_CASE("Immediate direct jumping", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     REQUIRE( Vm::Success == uut.singleStep());
 
@@ -640,8 +652,9 @@ TEST_CASE("Register direct jumping if accumulator is 0", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     SECTION("Should jump if acc1 is 0") {
         auto state = uut.getState();
@@ -676,8 +689,9 @@ TEST_CASE("Register direct jumping based on carry flag", "[opcode]") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     SECTION("Should jump if carry is set") {
         auto state = uut.getState();
@@ -712,8 +726,9 @@ TEST_CASE("Add instruction") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -734,8 +749,9 @@ TEST_CASE("Sub instruction") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -756,8 +772,9 @@ TEST_CASE("Xor instruction") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -778,8 +795,9 @@ TEST_CASE("Or instruction") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -800,8 +818,9 @@ TEST_CASE("And instruction") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Acc1] = 0x562a;
@@ -822,8 +841,9 @@ TEST_CASE("Sra instruction with signed value") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x80000000;
@@ -842,8 +862,9 @@ TEST_CASE("Sra instruction with unsigned value") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x60000000;
@@ -862,8 +883,9 @@ TEST_CASE("Sll instruction") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
 
     auto state = uut.getState();
     state.registers[Vm::Dsp] = 0x00000006;
@@ -907,8 +929,9 @@ TEST_CASE("Disassembling") {
     };
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
-    Vm uut{testdata, data_stack, return_stack};
+    Vm uut{testdata, data_stack, return_stack, symbols};
     auto state = uut.getState();
 
     SECTION("Disassembling nop instruction") {
@@ -1076,12 +1099,13 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
     Memory testdata;
     Memory data_stack;
     Memory return_stack;
+    Symbols symbols;
 
     SECTION("Or") {
         testdata = {
             0x34, 0x01, 0x4,    // or.w %ip, %wp, %acc1
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "or.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
@@ -1090,7 +1114,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x36, 0x01, 0x4,    // and.w %ip, %wp, %acc1
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "and.w %ip, %wp, %acc1" == uut.disassembleAtPc() );
     }
@@ -1099,7 +1123,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x73, 0x15, 0x00, 0x00, 0x00,   // call 0x15
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "call 0x15" == uut.disassembleAtPc() );
     }
@@ -1108,7 +1132,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x72, 0x15, 0x00, 0x00, 0x00,   // jc 0x15
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "jc 0x15" == uut.disassembleAtPc() );
     }
@@ -1117,7 +1141,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x62   // jmp [%rsp]
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "jmp [%rsp]" == uut.disassembleAtPc() );
     }
@@ -1126,7 +1150,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x63   // jmp [%dsp]
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "jmp [%dsp]" == uut.disassembleAtPc() );
     }
@@ -1135,7 +1159,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x6e   // jmp %ret
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "jmp %ret" == uut.disassembleAtPc() );
     }
@@ -1144,7 +1168,7 @@ TEST_CASE("Detailed disassembly", "[disassembly]") {
         testdata = {
             0x27, 0x10, 0x41, 0x32, 0x22,   // mov %acc2, 0x22324110
         };
-        Vm uut{testdata, data_stack, return_stack};
+        Vm uut{testdata, data_stack, return_stack, symbols};
 
         REQUIRE( "mov %acc2, 0x22324110" == uut.disassembleAtPc() );
     }

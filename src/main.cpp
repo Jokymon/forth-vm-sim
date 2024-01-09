@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     Memory main_memory;
     Memory data_stack;
     Memory return_stack;
-    Vm vm{main_memory, data_stack, return_stack};
+    Vm vm{main_memory, data_stack, return_stack, symbols};
 
     ghc::filesystem::path binaryInputPath(args::get(binaryInput));
     main_memory.loadImageFromFile(args::get(binaryInput));
