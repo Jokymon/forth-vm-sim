@@ -76,6 +76,8 @@ class Assembler:
         assembler.visit(parse_tree)
 
         if self.options.format == "disassembly":
+            self.symbol_table = {}
             return assembler.emitter.disassembly
         else:
+            self.symbol_table = assembler.emitter.labels
             return assembler.emitter.binary_code
