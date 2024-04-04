@@ -762,6 +762,37 @@ def test_dot_outputs_signed_number_with_space_and_sign_in_front(me):
 
 
 # ------------------------
+# Parsing
+class TestStringComparison:
+    def test_string_comparison_of_different_len_strings_returns_false(self):
+        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
+        stack, _ = run_vm_image(code, test_data="\x04word\x0aother_word")
+
+        assert len(stack) == 1
+        assert stack[0] == FALSE
+
+    def test_string_comparison_of_different_same_len_strings_returns_false(self):
+        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
+        stack, _ = run_vm_image(code, test_data="\x04word\x04text")
+
+        assert len(stack) == 1
+        assert stack[0] == FALSE
+
+    def test_string_comparison_of_equal_strings_returns_true(self):
+        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
+        stack, _ = run_vm_image(code, test_data="\x04word\x04word")
+
+        assert len(stack) == 1
+        assert stack[0] == TRUE
+
+    def test_string_comparison_takes_word_flags_into_account(self):
+        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
+        # First word has flag in bit 6 set
+        stack, _ = run_vm_image(code, test_data="\x44word\x04word")
+
+        assert len(stack) == 1
+        assert stack[0] == TRUE
+
 
 # ------------------------
 # parse
@@ -822,9 +853,55 @@ def test_expect_returns_the_address_and_the_amount_of_read_chars(me):
     assert stack[1] == 5
     assert stack[0] == 12000
 
+
+@passmein
+def test_same_on_equal_strings_returns_true(me):
+    """PRE_INIT_DATA DUP doLIT 5 + doLIT 4 SAME? PRE_INIT_DATA"""
+    stack, _ = run_vm_image(me.__doc__, test_data="ABCD\x00ABCD")
+
+    assert len(stack) == 4
+    pre_init_data = stack[3]
+    assert stack[2] == 0  # difference is 0
+    assert stack[1] == pre_init_data + 5
+    assert stack[0] == pre_init_data
+
+
+@passmein
+def test_same_on_unequal_strings_returns_false(me):
+    """PRE_INIT_DATA DUP doLIT 5 + doLIT 4 SAME? PRE_INIT_DATA"""
+    stack, _ = run_vm_image(me.__doc__, test_data="AACD\x00ABCD")
+
+    assert len(stack) == 4
+    pre_init_data = stack[3]
+    assert stack[2] != 0  # difference is something other than 0
+    assert stack[1] == pre_init_data + 5
+    assert stack[0] == pre_init_data
+
+
+# ------------------------
+# Dictionary search
+@passmein
+def test_find_returns_data_for_a_word(me):
+    """PRE_INIT_DATA CONTEXT @ find"""
+    stack, symbols = run_vm_image(me.__doc__, test_data="\x05QUERY")
+
+    assert len(stack) == 2
+    assert stack[1] == symbols['query_nfa']
+    assert stack[0] == symbols['query_cfa']
+
+
+@passmein
+def test_find_returns_false_when_word_doesnt_exist(me):
+    """PRE_INIT_DATA PRE_INIT_DATA CONTEXT @ find"""
+    stack, _ = run_vm_image(me.__doc__, test_data="\x07UNKNOWN")
+
+    assert len(stack) == 3
+    assert stack[2] == FALSE
+    assert stack[0] == stack[1]
+
+
 # ------------------------
 # QUERY
-
 @passmein
 def test_QUERY_stores_number_of_read_characters_and_resets_parser_pointer(me):
     """QUERY #TIB @ >IN @"""

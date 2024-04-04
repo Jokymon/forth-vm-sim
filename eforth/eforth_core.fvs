@@ -1045,7 +1045,87 @@ pars8:
     OVER R> - EXIT
 end
 
+// return a code address given a name address
+def word(colon) NAME>   // na -- ca
+    //CELL- CELL- @ EXIT
+    // our own implementation has CFA after name
+    DUP C@              // nfa name'len
+    doLIT 31 AND +      // mask flags and add length
+    doLIT 1 +           // jump over length field
+    EXIT
+end
+
+// Compare u cells in two strings. Return 0 if identical
+def word(colon) SAME?   // a a u -- a a f \ -0+
+    >R
+    BRANCH :same2
+same1:
+    OVER R@ + C@
+    OVER R@ + C@
+    - ?DUP
+    ?BRANCH :same2
+    R> DROP EXIT    // strings not equal
+same2:
+    next :same1
+    doLIT 0 EXIT    // strings are equal
+    EXIT
+end
+
 // -------------------------------------------------------------------
+// Dictionary search
+
+def word(colon) L>NAME  // lfa -- nfa
+    CELL+
+    EXIT
+end
+
+def word(colon) N>LINK  // nfa -- lfa
+    CELL-
+    EXIT
+end
+
+// compare two counted strings and return true if hey are equal
+def word(colon) $=      // b b -- f
+    2DUP 
+    C@ doLIT 31 AND
+    SWAP
+    C@ doLIT 31 AND     // b1 b2 n1 n2
+    =                   // b1 b2 f
+    ?BRANCH :streq2
+    DUP C@ doLIT 13 AND // b1 b2 n
+    ROT doLIT 1 +       // b2 n b1+1
+    ROT doLIT 1 +       // n b1+1 b2+1
+    ROT SAME?           // b1+1 b2+1 f
+    NIP NIP 0=
+    EXIT
+streq2:
+    2DROP doLIT 0
+    EXIT
+end
+
+// search the dictionary specified by va (the last NFA) for the
+// word given as counted string at address a
+def word(colon) find    // a va -- ca na | a F
+find_1:
+    2DUP $=             // a va f
+    ?BRANCH :find_2
+    // string found
+    NIP DUP             // va va
+    NAME> SWAP          // ca na
+    EXIT
+find_2:                 // not yet found, go to next word in chain
+    N>LINK              // a la
+    @                   // a la'previous
+    DUP
+    ?BRANCH :find_3
+    L>NAME              // a na'previous
+    BRANCH :find_1
+find_3:                 // reached the end of the chain without a find
+                        // a na'previous
+    DROP doLIT 0        // a F
+    EXIT
+end
+
 // Forth compiler
 
 def word(colon) TAP     // bot eot cur c -- bot eot cur
