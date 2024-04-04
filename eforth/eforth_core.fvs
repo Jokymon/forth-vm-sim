@@ -16,7 +16,8 @@ end
 // -------------------------------------------------------------------------
 // kernel words
 
-def asm(code) doLIT
+// Push an inline literal.
+def asm(code) doLIT     // -- w
     mov %acc1, [%ip++]
     pushd %acc1
     NEXT()
@@ -29,48 +30,54 @@ def asm(code) doLIST    // a --
     NEXT()
 end
 
-def asm(code) BYE
+// Exit Forth
+def asm(code) BYE       // --
     ifkt FKT_TERMINATE
 end
 
-def asm(code) EXIT
+// Terminate a colon definition
+def asm(code) EXIT      // --
     popr %ip
     NEXT()
 end
 
-def asm(code) EXECUTE
+// Execute the word at ca
+def asm(code) EXECUTE   // ca --
     popd %acc1
     jmp %acc1
     NEXT()
 end
 
-def asm(code) next
+// Run time code for the single index loop
+def asm(code) next      // --
     mov %acc2, #0x1
-    popr %acc1
-    sub %acc1, %acc1, %acc2
-    jc :next1
-    pushr %acc1
-    mov %ip, [%ip]
+    popr %acc1              // get TOS(r)
+    sub %acc1, %acc1, %acc2 // decrement
+    jc :next1               // jump if decremented below 0
+    pushr %acc1             // decremented value back on TOS(r)
+    mov %ip, [%ip]          // jump to label after next
     NEXT()
 next1:
-    mov %acc1, CELLSIZE
+    mov %acc1, CELLSIZE     // skip to next word
     add %ip, %ip, %acc1
     NEXT()
 end
 
-def asm(code) BRANCH
+// Branch if flag is zero
+def asm(code) BRANCH    // f --
     mov %ip, [%ip]
     NEXT()
 end
 
-def asm(code) ?BRANCH
+// Branch to an inline address
+def asm(code) alias QBRAN ?BRANCH  // branch if TOS ==0
     popd %acc1
-    jz :nobranch
-    mov %acc1, CELLSIZE
+    jz :bran1               // is TOS == 0
+    mov %acc1, CELLSIZE     // no, so point ip to next cell
     add %ip, %ip, %acc1
     NEXT()
-nobranch:
-    mov %ip, [%ip]
+bran1:
+    mov %ip, [%ip]          // yes, so jump to location from next cell
     NEXT()
 end
 
