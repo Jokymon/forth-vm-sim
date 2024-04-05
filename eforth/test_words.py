@@ -13,11 +13,12 @@ import tempfile
 # Forth constants
 TRUE = -1
 FALSE = 0
+TIBB_ADDR = 0x3000  # TODO: this should be better linked to the TIBB constant in eforth_core.fvs
 
 
 def passmein(func):
     def wrapper(*args, **kwargs):
-        return func(func, *args, **kwargs)
+        return func(*(*args, func), **kwargs)
     return wrapper
 
 
@@ -764,81 +765,135 @@ def test_dot_outputs_signed_number_with_space_and_sign_in_front(me):
 # ------------------------
 # Parsing
 class TestStringComparison:
-    def test_string_comparison_of_different_len_strings_returns_false(self):
-        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
-        stack, _ = run_vm_image(code, test_data="\x04word\x0aother_word")
+    @passmein
+    def test_string_comparison_of_different_len_strings_returns_false(self, me):
+        """PRE_INIT_DATA DUP doLIT 5 + $="""
+        stack, _ = run_vm_image(me.__doc__, test_data="\x04word\x0aother_word")
 
         assert len(stack) == 1
         assert stack[0] == FALSE
 
-    def test_string_comparison_of_different_same_len_strings_returns_false(self):
-        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
-        stack, _ = run_vm_image(code, test_data="\x04word\x04text")
+    @passmein
+    def test_string_comparison_of_different_same_len_strings_returns_false(self, me):
+        """PRE_INIT_DATA DUP doLIT 5 + $="""
+        stack, _ = run_vm_image(me.__doc__, test_data="\x04word\x04text")
 
         assert len(stack) == 1
         assert stack[0] == FALSE
 
-    def test_string_comparison_of_equal_strings_returns_true(self):
-        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
-        stack, _ = run_vm_image(code, test_data="\x04word\x04word")
+    @passmein
+    def test_string_comparison_of_equal_strings_returns_true(self, me):
+        """PRE_INIT_DATA DUP doLIT 5 + $="""
+        stack, _ = run_vm_image(me.__doc__, test_data="\x04word\x04word")
 
         assert len(stack) == 1
         assert stack[0] == TRUE
 
-    def test_string_comparison_takes_word_flags_into_account(self):
-        code = """PRE_INIT_DATA DUP doLIT 5 + $="""
+    @passmein
+    def test_string_comparison_takes_word_flags_into_account(self, me):
+        """PRE_INIT_DATA DUP doLIT 5 + $="""
         # First word has flag in bit 6 set
-        stack, _ = run_vm_image(code, test_data="\x44word\x04word")
+        stack, _ = run_vm_image(me.__doc__, test_data="\x44word\x04word")
 
         assert len(stack) == 1
         assert stack[0] == TRUE
 
 
-# ------------------------
-# parse
-# In these tests, we always put PRE_INIT_DATA at the
-# bottom of the stack to have a reference
-# Next we expect the values
-#   - b: start address of the parsed text
-#   - u: length of the parsed text
-#   - d: difference between the original start address
-#        and the location for the next parsing start address
+class Testparse:
+    # In these tests, we always put PRE_INIT_DATA at the
+    # bottom of the stack to have a reference
+    # Next we expect the values
+    #   - b: start address of the parsed text
+    #   - u: length of the parsed text
+    #   - d: difference between the original start address
+    #        and the location for the next parsing start address
+    @passmein
+    def test_parse_finds_one_space_delimited_word(self, me):
+        """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
+        stack, _ = run_vm_image(me.__doc__, test_data="  word ")
 
-@passmein
-def test_parse_finds_one_space_delimited_word(me):
-    """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
-    stack, _ = run_vm_image(me.__doc__, test_data="  word ")
+        assert len(stack) == 4
+        pre_init_address = stack[0]
+        assert stack[1] == pre_init_address + 2
+        assert stack[2] == 4
+        assert stack[3] == 7
 
-    assert len(stack) == 4
-    pre_init_address = stack[0]
-    assert stack[1] == pre_init_address + 2
-    assert stack[2] == 4
-    assert stack[3] == 7
+    @passmein
+    def test_parse_finds_one_space_delimited_word_from_multiple(self, me):
+        """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
+        stack, _ = run_vm_image(me.__doc__, test_data="   oneword   nextword  ")
+
+        assert len(stack) == 4
+        pre_init_address = stack[0]
+        assert stack[1] == pre_init_address + 3
+        assert stack[2] == 7
+        assert stack[3] == 11
+
+    @passmein
+    def test_parse_finds_text_delimited_by_bracket(self, me):
+        """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 doLIT 41 parse"""
+        # doLIT 41 == ord(')')
+        stack, _ = run_vm_image(me.__doc__, test_data="  comment text)")
+
+        assert len(stack) == 4
+        pre_init_address = stack[0]
+        assert stack[1] == pre_init_address
+        assert stack[2] == 14
+        assert stack[3] == 15
+
+    @passmein
+    def test_parse_returns_empty_string_when_length_is_zero(self, me):
+        """PRE_INIT_DATA PRE_INIT_DATA doLIT 0 BL parse"""
+        stack, _ = run_vm_image(me.__doc__, test_data="")
+
+        assert len(stack) == 4
+        pre_init_address = stack[0]
+        assert stack[1] == pre_init_address
+        assert stack[2] == 0
+        assert stack[3] == 0
 
 
-@passmein
-def test_parse_finds_one_space_delimited_word_from_multiple(me):
-    """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 BL parse"""
-    stack, _ = run_vm_image(me.__doc__, test_data="   oneword   nextword  ")
+class TestPARSE:
+    @passmein
+    def test_finds_one_space_delimited_word_from_input(self, me):
+        """QUERY BL PARSE"""
+        test_input = "  word \n"
+        INDEX_OF_WORD = test_input.index("word")
+        stack, _ = run_vm_image(me.__doc__, test_input)
 
-    assert len(stack) == 4
-    pre_init_address = stack[0]
-    assert stack[1] == pre_init_address + 3
-    assert stack[2] == 7
-    assert stack[3] == 11
+        assert len(stack) == 2
+        assert stack[0] == TIBB_ADDR + INDEX_OF_WORD
+        assert stack[1] == len("word")
 
+    @passmein
+    def test_PARSE_twice_gets_the_second_word_from_input(self, me):
+        """QUERY BL PARSE 2DROP BL PARSE"""
+        test_input = "  word1  word2\n"
+        INDEX_OF_WORD2 = test_input.index("word2")
+        stack, _ = run_vm_image(me.__doc__, test_input)
 
-@passmein
-def test_parse_finds_text_delimited_by_bracket(me):
-    """PRE_INIT_DATA PRE_INIT_DATA doLIT 80 doLIT 41 parse"""
-    # doLIT 41 == ord(')')
-    stack, _ = run_vm_image(me.__doc__, test_data="  comment text)")
+        assert len(stack) == 2
+        assert stack[0] == TIBB_ADDR + INDEX_OF_WORD2
+        assert stack[1] == len("word2")
 
-    assert len(stack) == 4
-    pre_init_address = stack[0]
-    assert stack[1] == pre_init_address
-    assert stack[2] == 14
-    assert stack[3] == 15
+    @passmein
+    def test_empty_input_returns_zero_length(self, me):
+        """QUERY BL PARSE"""
+        stack, _ = run_vm_image(me.__doc__, "\n")
+
+        assert len(stack) == 2
+        assert stack[0] == TIBB_ADDR
+        assert stack[1] == 0
+
+    @passmein
+    def test_only_spaces_returns_zero_length(self, me):
+        """QUERY BL PARSE"""
+        SPACES = "   "
+        stack, _ = run_vm_image(me.__doc__, SPACES+"\n")
+
+        assert len(stack) == 2
+        assert stack[0] == TIBB_ADDR + len(SPACES)
+        assert stack[1] == 0
 
 
 # ------------------------

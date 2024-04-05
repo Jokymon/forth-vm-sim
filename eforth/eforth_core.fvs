@@ -1011,7 +1011,8 @@ end
 // -------------------------------------------------------------------
 // Parsing
 
-def word(colon) parse   // b u c - b u delta ; <string>
+// Scan string delimited by c. Return found string and its offset.
+def word(colon) alias pars parse  // b u c - b u delta ; <string>
     temp ! OVER >R DUP  // c in temp, b in R -- b u u
     ?BRANCH :pars8      // jump to end if length is 0
     doLIT 1 -           // b u-1
@@ -1050,6 +1051,14 @@ pars7:
     R> R> - EXIT
 pars8:
     OVER R> - EXIT
+end
+
+// Scan input stream and return counted string delimited by c.
+def word(colon) PARSE   // c -- b u
+    >R TIB >IN @ +  // current input buffer pointer
+    #TIB @ >IN @ -  // remaining count
+    R> parse >IN +!
+    EXIT
 end
 
 // return a code address given a name address
