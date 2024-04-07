@@ -1142,21 +1142,35 @@ find_3:                 // reached the end of the chain without a find
     EXIT
 end
 
-// Forth compiler
+// -------------------------------------------------------------------
+// Terminal
 
-def word(colon) TAP     // bot eot cur c -- bot eot cur
-    DUP ECHO OVER C! doLIT 1 +
+// Backup the cursor by one character
+def word(colon) ^H      // bot eot cur -- bot eot cur
+    >R OVER R> SWAP OVER XOR
+    ?BRANCH :back1
+    doLIT BKSPP 'ECHO @EXECUTE doLIT 1 -
+    BL 'ECHO @EXECUTE
+    doLIT BKSPP 'ECHO @EXECUTE
+back1:
     EXIT
 end
 
-def word(colon) kTAP
-    DUP doLIT 13 XOR
+// Accept and echo the key stroke and bump the cursor
+def word(colon) TAP     // bot eot cur c -- bot eot cur
+    DUP 'ECHO @EXECUTE OVER C! doLIT 1 +
+    EXIT
+end
+
+// Process a key stroke, CR or backspace.
+def word(colon) kTAP    // bot eot cur c -- bot eot cur
+    DUP doLIT CRR XOR
     ?BRANCH :ktap2
-    doLIT 8 XOR
+    DUP doLIT BKSPP XOR
     ?BRANCH :ktap1
-    BL TAP EXIT
+    TAP EXIT
 ktap1:
-    doLIT 8 EXIT        // TODO: This should actually perform a backspace
+    DROP ^H EXIT
 ktap2:
     DROP SWAP DROP DUP
     EXIT

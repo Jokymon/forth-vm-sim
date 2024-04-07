@@ -899,6 +899,50 @@ class TestPARSE:
 # ------------------------
 # accept
 
+class TestkTAP:
+    BOT_INPUT = 12000
+    EOT_INPUT = 12080
+
+    def get_char_at(self, pos):
+        return f"doLIT {pos} C@"
+
+    def run_ktap(self, bot, eot, cur, char):
+        return f"doLIT {bot} doLIT {eot} doLIT {cur} doLIT {char} kTAP "
+
+    def test_kTAP_stores_char_at_cur(self):
+        cur = TestkTAP.BOT_INPUT
+        code = self.run_ktap(TestkTAP.BOT_INPUT, TestkTAP.EOT_INPUT,
+                             cur, ord('A'))
+        code += self.get_char_at(TestkTAP.BOT_INPUT)
+        stack, _ = run_vm_image(code)
+
+        assert len(stack) == 4
+        assert stack[3] == ord('A')
+        assert stack[2] == TestkTAP.BOT_INPUT + len('A')
+        assert stack[1] == TestkTAP.EOT_INPUT
+        assert stack[0] == TestkTAP.BOT_INPUT
+
+    def test_backspace_removes_one_char(self):
+        cur = TestkTAP.BOT_INPUT+2
+        code = self.run_ktap(TestkTAP.BOT_INPUT, TestkTAP.EOT_INPUT, cur, 8)
+        stack, _ = run_vm_image(code)
+
+        assert len(stack) == 3
+        assert stack[2] == cur - 1
+        assert stack[1] == TestkTAP.EOT_INPUT
+        assert stack[0] == TestkTAP.BOT_INPUT
+
+    def test_cr_makes_eot_equal_cur(self):
+        cur = TestkTAP.BOT_INPUT+3
+        code = self.run_ktap(TestkTAP.BOT_INPUT, TestkTAP.EOT_INPUT, cur, 13)
+        stack, _ = run_vm_image(code)
+
+        assert len(stack) == 3
+        assert stack[2] == cur
+        assert stack[1] == cur
+        assert stack[0] == TestkTAP.BOT_INPUT
+
+
 @passmein
 def test_expect_returns_the_address_and_the_amount_of_read_chars(me):
     """doLIT 12000 doLIT 80 accept"""
