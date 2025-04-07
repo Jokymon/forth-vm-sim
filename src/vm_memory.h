@@ -4,6 +4,8 @@
 #include <array>
 #include <initializer_list>
 #include <string>
+#include <stdexcept>
+#include <stdint.h>
 
 const static size_t MEMORY_SIZE = 32768;
 

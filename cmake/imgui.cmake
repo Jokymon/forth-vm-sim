@@ -1,6 +1,6 @@
 CPMAddPackage(
     NAME SDL2
-    GIT_TAG "release-2.0.20"
+    GIT_TAG "release-2.30.11"
     GITHUB_REPOSITORY libsdl-org/SDL
     OPTIONS
         "SDL_STATIC ON"
